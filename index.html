@@ -2881,33 +2881,36 @@ function applyResImg() {
 }
 
 function _renderResGallery() {
-  const inner = document.getElementById('res-gallery-inner');
+  const track = document.getElementById('res-gallery-track');
   const prev  = document.getElementById('res-prev');
   const next  = document.getElementById('res-next');
   const dots  = document.getElementById('res-dots');
-  if (!inner) return;
+  if (!track) return;
 
   const imgs = _resGalleryImgs;
-  inner.style.width = (imgs.length * 100) + '%';
-  inner.innerHTML = imgs.map(src =>
-    `<div style="width:${100/imgs.length}%;flex-shrink:0;">
-       <img src="${src}" style="width:100%;max-height:500px;object-fit:contain;display:block;cursor:zoom-in;"
-            onclick="window.open(this.src,'_blank')" onerror="this.style.opacity='0.3'">
-     </div>`
+  const multi = imgs.length > 1;
+
+  // 슬라이드: 각 이미지를 절대 위치로 쌓고 active만 보임
+  track.style.position = 'relative';
+  track.style.minHeight = '200px';
+  track.innerHTML = imgs.map((src, i) =>
+    `<img src="${src}"
+       style="width:100%;max-height:500px;object-fit:contain;display:${i===0?'block':'none'};cursor:zoom-in;"
+       data-slide="${i}"
+       onclick="window.open(this.src,'_blank')"
+       onerror="this.style.border='1px solid #555';this.alt='이미지 로드 실패';">`
   ).join('');
 
-  const multi = imgs.length > 1;
-  prev.style.display = multi ? 'block' : 'none';
-  next.style.display = multi ? 'block' : 'none';
-  dots.style.display = multi ? 'block' : 'none';
-  if (multi) {
+  if (prev) prev.style.display = multi ? 'block' : 'none';
+  if (next) next.style.display = multi ? 'block' : 'none';
+  if (dots) {
+    dots.style.display = multi ? 'block' : 'none';
     dots.innerHTML = imgs.map((_,i) =>
-      `<span onclick="resGalleryTo(${i})" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px;cursor:pointer;background:${i===_resGalleryIdx?'var(--gold)':'rgba(201,168,76,0.3)'};"></span>`
+      `<span onclick="resGalleryTo(${i})" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px;cursor:pointer;background:${i===0?'var(--gold)':'rgba(201,168,76,0.3)'};"></span>`
     ).join('');
   }
 
   // 터치 스와이프
-  const track = document.getElementById('res-gallery-track');
   track._touchX = null;
   track.ontouchstart = e => { track._touchX = e.touches[0].clientX; };
   track.ontouchend   = e => {
@@ -2916,8 +2919,6 @@ function _renderResGallery() {
     if (Math.abs(dx) > 40) resGallery(dx < 0 ? 1 : -1);
     track._touchX = null;
   };
-
-  _updateResGalleryPos();
 }
 
 function resGallery(dir) {
@@ -2931,9 +2932,13 @@ function resGalleryTo(i) {
 }
 
 function _updateResGalleryPos() {
-  const inner = document.getElementById('res-gallery-inner');
+  const track = document.getElementById('res-gallery-track');
   const dots  = document.getElementById('res-dots');
-  if (inner) inner.style.transform = `translateX(-${_resGalleryIdx * (100/_resGalleryImgs.length)}%)`;
+  if (track) {
+    track.querySelectorAll('img[data-slide]').forEach(img => {
+      img.style.display = parseInt(img.dataset.slide) === _resGalleryIdx ? 'block' : 'none';
+    });
+  }
   if (dots) {
     dots.querySelectorAll('span').forEach((s,i) => {
       s.style.background = i === _resGalleryIdx ? 'var(--gold)' : 'rgba(201,168,76,0.3)';
