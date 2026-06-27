@@ -1012,13 +1012,13 @@
           <label class="form-label">Firebase Database URL</label>
           <input type="text" class="form-input" id="fb-url"
             placeholder="https://your-project-default-rtdb.firebaseio.com"
-            value="${localStorage.getItem('vip_firebase_url')||''}">
+            value="">
         </div>
         <div class="form-group">
           <label class="form-label">Database Secret (레거시 토큰)</label>
           <input type="text" class="form-input" id="fb-secret"
             placeholder="Secret 키 입력"
-            value="${localStorage.getItem('vip_firebase_secret')||''}">
+            value="">
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
           <button class="btn-primary" onclick="saveFbConfig()">저장 및 연결</button>
@@ -1765,6 +1765,10 @@ function renderAdmin() {
   renderRegionOptions();
   document.getElementById('admin-welcome-text').value = DB.get('welcome_text', '');
   document.getElementById('admin-logo-text').value = DB.get('logo_text', '');
+  const fbUrlEl = document.getElementById('fb-url');
+  const fbSecretEl = document.getElementById('fb-secret');
+  if (fbUrlEl) fbUrlEl.value = localStorage.getItem('vip_firebase_url') || '';
+  if (fbSecretEl) fbSecretEl.value = localStorage.getItem('vip_firebase_secret') || '';
   renderAdminResImgPreview();
 }
 
