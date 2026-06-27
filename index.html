@@ -1308,7 +1308,10 @@ animateParticles();
 // 페이지 로드시 Firebase에서 데이터 동기화
 (async () => {
   const ok = await cloudPull(true);
-  if (ok) { try { renderAdmin && renderAdmin(); } catch(e){} }
+  if (ok) {
+    try { renderAdmin && renderAdmin(); } catch(e){}
+    try { if (typeof renderMain === 'function' && currentCode) renderMain(); } catch(e){}
+  }
 })();
 
 // ============================================================
@@ -1493,16 +1496,16 @@ function renderLinks() {
   });
 
   // 라이브 프리뷰 iframe 로드 + 스케일
-  requestAnimationFrame(() => {
+  setTimeout(() => {
     grid.querySelectorAll('.live-preview').forEach(iframe => {
       const preview = iframe.closest('.link-card-preview');
-      const w = (preview?.offsetWidth) || 300;
+      const w = (preview?.offsetWidth) || (window.innerWidth > 600 ? 300 : window.innerWidth - 40);
       const scale = w / 1280;
       iframe.style.transform = `scale(${scale})`;
       iframe.style.height = Math.ceil(190 / scale) + 'px';
       loadLivePreview(iframe, iframe.dataset.src);
     });
-  });
+  }, 300);
 
   setupScrollAnimations();
 }
