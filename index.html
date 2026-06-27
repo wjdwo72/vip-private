@@ -1184,10 +1184,29 @@ function _fbBase() {
   return (url && secret) ? { url: url.replace(/\/+$/,''), secret } : null;
 }
 
+function _stripBase64(obj) {
+  // base64 data URL을 포함한 필드는 클라우드에 올리지 않음 (용량 초과 방지)
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(_stripBase64);
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'string' && v.startsWith('data:')) out[k] = ''; // base64 제거
+    else if (Array.isArray(v)) out[k] = v.map(item => typeof item === 'string' && item.startsWith('data:') ? '' : _stripBase64(item));
+    else out[k] = _stripBase64(v);
+  }
+  return out;
+}
+
 async function cloudPush() {
   const fb = _fbBase(); if (!fb) return;
   const data = {};
-  CLOUD_KEYS.forEach(k => { const v = DB.get(k, null); if (v !== null) data[k] = v; });
+  CLOUD_KEYS.forEach(k => {
+    let v = DB.get(k, null);
+    if (v === null) return;
+    // links/codes는 base64 이미지 제거 후 업로드
+    if (k === 'links' || k === 'codes') v = _stripBase64(v);
+    data[k] = v;
+  });
   data._sync_ts = Date.now();
   try {
     const r = await fetch(`${fb.url}/vip.json?auth=${fb.secret}`, {
@@ -1198,9 +1217,12 @@ async function cloudPush() {
       localStorage.setItem('vip__sync_ts', String(data._sync_ts));
       document.getElementById('cloud-status') && (document.getElementById('cloud-status').textContent = '✓ 동기화 완료 ' + new Date().toLocaleTimeString('ko-KR'));
     } else {
-      document.getElementById('cloud-status') && (document.getElementById('cloud-status').textContent = '✗ 동기화 실패');
+      document.getElementById('cloud-status') && (document.getElementById('cloud-status').textContent = '✗ 동기화 실패 (' + r.status + ')');
     }
-  } catch(e) { console.warn('cloudPush 실패:', e); }
+  } catch(e) {
+    console.warn('cloudPush 실패:', e);
+    document.getElementById('cloud-status') && (document.getElementById('cloud-status').textContent = '✗ 네트워크 오류');
+  }
 }
 
 async function cloudPull(silent) {
