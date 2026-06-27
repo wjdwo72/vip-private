@@ -648,7 +648,7 @@
         </span>
       </label>
     </div>
-    <button class="entry-btn" onclick="verifyCode()">Enter</button>
+    <button type="button" class="entry-btn" onclick="verifyCode()">Enter</button>
     <div class="entry-error" id="entry-error"></div>
   </div>
 </div>
@@ -1340,7 +1340,7 @@ animateParticles();
 // ENTRY
 // ============================================================
 document.getElementById('entry-code-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') verifyCode();
+  if (e.key === 'Enter') { e.preventDefault(); verifyCode(); }
 });
 
 function togglePrivacy() {
