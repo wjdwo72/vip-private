@@ -1756,7 +1756,7 @@ async function submitReservation(e) {
     id, org: currentOrg || '직접방문', code: currentCode || '',
     service_id: serviceMenuId || '', service_name: serviceName || '-',
     name: obj.name || '-', date_start: obj.date_start || '-', date_end: obj.date_end || '-',
-    region: obj.region || '-', count: obj.count || '-',
+    region: obj.region || '-', region_sub: obj.region_sub || '', count: obj.count || '-',
     phone: obj.phone || '-', email: obj.email || '-',
     reply_method: obj.reply_method || '-', memo: obj.memo || '-',
     timestamp: new Date().toISOString(),
@@ -1802,7 +1802,7 @@ async function sendToTelegram(record, targetChannelId = null) {
     `🏢 단체명: ${record.org}\n` +
     `👤 예약자: ${record.name}\n` +
     `📅 일자: ${record.date_start} ~ ${record.date_end}\n` +
-    `📍 지역: ${record.region}\n` +
+    `📍 지역: ${record.region}${record.region_sub ? ' - ' + record.region_sub : ''}\n` +
     `👥 인원: ${record.count}명\n` +
     `📞 연락처: ${record.phone}\n` +
     `📧 이메일: ${record.email}\n` +
