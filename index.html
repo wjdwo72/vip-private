@@ -2859,12 +2859,17 @@ function applyResImg() {
   const wrap = document.getElementById('reservation-file-wrap');
   if (!wrap) return;
 
-  // 우선순위: 카드 전용 → 입장코드 전용 → 전역
+  // 우선순위: 카드 전용 → 입장코드 전용 → 전역 → 모든 카드 이미지 합산
   let imgs = _getResImgs(currentLinkObj);
   if (!imgs.length) imgs = _getResImgs(currentCodeObj);
   if (!imgs.length && !currentCodeObj) {
     const g = DB.get('reservation_img','');
     if (g) imgs = [g];
+  }
+  // 카드 컨텍스트 없고 이미지도 없으면 → 등록된 모든 카드 이미지 합산
+  if (!imgs.length && !currentLinkObj) {
+    const allLinks = DB.get('links', []);
+    allLinks.forEach(l => { imgs = imgs.concat(_getResImgs(l)); });
   }
 
   if (!imgs.length) { wrap.style.display = 'none'; return; }
