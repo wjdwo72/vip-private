@@ -1152,9 +1152,12 @@ const DB = {
   }
 };
 
+const _FB_DEFAULT_URL = 'https://vip-private-ebc10-default-rtdb.asia-southeast1.firebasedatabase.app';
+const _FB_DEFAULT_SECRET = '34CPnpuBimhbONu4HstfXZzjQyDqN0I1oUOunSyy';
+
 function _fbBase() {
-  const url = localStorage.getItem('vip_firebase_url') || '';
-  const secret = localStorage.getItem('vip_firebase_secret') || '';
+  const url = localStorage.getItem('vip_firebase_url') || _FB_DEFAULT_URL;
+  const secret = localStorage.getItem('vip_firebase_secret') || _FB_DEFAULT_SECRET;
   return (url && secret) ? { url: url.replace(/\/+$/,''), secret } : null;
 }
 
