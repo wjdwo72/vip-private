@@ -1118,18 +1118,17 @@
       <!-- 예약 폼 하단 첨부 뷰어 (이미지/PDF) -->
       <div id="reservation-file-wrap" style="display:none;margin:20px 0 24px;">
         <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">안내 자료</div>
-        <!-- 이미지 뷰어 -->
-        <img id="reservation-img" src="" alt="안내 이미지"
-          style="width:100%;border:1px solid rgba(201,168,76,0.2);display:none;cursor:zoom-in;max-height:600px;object-fit:contain;"
-          onclick="window.open(this.src,'_blank')"
-          onerror="this.style.display='none'">
-        <!-- PDF 뷰어 (iframe 방식 / 모바일은 버튼) -->
-        <iframe id="reservation-pdf" src="" frameborder="0"
-          style="width:100%;height:500px;border:1px solid rgba(201,168,76,0.2);display:none;background:#1a1a1a;"></iframe>
-        <button id="reservation-pdf-btn" onclick="openPdfMobile()"
-          style="display:none;width:100%;padding:16px;text-align:center;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:13px;letter-spacing:2px;cursor:pointer;">
-          📄 안내자료 PDF 열기 →
-        </button>
+        <!-- 다중 이미지 갤러리 -->
+        <div id="res-gallery" style="position:relative;user-select:none;">
+          <div id="res-gallery-track" style="overflow:hidden;border:1px solid rgba(201,168,76,0.2);">
+            <div id="res-gallery-inner" style="display:flex;transition:transform 0.35s ease;"></div>
+          </div>
+          <button id="res-prev" onclick="resGallery(-1)"
+            style="position:absolute;left:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);border:none;color:var(--gold);font-size:24px;padding:8px 12px;cursor:pointer;z-index:5;display:none;">‹</button>
+          <button id="res-next" onclick="resGallery(1)"
+            style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);border:none;color:var(--gold);font-size:24px;padding:8px 12px;cursor:pointer;z-index:5;display:none;">›</button>
+          <div id="res-dots" style="text-align:center;padding:8px 0;display:none;"></div>
+        </div>
       </div>
       <button type="submit" class="btn-primary">문의 전송</button>
     </form>
@@ -1830,40 +1829,25 @@ function renderContentCodeTexts() {
           onclick="saveCodeTextFromContent(${c.id})">저장</button>
       </div>
 
-      <!-- 전용 첨부 파일 -->
-      <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;">
-        전용 첨부 파일 (이미지 / PDF)
-        ${hasFile ? `<span style="color:#27ae60;margin-left:8px;font-size:9px;">● 적용중</span>` : `<span style="color:var(--text-dim);margin-left:8px;font-size:9px;">미설정 (전역 파일 사용)</span>`}
+      <!-- 전용 안내 이미지 (다중) -->
+      <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">
+        전용 안내 이미지 (여러 장 — 유저가 스와이프)
+        ${_getResImgs(c).length ? `<span style="color:#27ae60;margin-left:8px;font-size:9px;">● ${_getResImgs(c).length}장 등록</span>` : `<span style="color:var(--text-dim);margin-left:8px;font-size:9px;">미설정</span>`}
       </div>
-
-      <!-- URL 입력 -->
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input type="text" class="form-input" id="cfile-url-${c.id}"
-          placeholder="이미지 또는 PDF URL 입력" style="flex:1;"
-          value="${(c.res_img && c.res_img.startsWith('http')) ? c.res_img : ''}">
-        <button class="btn-secondary" style="white-space:nowrap;" onclick="saveCodeFileUrl(${c.id})">URL 적용</button>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+        ${_getResImgs(c).map((src,i) => `
+          <div style="position:relative;width:72px;height:54px;border:1px solid rgba(201,168,76,0.3);">
+            <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+            <button onclick="deleteCodeResImgAt(${c.id},${i})" style="position:absolute;top:1px;right:1px;background:rgba(0,0,0,0.7);border:none;color:#e88;font-size:10px;cursor:pointer;padding:1px 4px;">✕</button>
+          </div>`).join('')}
       </div>
-
-      <!-- 파일 업로드 -->
-      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;
-        border:1px dashed rgba(201,168,76,0.3);background:rgba(201,168,76,0.02);
-        cursor:pointer;margin-bottom:12px;transition:all 0.3s;"
-        onmouseover="this.style.borderColor='rgba(201,168,76,0.6)'"
-        onmouseout="this.style.borderColor='rgba(201,168,76,0.3)'">
-        <span style="font-size:16px;">📎</span>
-        <span id="cfile-name-${c.id}" style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">
-          ${hasFile && !c.res_img.startsWith('http') ? (isPDF ? '📄 PDF 등록됨' : '🖼 이미지 등록됨') : '클릭하여 파일 선택'}
-        </span>
-        <input type="file" accept="image/*,.pdf" style="display:none;"
-          onchange="loadCodeFile(${c.id}, this)">
-      </label>
-
-      <!-- 현재 파일 미리보기 + 삭제 -->
-      ${hasFile ? `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        ${!isPDF ? `<img src="${c.res_img}" style="height:60px;border:1px solid rgba(201,168,76,0.2);object-fit:cover;">` : `<span style="font-size:11px;color:var(--text);">📄 PDF 파일</span>`}
-        <button class="btn-danger" onclick="deleteCodeFile(${c.id})">파일 삭제</button>
-      </div>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+        <input type="text" class="form-input" id="cfile-url-${c.id}" placeholder="이미지 URL 입력 후 추가" style="flex:1;min-width:140px;">
+        <button class="btn-secondary" style="white-space:nowrap;" onclick="addCodeResImgUrl(${c.id})">URL추가</button>
+        <label style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;white-space:nowrap;">
+          파일추가<input type="file" accept="image/*" style="display:none;" onchange="addCodeResImgFile(${c.id},this)">
+        </label>
+      </div>
 
       <!-- 표시 링크 / 예약버튼 / 결제창 -->
       <div style="padding-top:16px;border-top:1px solid rgba(201,168,76,0.1);">
@@ -1907,47 +1891,61 @@ function renderContentCodeTexts() {
 }
 
 // ── 입장코드별 파일 관리 ──────────────────────────
-function saveCodeFileUrl(id) {
-  const url = document.getElementById('cfile-url-' + id)?.value.trim();
+function addCodeResImgUrl(id) {
+  const input = document.getElementById('cfile-url-' + id);
+  const url = input?.value.trim();
   if (!url) { showToast('URL을 입력하세요.', 'error'); return; }
   const codes = DB.get('codes', []);
   const c = codes.find(c => c.id === id);
-  if (c) { c.res_img = url; c.res_img_type = url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'; }
+  if (!c) return;
+  c.res_imgs = [..._getResImgs(c), url];
+  delete c.res_img; delete c.res_img_type;
   DB.set('codes', codes);
+  if (input) input.value = '';
   renderContentCodeTexts();
-  showToast(`[${c?.code}] 파일이 저장되었습니다.`, 'gold');
+  showToast('이미지 추가됨', 'gold');
 }
 
-function loadCodeFile(id, input) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const isPDF = file.type === 'application/pdf';
-  const nameEl = document.getElementById('cfile-name-' + id);
-  if (nameEl) nameEl.textContent = file.name;
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('파일이 5MB를 초과합니다. URL 방식을 권장합니다.', 'error');
-  }
+function addCodeResImgFile(id, input) {
+  const file = input?.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { showToast('이미지는 3MB 이하만 가능합니다.', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
-    try {
-      const codes = DB.get('codes', []);
-      const c = codes.find(c => c.id === id);
-      if (c) { c.res_img = e.target.result; c.res_img_type = isPDF ? 'pdf' : 'image'; }
-      DB.set('codes', codes);
-      renderContentCodeTexts();
-      showToast(isPDF ? 'PDF가 업로드되었습니다.' : '이미지가 업로드되었습니다.', 'gold');
-    } catch { showToast('파일이 너무 큽니다. URL을 사용해 주세요.', 'error'); }
+    const codes = DB.get('codes', []);
+    const c = codes.find(c => c.id === id);
+    if (!c) return;
+    c.res_imgs = [..._getResImgs(c), e.target.result];
+    delete c.res_img; delete c.res_img_type;
+    DB.set('codes', codes);
+    renderContentCodeTexts();
+    showToast('이미지 추가됨', 'gold');
   };
   reader.readAsDataURL(file);
 }
 
+function deleteCodeResImgAt(id, idx) {
+  const codes = DB.get('codes', []);
+  const c = codes.find(c => c.id === id);
+  if (!c) return;
+  const imgs = _getResImgs(c);
+  imgs.splice(idx, 1);
+  c.res_imgs = imgs;
+  delete c.res_img; delete c.res_img_type;
+  DB.set('codes', codes);
+  renderContentCodeTexts();
+  showToast('이미지 삭제됨');
+}
+
+function saveCodeFileUrl(id) { addCodeResImgUrl(id); }
+function loadCodeFile(id, input) { addCodeResImgFile(id, input); }
 function deleteCodeFile(id) {
   const codes = DB.get('codes', []);
   const c = codes.find(c => c.id === id);
-  if (c) { c.res_img = ''; c.res_img_type = ''; }
+  if (c) { c.res_imgs = []; delete c.res_img; delete c.res_img_type; }
   DB.set('codes', codes);
   renderContentCodeTexts();
-  showToast('파일이 삭제되었습니다.');
+  showToast('이미지 전체 삭제됨');
 }
 function saveCodeDisplaySettings(id) {
   const codes = DB.get('codes', []);
@@ -2336,74 +2334,83 @@ function renderLinksAdmin() {
           </div>
         </div>
         <div style="padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:4px;">
-          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">예약문의 안내 자료 (이 카드 전용)</div>
-          ${l.res_img ? `
-            <div style="margin-bottom:8px;">
-              ${l.res_img_type === 'pdf'
-                ? `<embed src="${l.res_img}" type="application/pdf" style="width:100%;height:120px;border:1px solid rgba(201,168,76,0.2);">`
-                : `<img src="${l.res_img}" style="max-width:100%;max-height:120px;border:1px solid rgba(201,168,76,0.2);cursor:zoom-in;" onclick="window.open(this.src,'_blank')">`
-              }
-            </div>` : ''}
+          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">예약문의 안내 이미지 (여러 장 — 스와이프)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+            ${_getResImgs(l).map((src,i) => `
+              <div style="position:relative;width:72px;height:54px;border:1px solid rgba(201,168,76,0.3);">
+                <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+                <button onclick="deleteLinkResImgAt(${l.id},${i})" style="position:absolute;top:1px;right:1px;background:rgba(0,0,0,0.7);border:none;color:#e88;font-size:10px;cursor:pointer;padding:1px 4px;">✕</button>
+              </div>`).join('')}
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <input id="link-file-url-${l.id}" type="text" placeholder="이미지/PDF URL 직접 입력"
-              style="flex:1;min-width:160px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;"
-              value="${l.res_img && !l.res_img.startsWith('data:') ? l.res_img : ''}">
-            <button onclick="saveLinkFileUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL저장</button>
+            <input id="link-file-url-${l.id}" type="text" placeholder="이미지 URL 입력 후 추가"
+              style="flex:1;min-width:140px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;" value="">
+            <button onclick="addLinkResImgUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL추가</button>
             <label style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">
-              파일선택
-              <input type="file" accept="image/*,application/pdf" style="display:none;" onchange="loadLinkFile(${l.id},this)">
+              파일추가<input type="file" accept="image/*" style="display:none;" onchange="addLinkResImgFile(${l.id},this)">
             </label>
-            ${l.res_img ? `<button onclick="deleteLinkFile(${l.id})" style="padding:6px 10px;background:rgba(180,50,50,0.2);border:1px solid rgba(180,50,50,0.4);color:#e88;font-size:10px;cursor:pointer;">삭제</button>` : ''}
           </div>
         </div>
       </div>`).join('');
 }
 
-function saveLinkFileUrl(id) {
+function addLinkResImgUrl(id) {
   const input = document.getElementById('link-file-url-' + id);
-  if (!input) return;
-  const url = input.value.trim();
+  const url = input?.value.trim();
   if (!url) { showToast('URL을 입력하세요.', 'error'); return; }
-  const ext = url.split('?')[0].split('.').pop().toLowerCase();
-  const fileType = ext === 'pdf' ? 'pdf' : 'image';
   const links = DB.get('links', []);
   const l = links.find(x => x.id === id);
   if (!l) return;
-  l.res_img = url;
-  l.res_img_type = fileType;
+  l.res_imgs = [..._getResImgs(l), url];
+  delete l.res_img; delete l.res_img_type;
   DB.set('links', links);
+  if (input) input.value = '';
   renderLinksAdmin();
-  showToast('카드 안내 자료 URL이 저장되었습니다.', 'gold');
+  showToast('이미지 추가됨', 'gold');
 }
 
-function loadLinkFile(id, input) {
-  const file = input.files[0];
+function addLinkResImgFile(id, input) {
+  const file = input?.files[0];
   if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { showToast('파일은 5MB 이하만 가능합니다.', 'error'); return; }
-  const fileType = file.type === 'application/pdf' ? 'pdf' : 'image';
+  if (file.size > 3 * 1024 * 1024) { showToast('이미지는 3MB 이하만 가능합니다.', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
     const links = DB.get('links', []);
     const l = links.find(x => x.id === id);
     if (!l) return;
-    l.res_img = e.target.result;
-    l.res_img_type = fileType;
+    l.res_imgs = [..._getResImgs(l), e.target.result];
+    delete l.res_img; delete l.res_img_type;
     DB.set('links', links);
     renderLinksAdmin();
-    showToast('카드 안내 자료가 업로드되었습니다.', 'gold');
+    showToast('이미지 추가됨', 'gold');
   };
   reader.readAsDataURL(file);
 }
 
+function deleteLinkResImgAt(id, idx) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  const imgs = _getResImgs(l);
+  imgs.splice(idx, 1);
+  l.res_imgs = imgs;
+  delete l.res_img; delete l.res_img_type;
+  DB.set('links', links);
+  renderLinksAdmin();
+  showToast('이미지 삭제됨');
+}
+
+function saveLinkFileUrl(id) { addLinkResImgUrl(id); }
+function loadLinkFile(id, input) { addLinkResImgFile(id, input); }
 function deleteLinkFile(id) {
   const links = DB.get('links', []);
   const l = links.find(x => x.id === id);
   if (!l) return;
-  delete l.res_img;
-  delete l.res_img_type;
+  l.res_imgs = [];
+  delete l.res_img; delete l.res_img_type;
   DB.set('links', links);
   renderLinksAdmin();
-  showToast('카드 안내 자료가 삭제되었습니다.');
+  showToast('안내 이미지 전체 삭제됨');
 }
 
 function _getThumbImgs(l) {
@@ -2789,81 +2796,94 @@ function deleteResImg() {
   showToast('첨부 파일이 삭제되었습니다.');
 }
 
-function applyResImg() {
-  // 우선순위: 카드 전용 → 입장코드 전용 → 전역
-  const cardSrc  = currentLinkObj?.res_img  || '';
-  const cardType = currentLinkObj?.res_img_type || '';
-  const codeSrc  = currentCodeObj?.res_img  || '';
-  const codeType = currentCodeObj?.res_img_type || '';
-  // 코드 로그인 상태면 글로벌 기본값 무시 (코드별 설정만 사용)
-  const globalSrc  = currentCodeObj ? '' : DB.get('reservation_img', '');
-  const globalType = currentCodeObj ? 'image' : DB.get('reservation_img_type', 'image');
-  const src      = cardSrc || codeSrc || globalSrc;
-  const fileType = cardSrc ? cardType : (codeSrc ? codeType : globalType);
+let _resGalleryImgs = [];
+let _resGalleryIdx  = 0;
 
-  const wrap = document.getElementById('reservation-file-wrap');
-  const img  = document.getElementById('reservation-img');
-  const pdf  = document.getElementById('reservation-pdf');
-  const pdfBtn = document.getElementById('reservation-pdf-btn');
-  if (!wrap) return;
-
-  // 이전 Blob URL 해제
-  if (_pdfBlobUrl) { URL.revokeObjectURL(_pdfBlobUrl); _pdfBlobUrl = null; }
-
-  if (!src) {
-    wrap.style.display = 'none';
-    if (img) { img.src = ''; img.style.display = 'none'; }
-    if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
-    if (pdfBtn) pdfBtn.style.display = 'none';
-    return;
-  }
-  wrap.style.display = 'block';
-  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
-  if (fileType === 'pdf') {
-    if (img) { img.src = ''; img.style.display = 'none'; }
-    // base64 data URL → Blob URL 변환
-    let displaySrc = src;
-    if (src.startsWith('data:')) {
-      try {
-        const base64 = src.split(',')[1];
-        const bin = atob(base64);
-        const arr = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-        const blob = new Blob([arr], { type: 'application/pdf' });
-        _pdfBlobUrl = URL.createObjectURL(blob);
-        displaySrc = _pdfBlobUrl;
-      } catch(e) { console.warn('PDF Blob 변환 실패', e); }
-    }
-    if (isMobile) {
-      // 모바일: iframe 대신 버튼으로 PDF 다운로드/열기
-      if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
-      if (pdfBtn) { pdfBtn.dataset.src = displaySrc; pdfBtn.style.display = 'block'; }
-    } else {
-      if (pdfBtn) pdfBtn.style.display = 'none';
-      if (pdf) { pdf.src = displaySrc; pdf.style.display = 'block'; }
-    }
-  } else {
-    if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
-    if (pdfBtn) pdfBtn.style.display = 'none';
-    if (img) { img.src = src; img.style.display = 'block'; }
-  }
+function _getResImgs(obj) {
+  if (!obj) return [];
+  if (obj.res_imgs && obj.res_imgs.length) return obj.res_imgs;
+  if (obj.res_img) return [obj.res_img];
+  return [];
 }
 
-function openPdfMobile() {
-  const btn = document.getElementById('reservation-pdf-btn');
-  const src = btn?.dataset.src;
-  if (!src) return;
-  // blob URL이면 <a download> 트릭으로 다운로드 → 기기 PDF 앱에서 열림
-  if (src.startsWith('blob:')) {
-    const a = document.createElement('a');
-    a.href = src;
-    a.download = '안내자료.pdf';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } else {
-    window.open(src, '_blank');
+function applyResImg() {
+  const wrap = document.getElementById('reservation-file-wrap');
+  if (!wrap) return;
+
+  // 우선순위: 카드 전용 → 입장코드 전용 → 전역
+  let imgs = _getResImgs(currentLinkObj);
+  if (!imgs.length) imgs = _getResImgs(currentCodeObj);
+  if (!imgs.length && !currentCodeObj) {
+    const g = DB.get('reservation_img','');
+    if (g) imgs = [g];
+  }
+
+  if (!imgs.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  _resGalleryImgs = imgs;
+  _resGalleryIdx  = 0;
+  _renderResGallery();
+}
+
+function _renderResGallery() {
+  const inner = document.getElementById('res-gallery-inner');
+  const prev  = document.getElementById('res-prev');
+  const next  = document.getElementById('res-next');
+  const dots  = document.getElementById('res-dots');
+  if (!inner) return;
+
+  const imgs = _resGalleryImgs;
+  inner.style.width = (imgs.length * 100) + '%';
+  inner.innerHTML = imgs.map(src =>
+    `<div style="width:${100/imgs.length}%;flex-shrink:0;">
+       <img src="${src}" style="width:100%;max-height:500px;object-fit:contain;display:block;cursor:zoom-in;"
+            onclick="window.open(this.src,'_blank')" onerror="this.style.opacity='0.3'">
+     </div>`
+  ).join('');
+
+  const multi = imgs.length > 1;
+  prev.style.display = multi ? 'block' : 'none';
+  next.style.display = multi ? 'block' : 'none';
+  dots.style.display = multi ? 'block' : 'none';
+  if (multi) {
+    dots.innerHTML = imgs.map((_,i) =>
+      `<span onclick="resGalleryTo(${i})" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px;cursor:pointer;background:${i===_resGalleryIdx?'var(--gold)':'rgba(201,168,76,0.3)'};"></span>`
+    ).join('');
+  }
+
+  // 터치 스와이프
+  const track = document.getElementById('res-gallery-track');
+  track._touchX = null;
+  track.ontouchstart = e => { track._touchX = e.touches[0].clientX; };
+  track.ontouchend   = e => {
+    if (track._touchX === null) return;
+    const dx = e.changedTouches[0].clientX - track._touchX;
+    if (Math.abs(dx) > 40) resGallery(dx < 0 ? 1 : -1);
+    track._touchX = null;
+  };
+
+  _updateResGalleryPos();
+}
+
+function resGallery(dir) {
+  _resGalleryIdx = Math.max(0, Math.min(_resGalleryImgs.length - 1, _resGalleryIdx + dir));
+  _updateResGalleryPos();
+}
+
+function resGalleryTo(i) {
+  _resGalleryIdx = i;
+  _updateResGalleryPos();
+}
+
+function _updateResGalleryPos() {
+  const inner = document.getElementById('res-gallery-inner');
+  const dots  = document.getElementById('res-dots');
+  if (inner) inner.style.transform = `translateX(-${_resGalleryIdx * (100/_resGalleryImgs.length)}%)`;
+  if (dots) {
+    dots.querySelectorAll('span').forEach((s,i) => {
+      s.style.background = i === _resGalleryIdx ? 'var(--gold)' : 'rgba(201,168,76,0.3)';
+    });
   }
 }
 
