@@ -1648,7 +1648,11 @@ const FIELD_DEFS = {
   service: { label: '문의 메뉴 선택', type: 'service', placeholder: '' },
   name: { label: '예약자명', type: 'text', placeholder: '홍길동' },
   dates: { label: '사용일자', type: 'dates', placeholder: '' },
-  region: { label: '지역', type: 'select', options: () => DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']) },
+  region: { label: '지역', type: 'select', options: () => {
+    if (currentLinkObj && currentLinkObj.sub_categories && currentLinkObj.sub_categories.length)
+      return currentLinkObj.sub_categories;
+    return DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
+  }},
   count: { label: '인원수', type: 'number', placeholder: '인원 수' },
   contact: { label: '연락처 / 이메일', type: 'contact', placeholder: '' },
   reply_method: { label: '답변 수단', type: 'radio', options: ['문자','카카오톡','전화'] },
@@ -2451,6 +2455,23 @@ function renderLinksAdmin() {
             </label>
           </div>
         </div>
+        <!-- 하위 카테고리 -->
+        <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">예약폼 하위 카테고리 <span style="font-size:9px;color:var(--text-dim);letter-spacing:0;">(비워두면 전체 지역 목록 사용)</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;" id="sub-cat-list-${l.id}">
+            ${(l.sub_categories||[]).map((cat,i) => `
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:11px;letter-spacing:1px;">
+                ${cat}
+                <button type="button" onclick="deleteLinkSubCat(${l.id},${i})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:12px;line-height:1;padding:0 0 0 4px;">✕</button>
+              </span>`).join('')}
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input id="sub-cat-input-${l.id}" type="text" placeholder="카테고리명 입력 후 추가"
+              style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addLinkSubCat(${l.id});}">
+            <button type="button" onclick="addLinkSubCat(${l.id})" style="padding:6px 14px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">추가</button>
+          </div>
+        </div>
         <div style="padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:4px;">
           <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">예약문의 안내 이미지 (여러 장 — 스와이프)</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
@@ -2470,6 +2491,30 @@ function renderLinksAdmin() {
           </div>
         </div>
       </div>`).join('');
+}
+
+function addLinkSubCat(id) {
+  const input = document.getElementById('sub-cat-input-' + id);
+  const val = input?.value.trim();
+  if (!val) { showToast('카테고리명을 입력하세요.', 'error'); return; }
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  l.sub_categories = [...(l.sub_categories || []), val];
+  DB.set('links', links);
+  if (input) input.value = '';
+  renderLinksAdmin();
+  showToast('카테고리 추가됨', 'gold');
+}
+
+function deleteLinkSubCat(id, idx) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  l.sub_categories = (l.sub_categories || []).filter((_,i) => i !== idx);
+  DB.set('links', links);
+  renderLinksAdmin();
+  showToast('카테고리 삭제됨');
 }
 
 function addLinkResImgUrl(id) {
