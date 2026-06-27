@@ -1123,9 +1123,13 @@
           style="width:100%;border:1px solid rgba(201,168,76,0.2);display:none;cursor:zoom-in;max-height:600px;object-fit:contain;"
           onclick="window.open(this.src,'_blank')"
           onerror="this.style.display='none'">
-        <!-- PDF 뷰어 (iframe 방식) -->
+        <!-- PDF 뷰어 (iframe 방식 / 모바일은 버튼) -->
         <iframe id="reservation-pdf" src="" frameborder="0"
           style="width:100%;height:500px;border:1px solid rgba(201,168,76,0.2);display:none;background:#1a1a1a;"></iframe>
+        <a id="reservation-pdf-btn" href="" target="_blank"
+          style="display:none;width:100%;padding:16px;text-align:center;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:13px;letter-spacing:2px;text-decoration:none;">
+          📄 안내자료 PDF 열기 →
+        </a>
       </div>
       <button type="submit" class="btn-primary">문의 전송</button>
     </form>
@@ -2800,6 +2804,7 @@ function applyResImg() {
   const wrap = document.getElementById('reservation-file-wrap');
   const img  = document.getElementById('reservation-img');
   const pdf  = document.getElementById('reservation-pdf');
+  const pdfBtn = document.getElementById('reservation-pdf-btn');
   if (!wrap) return;
 
   // 이전 Blob URL 해제
@@ -2809,30 +2814,38 @@ function applyResImg() {
     wrap.style.display = 'none';
     if (img) { img.src = ''; img.style.display = 'none'; }
     if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
+    if (pdfBtn) pdfBtn.style.display = 'none';
     return;
   }
   wrap.style.display = 'block';
+  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
   if (fileType === 'pdf') {
     if (img) { img.src = ''; img.style.display = 'none'; }
-    if (pdf) {
-      // base64 data URL은 iframe에서 차단됨 → Blob URL로 변환
-      let displaySrc = src;
-      if (src.startsWith('data:')) {
-        try {
-          const base64 = src.split(',')[1];
-          const bin = atob(base64);
-          const arr = new Uint8Array(bin.length);
-          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-          const blob = new Blob([arr], { type: 'application/pdf' });
-          _pdfBlobUrl = URL.createObjectURL(blob);
-          displaySrc = _pdfBlobUrl;
-        } catch(e) { console.warn('PDF Blob 변환 실패', e); }
-      }
-      pdf.src = displaySrc;
-      pdf.style.display = 'block';
+    // base64 data URL → Blob URL 변환
+    let displaySrc = src;
+    if (src.startsWith('data:')) {
+      try {
+        const base64 = src.split(',')[1];
+        const bin = atob(base64);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        const blob = new Blob([arr], { type: 'application/pdf' });
+        _pdfBlobUrl = URL.createObjectURL(blob);
+        displaySrc = _pdfBlobUrl;
+      } catch(e) { console.warn('PDF Blob 변환 실패', e); }
+    }
+    if (isMobile) {
+      // 모바일: iframe 대신 버튼으로 PDF 열기
+      if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
+      if (pdfBtn) { pdfBtn.href = displaySrc; pdfBtn.style.display = 'block'; }
+    } else {
+      if (pdfBtn) pdfBtn.style.display = 'none';
+      if (pdf) { pdf.src = displaySrc; pdf.style.display = 'block'; }
     }
   } else {
     if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
+    if (pdfBtn) pdfBtn.style.display = 'none';
     if (img) { img.src = src; img.style.display = 'block'; }
   }
 }
