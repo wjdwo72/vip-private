@@ -805,10 +805,16 @@
       </div>
       <div class="admin-section">
         <div class="admin-section-title">입장코드별 메인 텍스트 수정</div>
-        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.7;margin-bottom:20px;">
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.7;margin-bottom:16px;">
           각 입장코드로 들어온 회원에게 보여줄 전용 메인 텍스트를 설정합니다.<br>
           비워두면 위의 기본 메인 텍스트가 표시됩니다.
         </p>
+        <!-- 빠른 입장코드 추가 -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding:14px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.03);">
+          <input type="text" id="quick-code-code" class="form-input" placeholder="입장코드" style="flex:1;min-width:100px;">
+          <input type="text" id="quick-code-org" class="form-input" placeholder="단체명" style="flex:2;min-width:140px;">
+          <button class="btn-primary" style="white-space:nowrap;" onclick="quickAddCode()">+ 입장코드 추가</button>
+        </div>
         <div id="content-code-text-list"></div>
       </div>
     </div>
@@ -1956,6 +1962,22 @@ function saveCodeDisplaySettings(id) {
   showToast(`[${c.code}] 설정이 저장되었습니다.`, 'gold');
 }
 // ─────────────────────────────────────────────────
+
+function quickAddCode() {
+  const code = document.getElementById('quick-code-code').value.trim();
+  const org  = document.getElementById('quick-code-org').value.trim();
+  if (!code) { showToast('입장코드를 입력하세요.', 'error'); return; }
+  const codes = DB.get('codes', []);
+  if (codes.find(c => c.code === code)) { showToast('이미 존재하는 코드입니다.', 'error'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  codes.push({ id: Date.now(), code, org: org||code, menus: '', expire: '', welcome_text: '', res_img: '', res_img_type: 'image', show_reservation: true, show_payment: true, visible_links: null });
+  DB.set('codes', codes);
+  document.getElementById('quick-code-code').value = '';
+  document.getElementById('quick-code-org').value = '';
+  showToast(`입장코드 "${code}" 추가됨`, 'gold');
+  renderContentCodeTexts();
+  renderCodesAdmin();
+}
 
 function saveCodeTextFromContent(id) {
   const ta = document.getElementById('cct-' + id);
