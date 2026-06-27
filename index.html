@@ -2421,8 +2421,8 @@ function renderLinksAdmin() {
               style="flex:1;min-width:160px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;" value="">
             <button onclick="addLinkThumbUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL추가</button>
             <label style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">
-              파일추가
-              <input type="file" accept="image/*" style="display:none;" onchange="addLinkThumbFile(${l.id},this)">
+              파일추가(여러장)
+              <input type="file" accept="image/*" multiple style="display:none;" onchange="addLinkThumbFile(${l.id},this)">
             </label>
           </div>
         </div>
@@ -2440,7 +2440,7 @@ function renderLinksAdmin() {
               style="flex:1;min-width:140px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;" value="">
             <button onclick="addLinkResImgUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL추가</button>
             <label style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">
-              파일추가<input type="file" accept="image/*" style="display:none;" onchange="addLinkResImgFile(${l.id},this)">
+              파일추가(여러장)<input type="file" accept="image/*" multiple style="display:none;" onchange="addLinkResImgFile(${l.id},this)">
             </label>
           </div>
         </div>
@@ -2463,21 +2463,32 @@ function addLinkResImgUrl(id) {
 }
 
 function addLinkResImgFile(id, input) {
-  const file = input?.files[0];
-  if (!file) return;
-  if (file.size > 3 * 1024 * 1024) { showToast('이미지는 3MB 이하만 가능합니다.', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const links = DB.get('links', []);
-    const l = links.find(x => x.id === id);
-    if (!l) return;
-    l.res_imgs = [..._getResImgs(l), e.target.result];
-    delete l.res_img; delete l.res_img_type;
-    DB.set('links', links);
-    renderLinksAdmin();
-    showToast('이미지 추가됨', 'gold');
-  };
-  reader.readAsDataURL(file);
+  const files = Array.from(input?.files || []);
+  if (!files.length) return;
+  const oversized = files.filter(f => f.size > 3 * 1024 * 1024);
+  if (oversized.length) { showToast(`${oversized.length}개 파일이 3MB 초과 (제외됨)`, 'error'); }
+  const valid = files.filter(f => f.size <= 3 * 1024 * 1024);
+  if (!valid.length) return;
+  let done = 0;
+  const results = new Array(valid.length);
+  valid.forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      results[i] = e.target.result;
+      done++;
+      if (done === valid.length) {
+        const links = DB.get('links', []);
+        const l = links.find(x => x.id === id);
+        if (!l) return;
+        l.res_imgs = [..._getResImgs(l), ...results];
+        delete l.res_img; delete l.res_img_type;
+        DB.set('links', links);
+        renderLinksAdmin();
+        showToast(`이미지 ${valid.length}장 추가됨`, 'gold');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function deleteLinkResImgAt(id, idx) {
@@ -2529,21 +2540,32 @@ function addLinkThumbUrl(id) {
 }
 
 function addLinkThumbFile(id, input) {
-  const file = input.files[0];
-  if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showToast('이미지는 2MB 이하만 가능합니다.', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const links = DB.get('links', []);
-    const l = links.find(x => x.id === id);
-    if (!l) return;
-    l.thumb_imgs = [..._getThumbImgs(l), e.target.result];
-    delete l.thumb_img;
-    DB.set('links', links);
-    renderLinksAdmin(); renderLinks();
-    showToast('썸네일 추가됨', 'gold');
-  };
-  reader.readAsDataURL(file);
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  const oversized = files.filter(f => f.size > 2 * 1024 * 1024);
+  if (oversized.length) { showToast(`${oversized.length}개 파일이 2MB 초과 (제외됨)`, 'error'); }
+  const valid = files.filter(f => f.size <= 2 * 1024 * 1024);
+  if (!valid.length) return;
+  let done = 0;
+  const results = new Array(valid.length);
+  valid.forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      results[i] = e.target.result;
+      done++;
+      if (done === valid.length) {
+        const links = DB.get('links', []);
+        const l = links.find(x => x.id === id);
+        if (!l) return;
+        l.thumb_imgs = [..._getThumbImgs(l), ...results];
+        delete l.thumb_img;
+        DB.set('links', links);
+        renderLinksAdmin(); renderLinks();
+        showToast(`썸네일 ${valid.length}장 추가됨`, 'gold');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function deleteLinkThumbAt(id, idx) {
