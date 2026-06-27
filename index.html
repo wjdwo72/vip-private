@@ -2850,9 +2850,14 @@ let _resGalleryIdx  = 0;
 
 function _getResImgs(obj) {
   if (!obj) return [];
-  if (obj.res_imgs && obj.res_imgs.length) return obj.res_imgs;
-  if (obj.res_img) return [obj.res_img];
-  return [];
+  let list = [];
+  if (obj.res_imgs && obj.res_imgs.length) {
+    list = obj.res_imgs;
+  } else if (obj.res_img && obj.res_img_type !== 'pdf') {
+    list = [obj.res_img];
+  }
+  // 유효한 이미지 src만 (비어있거나 PDF data URL 제외)
+  return list.filter(s => s && s.length > 10 && !s.startsWith('data:application/pdf'));
 }
 
 function applyResImg() {
@@ -2898,7 +2903,7 @@ function _renderResGallery() {
        style="width:100%;max-height:500px;object-fit:contain;display:${i===0?'block':'none'};cursor:zoom-in;"
        data-slide="${i}"
        onclick="window.open(this.src,'_blank')"
-       onerror="this.style.border='1px solid #555';this.alt='이미지 로드 실패';">`
+       onerror="this.style.display='none';">`
   ).join('');
 
   if (prev) prev.style.display = multi ? 'block' : 'none';
