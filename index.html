@@ -906,6 +906,13 @@
     <!-- TAB: Reservations DB -->
     <div id="tab-reservations" class="tab-content">
       <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+          입장 로그
+          <button class="btn-secondary" style="font-size:10px;padding:4px 12px;" onclick="clearEntryLogs()">전체삭제</button>
+        </div>
+        <div id="entry-log-list" style="max-height:260px;overflow-y:auto;"></div>
+      </div>
+      <div class="admin-section">
         <div class="admin-section-title">예약 문의 데이터베이스</div>
         <div style="margin-bottom:16px;display:flex;gap:12px;">
           <select class="form-select" id="filter-org" style="max-width:200px;padding:8px 12px;">
@@ -1153,7 +1160,7 @@
 // ============================================================
 const CLOUD_KEYS = ['codes','menus','links','tg_channels','tg_token',
   'admin_pw','welcome_text','logo_text','reservation_img','reservation_img_type',
-  'form_fields','region_options','reservations','feedbacks'];
+  'form_fields','region_options','reservations','feedbacks','entry_logs'];
 
 let _cloudTimer = null;
 const DB = {
@@ -1362,6 +1369,11 @@ function verifyCode() {
     currentOrg = found.org;
     currentCodeObj = found;
     document.getElementById('entry-error').textContent = '';
+    // 입장 로그 기록
+    const logs = DB.get('entry_logs', []);
+    logs.unshift({ code: found.code, org: found.org, time: new Date().toISOString(), ua: navigator.userAgent.slice(0,80) });
+    if (logs.length > 500) logs.length = 500;
+    DB.set('entry_logs', logs);
     enterMain();
   } else {
     document.getElementById('entry-error').textContent = '유효하지 않은 입장 코드입니다.';
@@ -1380,10 +1392,13 @@ function enterMain() {
 // PAGE SWITCHING
 // ============================================================
 function showPage(id) {
+  if (id === 'page-admin' && !isAdminLoggedIn) {
+    openModal('modal-admin-login');
+    return;
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (id === 'page-admin') {
-    if (!isAdminLoggedIn) { openModal('modal-admin-login'); return; }
     renderAdmin();
     document.getElementById('admin-date').textContent = new Date().toLocaleDateString('ko-KR');
   }
@@ -1788,6 +1803,7 @@ function renderAdmin() {
   renderLinksAdmin();
   renderMenusAdmin();
   renderReservationsAdmin();
+  renderEntryLogs();
   renderFormFieldsAdmin();
   renderRegionOptions();
   document.getElementById('admin-welcome-text').value = DB.get('welcome_text', '');
@@ -2651,6 +2667,38 @@ function filterReservations() {
   const org = document.getElementById('filter-org').value;
   const tg = document.getElementById('filter-tg').value;
   renderReservationsAdmin({ org, tg });
+}
+
+function clearEntryLogs() {
+  if (!confirm('입장 로그를 전체 삭제하시겠습니까?')) return;
+  DB.set('entry_logs', []);
+  renderEntryLogs();
+  showToast('입장 로그가 삭제되었습니다.');
+}
+
+function renderEntryLogs() {
+  const el = document.getElementById('entry-log-list');
+  if (!el) return;
+  const logs = DB.get('entry_logs', []);
+  if (!logs.length) { el.innerHTML = '<p style="color:var(--text-dim);font-size:12px;padding:12px 0;">입장 기록이 없습니다.</p>'; return; }
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px;">
+    <thead><tr style="border-bottom:1px solid rgba(201,168,76,0.3);">
+      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">시간</th>
+      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">입장코드</th>
+      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">단체명</th>
+      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">기기</th>
+    </tr></thead>
+    <tbody>${logs.map(l => {
+      const t = new Date(l.time).toLocaleString('ko-KR');
+      const mobile = /Mobi|Android|iPhone|iPad/i.test(l.ua||'') ? '📱모바일' : '💻PC';
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:6px 8px;color:var(--text-dim);">${t}</td>
+        <td style="padding:6px 8px;color:var(--gold);font-family:'Courier New';">${l.code}</td>
+        <td style="padding:6px 8px;color:var(--text);">${l.org}</td>
+        <td style="padding:6px 8px;color:var(--text-dim);">${mobile}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
 }
 
 function exportCSV() {
