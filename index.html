@@ -1,0 +1,2820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP Private Access</title>
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dark: #8b6914;
+    --black: #050505;
+    --dark: #0a0a0a;
+    --dark2: #111111;
+    --dark3: #1a1a1a;
+    --text: #f0ece4;
+    --text-dim: #b8ae9e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Noto Serif KR', 'Georgia', serif;
+    min-height: 100vh;
+    cursor: none;
+    overflow-x: hidden;
+  }
+  /* Custom Cursor */
+  #cursor {
+    position: fixed; width: 8px; height: 8px;
+    background: var(--gold); border-radius: 50%;
+    pointer-events: none; z-index: 99999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.1s ease;
+  }
+  #cursor-ring {
+    position: fixed; width: 36px; height: 36px;
+    border: 1px solid var(--gold); border-radius: 50%;
+    pointer-events: none; z-index: 99998;
+    transform: translate(-50%,-50%);
+    transition: all 0.15s ease;
+    opacity: 0.6;
+  }
+  /* Canvas */
+  #particle-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  /* Pages */
+  .page { display: none; min-height: 100vh; position: relative; z-index: 1; }
+  .page.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* ===== ENTRY PAGE ===== */
+  #page-entry {
+    background: radial-gradient(ellipse at center, #0d0b08 0%, var(--black) 70%);
+  }
+  .entry-logo {
+    font-size: 12px; letter-spacing: 8px;
+    color: var(--gold-light);
+    text-transform: uppercase; margin-bottom: 60px; opacity: 0;
+    animation: fadeUp 1.2s ease 0.5s forwards;
+    text-shadow: 0 0 20px rgba(201,168,76,0.5);
+  }
+  .entry-title {
+    font-size: clamp(36px, 6vw, 64px); font-weight: 300;
+    letter-spacing: 10px; color: #ffffff;
+    margin-bottom: 16px; opacity: 0;
+    animation: fadeUp 1.2s ease 0.8s forwards;
+    text-align: center;
+    text-shadow: 0 2px 30px rgba(255,255,255,0.15);
+  }
+  .entry-sub {
+    font-size: 14px; letter-spacing: 5px; color: var(--gold-light);
+    margin-bottom: 60px; opacity: 0;
+    animation: fadeUp 1.2s ease 1.0s forwards;
+    text-align: center;
+    text-shadow: 0 0 15px rgba(201,168,76,0.4);
+  }
+  .entry-divider {
+    width: 1px; height: 60px; background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    margin: 0 auto 50px; opacity: 0;
+    animation: fadeIn 1.2s ease 1.2s forwards;
+  }
+  .entry-box {
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+    opacity: 0; animation: fadeUp 1.2s ease 1.4s forwards;
+  }
+  .entry-label {
+    font-size: 12px; letter-spacing: 4px; color: #a09080;
+    text-transform: uppercase;
+  }
+  /* Admin ghost icon */
+  #admin-ghost {
+    position: fixed; bottom: 22px; right: 22px;
+    width: 28px; height: 28px;
+    opacity: 0; z-index: 9999; cursor: none;
+    transition: opacity 0.4s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #admin-ghost:hover { opacity: 0.5 !important; }
+  #admin-ghost svg { width: 18px; height: 18px; fill: var(--gold-dark); }
+  .entry-input-wrap { position: relative; }
+  .entry-input {
+    width: 320px; padding: 16px 50px 16px 24px;
+    background: transparent;
+    border: 1px solid var(--gold-dark);
+    color: var(--gold-light); font-size: 18px; letter-spacing: 6px;
+    text-align: center; outline: none;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+  }
+  .entry-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.15), inset 0 0 20px rgba(201,168,76,0.03);
+  }
+  .entry-input::placeholder { color: var(--gold-dark); letter-spacing: 4px; font-size: 14px; }
+  .entry-btn {
+    padding: 14px 56px; background: transparent;
+    border: 1px solid var(--gold); color: var(--gold);
+    font-size: 11px; letter-spacing: 5px; text-transform: uppercase;
+    cursor: none; transition: all 0.3s ease;
+  }
+  .entry-btn:hover {
+    background: var(--gold); color: var(--black);
+    box-shadow: 0 0 30px rgba(201,168,76,0.3);
+  }
+  .entry-error {
+    font-size: 11px; letter-spacing: 2px; color: #c0392b;
+    min-height: 18px; text-align: center;
+  }
+
+  /* ===== MAIN PAGE ===== */
+  #page-main { justify-content: flex-start; padding-top: 0; }
+  /* Header */
+  .header {
+    width: 100%; padding: 24px 40px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(5,5,5,0.95);
+    backdrop-filter: blur(10px);
+  }
+  .header-logo { font-size: 10px; letter-spacing: 6px; color: var(--gold); text-transform: uppercase; }
+  .header-nav { display: flex; gap: 8px; align-items: center; }
+  .header-nav a, .header-nav button {
+    padding: 8px 18px; font-size: 11px; letter-spacing: 3px;
+    color: var(--text); text-decoration: none; font-weight: 500;
+    background: transparent; border: 1px solid transparent;
+    cursor: none; transition: all 0.3s; text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(240,236,228,0.3);
+  }
+  .header-nav a:hover, .header-nav button:hover {
+    color: var(--gold); border-color: rgba(201,168,76,0.4);
+    text-shadow: 0 0 14px rgba(201,168,76,0.4);
+  }
+  /* Welcome Banner */
+  .welcome-banner {
+    width: 100%; padding: 80px 40px 60px;
+    text-align: center; position: relative;
+    overflow: hidden;
+  }
+  .welcome-banner::before {
+    content: ''; position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--gold));
+  }
+  .welcome-greeting {
+    font-size: 12px; letter-spacing: 7px; color: var(--gold-light);
+    margin-bottom: 20px; text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(201,168,76,0.35);
+  }
+  .welcome-main-text {
+    font-size: clamp(18px, 2.8vw, 30px); font-weight: 400;
+    color: #ffffff; line-height: 1.75; letter-spacing: 1px;
+    max-width: 700px; margin: 0 auto 20px;
+    transition: all 0.3s ease;
+    text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+  }
+  .welcome-edit-btn {
+    display: inline-block; padding: 6px 16px;
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold-dark); border: 1px solid var(--gold-dark);
+    background: transparent; cursor: none; transition: all 0.3s;
+    margin-top: 10px;
+  }
+  .welcome-edit-btn:hover { color: var(--gold); border-color: var(--gold); }
+  /* Search */
+  .search-section {
+    width: 100%; max-width: 700px;
+    padding: 0 40px 60px; margin: 0 auto;
+    opacity: 0; animation: fadeUp 0.8s ease 0.3s forwards;
+  }
+  .search-wrap {
+    position: relative; display: flex; align-items: center;
+    border: 1px solid rgba(201,168,76,0.3);
+    background: rgba(255,255,255,0.02);
+    transition: all 0.3s;
+  }
+  .search-wrap:focus-within {
+    border-color: var(--gold);
+    box-shadow: 0 0 30px rgba(201,168,76,0.1);
+  }
+  .search-icon { padding: 0 18px; color: var(--gold-dark); font-size: 18px; }
+  .search-input {
+    flex: 1; padding: 18px 0; background: transparent;
+    border: none; color: var(--text); font-size: 15px;
+    outline: none; letter-spacing: 1px;
+    font-family: 'Noto Serif KR', serif;
+  }
+  .search-input::placeholder { color: var(--text-dim); font-size: 13px; }
+  .search-voice {
+    padding: 0 20px; background: transparent; border: none;
+    color: var(--gold-dark); cursor: none; font-size: 18px;
+    transition: color 0.3s;
+  }
+  .search-voice:hover { color: var(--gold); }
+  .search-voice.listening { color: #e74c3c; animation: pulse 1s infinite; }
+  /* Quick Links Grid */
+  .links-section {
+    width: 100%; max-width: 1100px;
+    padding: 20px 40px 60px; margin: 0 auto;
+    opacity: 0; animation: fadeUp 0.8s ease 0.5s forwards;
+  }
+  .links-title {
+    font-size: 11px; letter-spacing: 5px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 28px; text-align: center;
+  }
+  .links-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .link-card {
+    border: 1px solid rgba(201,168,76,0.2);
+    background: rgba(255,255,255,0.02);
+    cursor: none; transition: all 0.3s;
+    position: relative; overflow: hidden;
+    text-decoration: none; display: flex; flex-direction: column;
+  }
+  .link-card:hover { border-color: rgba(201,168,76,0.5); box-shadow: 0 0 24px rgba(201,168,76,0.1); }
+  /* iframe 미리보기 영역 */
+  .link-card-preview {
+    position: relative; width: 100%; height: 190px;
+    overflow: hidden; background: #111; flex-shrink: 0;
+  }
+  .link-card-preview img.preview-shot {
+    width: 100%; height: 100%; object-fit: cover; object-position: top;
+    border: none; display: block;
+  }
+  .link-card-preview iframe.live-preview {
+    width: 1280px; height: 760px; border: none; pointer-events: none;
+    transform-origin: top left; transform: scale(0.234375);
+  }
+  .link-card-preview .preview-fallback {
+    width: 100%; height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(135deg, #0e0e0e 0%, #1a1a1a 100%);
+  }
+  .link-card-preview-overlay {
+    position: absolute; inset: 0; z-index: 2;
+    background: linear-gradient(to bottom, transparent 60%, rgba(5,5,5,0.6) 100%);
+  }
+  .link-card-body {
+    padding: 16px 18px; position: relative; flex: 1;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .link-card-body::before {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 0; height: 1px; background: var(--gold);
+    transition: width 0.4s ease;
+  }
+  .link-card:hover .link-card-body::before { width: 100%; }
+  .link-card-icon { font-size: 22px; flex-shrink: 0; }
+  .link-card-info { flex: 1; min-width: 0; }
+  .link-card-title { font-size: 14px; color: var(--text); letter-spacing: 1px; margin-bottom: 3px; font-weight: 500; }
+  .link-card-url { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .link-card-badge {
+    font-size: 9px; letter-spacing: 2px; color: var(--gold);
+    border: 1px solid var(--gold-dark); padding: 3px 9px;
+    text-transform: uppercase; flex-shrink: 0;
+  }
+  /* 미리보기 없는 일반 카드 */
+  .link-card.no-preview .link-card-body {
+    padding: 24px 20px; flex-direction: column; align-items: flex-start; gap: 8px;
+  }
+  .link-card.no-preview .link-card-icon { font-size: 28px; margin-bottom: 4px; }
+  .link-card.no-preview .link-card-badge {
+    position: absolute; top: 12px; right: 12px;
+  }
+  .add-link-card {
+    border: 1px dashed rgba(201,168,76,0.2);
+    background: transparent; padding: 24px 20px;
+    cursor: none; transition: all 0.3s; color: var(--text-dim);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 120px; gap: 8px;
+  }
+  .add-link-card:hover { border-color: var(--gold); color: var(--gold); }
+  /* 헤더 아래 예약 바 */
+  .header-reservation-bar {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 7px 20px;
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.2);
+    margin: 12px auto 0;
+    cursor: none;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .header-reservation-bar:hover {
+    background: rgba(201,168,76,0.13);
+    border-color: rgba(201,168,76,0.45);
+  }
+  .res-bar-wrap {
+    width: 100%; display: flex; justify-content: center; padding-bottom: 8px;
+  }
+  /* Reservation FAB */
+  .fab-reservation {
+    position: fixed; bottom: 40px; right: 40px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--gold); border: none;
+    cursor: none; z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; box-shadow: 0 0 30px rgba(201,168,76,0.4);
+    transition: all 0.3s;
+  }
+  .fab-reservation:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 50px rgba(201,168,76,0.6);
+  }
+  .fab-tooltip {
+    position: absolute; right: 70px; top: 50%;
+    transform: translateY(-50%);
+    background: var(--dark3); color: var(--gold);
+    padding: 6px 14px; font-size: 10px; letter-spacing: 2px;
+    white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    text-transform: uppercase;
+  }
+  .fab-reservation:hover .fab-tooltip { opacity: 1; }
+
+  /* ===== MODAL BASE ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 500;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--dark2); border: 1px solid rgba(201,168,76,0.2);
+    padding: 50px; max-width: 600px; width: 90%;
+    max-height: 90vh; overflow-y: auto;
+    position: relative;
+    animation: fadeUp 0.4s ease;
+  }
+  .modal-close {
+    position: absolute; top: 20px; right: 24px;
+    background: transparent; border: none; color: var(--text-dim);
+    font-size: 20px; cursor: none; transition: color 0.3s;
+  }
+  .modal-close:hover { color: var(--gold); }
+  .modal-title {
+    font-size: 11px; letter-spacing: 5px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .modal-sub {
+    font-size: 13px; color: var(--text-dim); margin-bottom: 36px;
+    letter-spacing: 1px; line-height: 1.6;
+  }
+  .form-group { margin-bottom: 22px; }
+  .form-label {
+    display: block; font-size: 10px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 13px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--text); font-size: 13px; outline: none;
+    transition: border-color 0.3s;
+    font-family: 'Noto Serif KR', serif;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--gold);
+  }
+  .form-select { cursor: none; }
+  .form-select option { background: var(--dark2); }
+  .form-textarea { min-height: 100px; resize: vertical; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-radio-group { display: flex; gap: 16px; flex-wrap: wrap; }
+  .form-radio-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-dim); cursor: none;
+  }
+  .form-radio-label input[type="radio"] { accent-color: var(--gold); cursor: none; }
+  .btn-primary {
+    width: 100%; padding: 16px; background: transparent;
+    border: 1px solid var(--gold); color: var(--gold);
+    font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+    cursor: none; transition: all 0.3s; margin-top: 10px;
+  }
+  .btn-primary:hover {
+    background: var(--gold); color: var(--black);
+    box-shadow: 0 0 30px rgba(201,168,76,0.3);
+  }
+  .btn-secondary {
+    padding: 10px 24px; background: transparent;
+    border: 1px solid rgba(201,168,76,0.3); color: var(--text-dim);
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    cursor: none; transition: all 0.3s;
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-danger {
+    padding: 8px 16px; background: transparent;
+    border: 1px solid rgba(192,57,43,0.4); color: #c0392b;
+    font-size: 9px; letter-spacing: 2px; cursor: none;
+    transition: all 0.3s;
+  }
+  .btn-danger:hover { background: rgba(192,57,43,0.1); }
+
+  /* ===== ADMIN PAGE ===== */
+  #page-admin {
+    justify-content: flex-start; align-items: flex-start;
+    padding: 40px;
+  }
+  .admin-header {
+    width: 100%; display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 40px;
+    padding-bottom: 24px; border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+  .admin-title { font-size: 11px; letter-spacing: 5px; color: var(--gold); text-transform: uppercase; }
+  .admin-tabs {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 32px;
+  }
+  .tab-btn {
+    padding: 10px 22px; background: transparent;
+    border: 1px solid rgba(201,168,76,0.25); color: var(--text);
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    cursor: none; transition: all 0.3s;
+  }
+  .tab-btn.active, .tab-btn:hover {
+    border-color: var(--gold-light); color: var(--gold-light);
+    background: rgba(201,168,76,0.08);
+  }
+  .tab-content { display: none; width: 100%; }
+  .tab-content.active { display: block; }
+  .admin-section {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(201,168,76,0.1);
+    padding: 32px; margin-bottom: 24px;
+  }
+  .admin-section-title {
+    font-size: 11px; letter-spacing: 4px; color: var(--gold-light);
+    text-transform: uppercase; margin-bottom: 24px;
+    padding-bottom: 12px; border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    padding: 10px 14px; text-align: left;
+    font-size: 10px; letter-spacing: 2px; color: var(--gold);
+    text-transform: uppercase; border-bottom: 1px solid rgba(201,168,76,0.25);
+  }
+  .data-table td {
+    padding: 12px 14px; color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .data-table tr:hover td { color: #fff; background: rgba(201,168,76,0.04); }
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .badge-success { background: rgba(39,174,96,0.15); color: #27ae60; border: 1px solid rgba(39,174,96,0.3); }
+  .badge-pending { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .badge-fail { background: rgba(192,57,43,0.1); color: #c0392b; border: 1px solid rgba(192,57,43,0.3); }
+  /* Code list */
+  .code-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border: 1px solid rgba(201,168,76,0.1);
+    margin-bottom: 8px; background: rgba(255,255,255,0.01);
+  }
+  .code-item-info { flex: 1; }
+  .code-item-code { font-family: 'Courier New'; font-size: 16px; color: var(--gold); letter-spacing: 3px; }
+  .code-item-meta { font-size: 11px; color: var(--text); letter-spacing: 1px; margin-top: 4px; }
+  .code-item-actions { display: flex; gap: 8px; }
+  /* Telegram list */
+  .tg-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border: 1px solid rgba(201,168,76,0.1);
+    margin-bottom: 8px;
+  }
+  .tg-item-id { font-family: 'Courier New'; color: var(--gold-light); font-size: 14px; }
+  .tg-item .tg-sub { font-size: 11px; color: var(--text); margin-top: 3px; }
+  .input-group { display: flex; gap: 12px; margin-bottom: 16px; }
+  .input-group .form-input { margin: 0; }
+  /* Stats */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .stat-card {
+    border: 1px solid rgba(201,168,76,0.25);
+    padding: 24px; text-align: center;
+    background: rgba(201,168,76,0.03);
+  }
+  /* PW Warning Banner */
+  .pw-warning {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; margin-bottom: 24px;
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.35);
+    animation: pulse 2s infinite;
+  }
+  .pw-warning-text { font-size: 11px; letter-spacing: 2px; color: var(--gold); }
+  .pw-warning-btn {
+    padding: 7px 18px; background: var(--gold); color: var(--black);
+    border: none; font-size: 9px; letter-spacing: 3px;
+    text-transform: uppercase; cursor: none;
+  }
+  .stat-value { font-size: 36px; color: var(--gold-light); font-weight: 300; }
+  .stat-label { font-size: 10px; letter-spacing: 3px; color: var(--text); text-transform: uppercase; margin-top: 8px; }
+  /* Menu toggle */
+  .menu-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; border: 1px solid rgba(201,168,76,0.2);
+    margin-bottom: 8px; background: rgba(255,255,255,0.02);
+  }
+  .menu-item-info { flex: 1; }
+  .menu-item-name { font-size: 14px; color: var(--text); font-weight: 400; }
+  .menu-item-url { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: monospace; }
+  .toggle-switch {
+    position: relative; width: 44px; height: 22px;
+    cursor: none;
+  }
+  .toggle-switch input { display: none; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 11px; transition: 0.3s;
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--text-dim); left: 2px; top: 2px;
+    transition: 0.3s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: rgba(201,168,76,0.2); border-color: var(--gold); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); background: var(--gold); }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+  .fade-in { opacity: 0; transition: opacity 0.6s ease, transform 0.6s ease; transform: translateY(20px); }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--dark3); border: 1px solid rgba(201,168,76,0.3);
+    color: var(--text); padding: 14px 28px; font-size: 11px; letter-spacing: 2px;
+    z-index: 9999; opacity: 0; transition: all 0.3s; pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.gold { border-color: var(--gold); color: var(--gold); }
+  #toast.error { border-color: #c0392b; color: #c0392b; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+
+  @media (max-width: 600px) {
+    .header { padding: 16px 20px; }
+    .welcome-banner { padding: 50px 20px 40px; }
+    .search-section, .links-section { padding: 0 20px 40px; }
+    .modal { padding: 30px 20px; }
+    .form-row { grid-template-columns: 1fr; }
+    #page-admin { padding: 20px; }
+    .fab-reservation { bottom: 20px; right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<div id="toast"></div>
+
+<!-- Admin ghost icon (우하단 숨김) -->
+<div id="admin-ghost" onclick="showPage('page-admin')" title="">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C8.13 2 5 5.13 5 9v7l-2 2v1h18v-1l-2-2V9c0-3.87-3.13-7-7-7zm0 20c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2z"/>
+  </svg>
+</div>
+
+<!-- ===== ENTRY PAGE ===== -->
+<div id="page-entry" class="page active">
+  <div class="entry-logo">Private Access</div>
+  <div class="entry-title">V I P</div>
+  <div class="entry-sub">Exclusive Members Only</div>
+  <div class="entry-divider"></div>
+  <div class="entry-box">
+    <div class="entry-label">입장 코드를 입력하세요</div>
+    <div class="entry-input-wrap">
+      <input type="text" id="entry-code-input" class="entry-input"
+             placeholder="● ● ● ● ● ●"
+             maxlength="20" autocomplete="off" spellcheck="false">
+    </div>
+    <!-- 개인정보 동의 -->
+    <div style="margin:18px 0 6px;text-align:left;">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:6px;"
+           onclick="togglePrivacy()">
+        <span id="privacy-arrow" style="display:inline-block;transition:transform 0.3s;">▶</span>
+        개인정보 수집·이용 동의 (필수)
+      </div>
+      <div id="privacy-text" style="display:none;max-height:160px;overflow-y:auto;
+           padding:14px 16px;margin-bottom:12px;
+           background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);
+           font-size:10px;color:var(--text-dim);line-height:1.9;letter-spacing:0.5px;">
+        <b style="color:var(--gold);">개인정보 수집·이용 동의</b><br><br>
+        <b>수집 항목:</b> 예약자명, 연락처, 이메일, 사용일자, 지역, 인원수, 문의내용<br><br>
+        <b>수집 목적:</b> 특별가 예약 문의 접수 및 처리, 예약 확인 및 안내, 고객 맞춤 서비스 제공<br><br>
+        <b>보유 기간:</b> 예약 문의 처리 완료 후 1년간 보관 후 파기. 단, 관련 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관<br><br>
+        <b>제3자 제공:</b> 수집된 개인정보는 예약 처리 목적 외에 제3자에게 제공되지 않습니다.<br><br>
+        귀하는 개인정보 수집·이용에 동의하지 않을 권리가 있습니다. 다만, 동의 거부 시 예약 문의 서비스 이용이 제한될 수 있습니다.
+      </div>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="privacy-agree"
+          style="width:15px;height:15px;accent-color:var(--gold);flex-shrink:0;">
+        <span style="font-size:11px;color:var(--text);letter-spacing:1px;">
+          개인정보 수집·이용에 동의합니다
+        </span>
+      </label>
+    </div>
+    <button class="entry-btn" onclick="verifyCode()">Enter</button>
+    <div class="entry-error" id="entry-error"></div>
+  </div>
+</div>
+
+<!-- ===== MAIN PAGE ===== -->
+<div id="page-main" class="page">
+  <header class="header">
+    <div class="header-logo" id="header-logo-text">VIP Private</div>
+    <nav class="header-nav" id="header-nav-items">
+      <!-- dynamic menus -->
+    </nav>
+  </header>
+
+  <div class="welcome-banner fade-in">
+    <div class="welcome-greeting">Welcome, Valued Member</div>
+    <div class="welcome-main-text" id="main-welcome-text">
+      오직 선택된 관리자 추가분들을 위한 선택된 정보제공
+    </div>
+    <button class="welcome-edit-btn" id="welcome-edit-btn" onclick="openWelcomeEdit()" style="display:none;">
+      ✎ 텍스트 수정
+    </button>
+  </div>
+
+  <div class="search-section">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="main-search"
+             placeholder="검색어를 입력하세요..."
+             onkeydown="handleSearch(event)">
+      <button class="search-voice" id="voice-btn" onclick="startVoice()" title="음성 입력">🎤</button>
+    </div>
+  </div>
+
+  <div class="links-section">
+    <div class="links-title">Quick Access</div>
+    <div id="links-grid-wrap">
+      <div class="links-grid" id="links-grid">
+        <!-- dynamic -->
+      </div>
+      <div id="global-reservation-bar-wrap" style="margin-top:12px;">
+        <div class="header-reservation-bar" onclick="openModal('modal-reservation')" style="display:inline-flex;">
+          <span style="font-size:10px;letter-spacing:3px;color:var(--text);">특별가 예약 문의</span>
+          <span style="color:var(--gold);font-size:12px;">→</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN PAGE ===== -->
+<div id="page-admin" class="page" style="align-items:flex-start;">
+  <div style="width:100%;">
+    <div class="admin-header">
+      <div class="admin-title">Admin Dashboard</div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <span style="font-size:10px;color:var(--text-dim);letter-spacing:2px;" id="admin-date"></span>
+        <button class="btn-secondary" onclick="exitAdmin()">← 메인으로</button>
+        <button class="btn-secondary" onclick="adminLogout()">로그아웃</button>
+      </div>
+    </div>
+
+    <div id="pw-warning-banner" style="display:none;" class="pw-warning">
+      <span class="pw-warning-text">⚠ 기본 비밀번호(admin1234)를 사용 중입니다 — 보안을 위해 즉시 변경하세요</span>
+      <button class="pw-warning-btn" onclick="goToPasswordTab()">지금 변경 →</button>
+    </div>
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-dashboard')">대시보드</button>
+      <button class="tab-btn" onclick="switchTab('tab-content')">콘텐츠</button>
+      <button class="tab-btn" onclick="switchTab('tab-codes')">입장코드</button>
+      <button class="tab-btn" onclick="switchTab('tab-telegram')">텔레그램</button>
+      <button class="tab-btn" onclick="switchTab('tab-reservations')">예약 DB</button>
+      <button class="tab-btn" onclick="switchTab('tab-links')">링크관리</button>
+      <button class="tab-btn" onclick="switchTab('tab-menus')">메뉴관리</button>
+      <button class="tab-btn" onclick="switchTab('tab-settings')">보안설정</button>
+    </div>
+
+    <!-- TAB: Dashboard -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="admin-section">
+        <div class="admin-section-title">최근 예약 문의</div>
+        <div id="recent-reservations"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Content -->
+    <div id="tab-content" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">메인 텍스트 수정</div>
+        <div class="form-group">
+          <label class="form-label">환영 메시지</label>
+          <textarea class="form-textarea" id="admin-welcome-text" rows="4"></textarea>
+        </div>
+        <button class="btn-primary" onclick="saveWelcomeText()">저장</button>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">사이트 로고 텍스트</div>
+        <div class="input-group">
+          <input type="text" class="form-input" id="admin-logo-text" placeholder="로고 텍스트">
+          <button class="btn-secondary" onclick="saveLogoText()">저장</button>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">예약 폼 하단 첨부 자료 — 기본값</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.8;margin-bottom:16px;">
+          <span style="color:var(--gold);">⚠ 입장코드 없이</span> 접속했을 때만 표시됩니다.<br>
+          입장코드로 접속한 경우엔 아래 <b>입장코드별 설정</b>의 첨부 파일이 우선 적용됩니다.
+        </p>
+        <!-- URL 입력 -->
+        <div class="form-group">
+          <label class="form-label">URL 직접 입력 (이미지 또는 PDF)</label>
+          <div class="input-group">
+            <input type="text" class="form-input" id="admin-res-img-url" placeholder="https://...">
+            <button class="btn-secondary" onclick="saveResImg('url')">적용</button>
+          </div>
+        </div>
+        <!-- 파일 업로드 — input을 label로 감싸 cursor 문제 해결 -->
+        <div class="form-group">
+          <label class="form-label">파일 업로드 (이미지 JPG·PNG·GIF / PDF)</label>
+          <label id="upload-label" style="
+            display:flex;align-items:center;gap:12px;padding:12px 16px;
+            border:1px dashed rgba(201,168,76,0.35);background:rgba(201,168,76,0.03);
+            cursor:pointer;transition:all 0.3s;">
+            <span style="font-size:20px;">📎</span>
+            <span id="upload-filename" style="font-size:12px;color:var(--text-dim);letter-spacing:1px;">
+              클릭하여 파일 선택
+            </span>
+            <input type="file" id="admin-res-img-file" accept="image/*,.pdf"
+              style="display:none;" onchange="loadResImgFile(this)">
+          </label>
+        </div>
+        <!-- 미리보기 + 삭제 -->
+        <div id="admin-res-img-preview" style="display:none;margin-top:16px;">
+          <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">현재 적용된 파일</div>
+          <!-- 이미지 썸네일 -->
+          <img id="admin-res-img-thumb" src="" alt=""
+            style="max-width:100%;max-height:220px;border:1px solid rgba(201,168,76,0.2);display:none;margin-bottom:12px;">
+          <!-- PDF 썸네일 -->
+          <div id="admin-res-pdf-thumb"
+            style="display:none;padding:16px;border:1px solid rgba(201,168,76,0.2);
+                   background:rgba(255,255,255,0.02);margin-bottom:12px;font-size:13px;
+                   color:var(--text);letter-spacing:1px;">
+            📄 PDF 파일이 등록되어 있습니다.
+          </div>
+          <button class="btn-danger" onclick="deleteResImg()">첨부 파일 삭제</button>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">예약 폼 — 지역 목록 관리</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.8;margin-bottom:14px;">
+          예약 폼의 지역 드롭다운 항목을 추가·삭제합니다.
+        </p>
+        <div id="region-options-list" style="margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input id="new-region-input" type="text" placeholder="새 지역 입력 후 추가"
+            style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:8px 12px;font-size:12px;letter-spacing:1px;"
+            onkeydown="if(event.key==='Enter')addRegionOption()">
+          <button class="btn-primary" style="padding:8px 18px;font-size:11px;" onclick="addRegionOption()">추가</button>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">입장코드별 메인 텍스트 수정</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.7;margin-bottom:20px;">
+          각 입장코드로 들어온 회원에게 보여줄 전용 메인 텍스트를 설정합니다.<br>
+          비워두면 위의 기본 메인 텍스트가 표시됩니다.
+        </p>
+        <div id="content-code-text-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Codes -->
+    <div id="tab-codes" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">새 입장 코드 생성</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">단체명 / 이름</label>
+            <input type="text" class="form-input" id="new-code-org" placeholder="단체명">
+          </div>
+          <div class="form-group">
+            <label class="form-label">입장 코드</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" class="form-input" id="new-code-val" placeholder="코드 입력 또는 생성">
+              <button class="btn-secondary" onclick="generateCode()">자동생성</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">방문 가능 메뉴 (콤마 구분)</label>
+          <input type="text" class="form-input" id="new-code-menus" placeholder="예: 예약문의, 이벤트">
+        </div>
+        <div class="form-group">
+          <label class="form-label">코드 전용 메인 텍스트 <span style="color:var(--text-dim);font-size:9px;letter-spacing:1px;">(비워두면 기본 텍스트 사용)</span></label>
+          <textarea class="form-textarea" id="new-code-text" rows="3"
+            placeholder="이 코드로 입장한 회원에게만 보이는 텍스트를 입력하세요."></textarea>
+        </div>
+        <button class="btn-primary" onclick="addCode()">코드 추가</button>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">등록된 입장 코드</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.7;margin-bottom:16px;">
+          ✏ 각 코드의 메인 텍스트를 수정한 뒤 <b style="color:var(--gold);">저장</b> 버튼을 누르세요.
+        </p>
+        <div id="codes-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Telegram -->
+    <div id="tab-telegram" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">텔레그램 봇 설정</div>
+        <div class="form-group">
+          <label class="form-label">Bot Token</label>
+          <input type="text" class="form-input" id="tg-bot-token" placeholder="123456789:ABCdef...">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:0;">
+          <button class="btn-secondary" onclick="saveTgToken()">토큰 저장</button>
+          <button class="btn-secondary" onclick="testTgAll()" style="border-color:rgba(201,168,76,0.4);color:var(--gold);">전체 테스트 전송</button>
+        </div>
+        <p style="font-size:10px;color:var(--text-dim);margin-top:12px;letter-spacing:1px;line-height:1.8;">
+          @BotFather에서 봇 생성 후 발급된 토큰을 입력하세요.<br>
+          봇을 채널/그룹에 추가하고 아래에서 Chat ID를 등록하세요.
+        </p>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">텔레그램 수신 채널 관리</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <input type="text" class="form-input" id="new-tg-id" placeholder="Chat ID (예: -1001234567890)" style="flex:1;min-width:180px;">
+          <input type="text" class="form-input" id="new-tg-name" placeholder="채널명" style="flex:1;min-width:120px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;">
+            <input type="checkbox" id="new-tg-is-admin" style="accent-color:var(--gold);width:14px;height:14px;">
+            <span style="font-size:11px;color:var(--gold);letter-spacing:1px;">관리자 채널 — 모든 문의 수신</span>
+          </label>
+          <button class="btn-secondary" onclick="addTgChannel()">추가</button>
+        </div>
+        <div id="tg-list"></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">피드백 수집</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.8;margin-bottom:16px;">
+          예약 전송 시 고유 ID가 부여됩니다. 해당 ID로 답장된 메시지는 자동으로 수집됩니다.
+        </p>
+        <div id="feedback-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Reservations DB -->
+    <div id="tab-reservations" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">예약 문의 데이터베이스</div>
+        <div style="margin-bottom:16px;display:flex;gap:12px;">
+          <select class="form-select" id="filter-org" style="max-width:200px;padding:8px 12px;">
+            <option value="">전체 단체</option>
+          </select>
+          <select class="form-select" id="filter-tg" style="max-width:200px;padding:8px 12px;">
+            <option value="">전체 전송상태</option>
+            <option value="sent">전송완료</option>
+            <option value="failed">전송실패</option>
+          </select>
+          <button class="btn-secondary" onclick="filterReservations()">필터</button>
+          <button class="btn-secondary" onclick="exportCSV()">CSV 내보내기</button>
+        </div>
+        <div id="reservation-table"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Links -->
+    <div id="tab-links" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">외부 링크 추가</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">이름</label>
+            <input type="text" class="form-input" id="new-link-title" placeholder="링크 이름">
+          </div>
+          <div class="form-group">
+            <label class="form-label">URL</label>
+            <input type="text" class="form-input" id="new-link-url" placeholder="https://example.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">아이콘 (이모지)</label>
+            <input type="text" class="form-input" id="new-link-icon" placeholder="🌐">
+          </div>
+          <div class="form-group">
+            <label class="form-label">뱃지 텍스트 (선택)</label>
+            <input type="text" class="form-input" id="new-link-badge" placeholder="NEW">
+          </div>
+        </div>
+        <button class="btn-primary" onclick="addLink()">링크 추가</button>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">등록된 링크</div>
+        <div id="links-admin-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Menus -->
+    <div id="tab-menus" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">메뉴 추가</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">메뉴 이름</label>
+            <input type="text" class="form-input" id="new-menu-name" placeholder="메뉴 이름">
+          </div>
+          <div class="form-group">
+            <label class="form-label">URL (선택)</label>
+            <input type="text" class="form-input" id="new-menu-url" placeholder="https://...">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">예약 전송 텔레그램 채널</label>
+            <select class="form-select" id="new-menu-tg">
+              <option value="">채널 선택 (전체 채널로 전송)</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+            <label class="form-radio-label" style="margin-bottom:12px;">
+              <input type="checkbox" id="new-menu-payment" style="accent-color:var(--gold);">
+              <span style="font-size:12px;letter-spacing:1px;color:var(--text);">결제 기능 포함</span>
+            </label>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="addMenu()">메뉴 추가</button>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">메뉴 목록</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;margin-bottom:16px;line-height:1.7;">
+          각 메뉴에 텔레그램 채널을 지정하면, 해당 메뉴로 들어온 예약 문의가 지정 채널로만 전송됩니다.
+        </p>
+        <div id="menus-admin-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Settings -->
+    <div id="tab-settings" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">관리자 비밀번호 변경</div>
+        <div class="form-group">
+          <label class="form-label">현재 비밀번호</label>
+          <input type="password" class="form-input" id="admin-old-pw" placeholder="현재 비밀번호">
+        </div>
+        <div class="form-group">
+          <label class="form-label">새 비밀번호</label>
+          <input type="password" class="form-input" id="admin-new-pw" placeholder="새 비밀번호">
+        </div>
+        <div class="form-group">
+          <label class="form-label">새 비밀번호 확인</label>
+          <input type="password" class="form-input" id="admin-new-pw2" placeholder="새 비밀번호 확인">
+        </div>
+        <button class="btn-primary" onclick="changeAdminPw()">비밀번호 변경</button>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title">예약 폼 항목 설정</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.8;margin-bottom:16px;">
+          표시할 폼 항목을 선택하세요.
+        </p>
+        <div id="form-fields-settings"></div>
+        <button class="btn-primary" style="margin-top:16px;" onclick="saveFormFields()">설정 저장</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Admin Login ===== -->
+<div class="modal-overlay" id="modal-admin-login">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('modal-admin-login')">✕</button>
+
+    <!-- 로그인 섹션 -->
+    <div id="admin-login-section">
+      <div class="modal-title">Admin Access</div>
+      <div class="modal-sub">관리자 비밀번호를 입력하세요.</div>
+      <div class="form-group">
+        <input type="password" class="form-input" id="admin-pw-input"
+               placeholder="Password" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <button class="btn-primary" onclick="adminLogin()">로그인</button>
+      <div class="entry-error" id="admin-login-error" style="margin-top:12px;"></div>
+      <div style="text-align:center;margin-top:20px;">
+        <button onclick="toggleLoginSection(false)"
+          style="background:none;border:none;color:var(--text-dim);font-size:10px;letter-spacing:2px;cursor:none;text-decoration:underline;">
+          비밀번호 변경
+        </button>
+      </div>
+    </div>
+
+    <!-- 비밀번호 변경 섹션 -->
+    <div id="admin-changepw-section" style="display:none;">
+      <div class="modal-title">비밀번호 변경</div>
+      <div class="modal-sub">현재 비밀번호 확인 후 새 비밀번호를 설정합니다.</div>
+      <div class="form-group">
+        <label class="form-label">현재 비밀번호</label>
+        <input type="password" class="form-input" id="modal-old-pw" placeholder="현재 비밀번호">
+      </div>
+      <div class="form-group">
+        <label class="form-label">새 비밀번호</label>
+        <input type="password" class="form-input" id="modal-new-pw" placeholder="새 비밀번호 (6자 이상)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">새 비밀번호 확인</label>
+        <input type="password" class="form-input" id="modal-new-pw2" placeholder="새 비밀번호 확인"
+               onkeydown="if(event.key==='Enter')changeAdminPwModal()">
+      </div>
+      <button class="btn-primary" onclick="changeAdminPwModal()">비밀번호 변경</button>
+      <div class="entry-error" id="modal-pw-error" style="margin-top:12px;"></div>
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="toggleLoginSection(true)"
+          style="background:none;border:none;color:var(--text-dim);font-size:10px;letter-spacing:2px;cursor:none;text-decoration:underline;">
+          ← 로그인으로 돌아가기
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Reservation ===== -->
+<div class="modal-overlay" id="modal-reservation">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-reservation')">✕</button>
+    <div class="modal-title">Special Rate Inquiry</div>
+    <div class="modal-sub">특별가 예약 문의 · 전담 매니저가 직접 안내드립니다</div>
+    <form id="reservation-form" onsubmit="submitReservation(event)">
+      <div id="reservation-form-fields">
+        <!-- rendered dynamically -->
+      </div>
+      <!-- 예약 폼 하단 첨부 뷰어 (이미지/PDF) -->
+      <div id="reservation-file-wrap" style="display:none;margin:20px 0 24px;">
+        <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">안내 자료</div>
+        <!-- 이미지 뷰어 -->
+        <img id="reservation-img" src="" alt="안내 이미지"
+          style="width:100%;border:1px solid rgba(201,168,76,0.2);display:none;cursor:zoom-in;max-height:600px;object-fit:contain;"
+          onclick="window.open(this.src,'_blank')"
+          onerror="this.style.display='none'">
+        <!-- PDF 뷰어 (iframe 방식) -->
+        <iframe id="reservation-pdf" src="" frameborder="0"
+          style="width:100%;height:500px;border:1px solid rgba(201,168,76,0.2);display:none;background:#1a1a1a;"></iframe>
+      </div>
+      <button type="submit" class="btn-primary">문의 전송</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MODAL: Welcome Edit ===== -->
+<div class="modal-overlay" id="modal-welcome-edit">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeModal('modal-welcome-edit')">✕</button>
+    <div class="modal-title">메인 텍스트 수정</div>
+    <div class="form-group" style="margin-top:20px;">
+      <textarea class="form-textarea" id="inline-welcome-text" rows="5"></textarea>
+    </div>
+    <button class="btn-primary" onclick="saveWelcomeTextInline()">저장</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA STORE (localStorage)
+// ============================================================
+const DB = {
+  get(k, def) { try { return JSON.parse(localStorage.getItem('vip_'+k)) ?? def; } catch { return def; } },
+  set(k, v) { localStorage.setItem('vip_'+k, JSON.stringify(v)); }
+};
+
+// Defaults
+function initDefaults() {
+  if (!DB.get('admin_pw')) DB.set('admin_pw', 'admin1234');
+  if (!DB.get('welcome_text')) DB.set('welcome_text', '오직 선택된 관리자 추가분들을 위한\n선택된 정보제공');
+  if (!DB.get('logo_text')) DB.set('logo_text', 'VIP Private');
+  if (!DB.get('codes')) DB.set('codes', [
+    { id: 1, code: 'VIP2024', org: '테스트 단체', menus: '예약문의,이벤트', created: new Date().toISOString() }
+  ]);
+  if (!DB.get('tg_token')) DB.set('tg_token', '');
+  if (!DB.get('tg_channels')) DB.set('tg_channels', []);
+  if (!DB.get('reservations')) DB.set('reservations', []);
+  if (!DB.get('links')) DB.set('links', [
+    { id: 1, title: 'El Momento', url: 'https://elmomento.co.kr', icon: '🌟', badge: 'HOT', visible: true }
+  ]);
+  if (!DB.get('menus')) DB.set('menus', [
+    { id: 1, name: '문의', url: '', payment: false, visible: true }
+  ]);
+  if (!DB.get('form_fields')) DB.set('form_fields', ['service','name','dates','region','count','contact','reply_method','memo']);
+  if (!DB.get('feedbacks')) DB.set('feedbacks', []);
+  if (!DB.get('res_id_counter')) DB.set('res_id_counter', 1000);
+}
+initDefaults();
+
+// 기존 "예약문의" 메뉴명 → "문의" 자동 마이그레이션
+(function migrateMenuNames() {
+  const menus = DB.get('menus', []);
+  let changed = false;
+  menus.forEach(m => { if (m.name === '예약문의') { m.name = '문의'; changed = true; } });
+  if (changed) DB.set('menus', menus);
+})();
+
+// Current session
+let currentCode = null;
+let currentOrg = null;
+let currentCodeObj = null;
+let currentLinkObj = null;   // 예약 문의 시 선택된 카드
+let isAdminLoggedIn = false;
+let _pdfBlobUrl = null; // base64 PDF → Blob URL 캐시
+let isAdminOnMain = false;
+
+// ============================================================
+// CURSOR
+// ============================================================
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+});
+function animateCursor() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  cursorRing.style.left = rx + 'px'; cursorRing.style.top = ry + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+// ============================================================
+// PARTICLES
+// ============================================================
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+
+function createParticle() {
+  return {
+    x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+    size: Math.random() * 1.5 + 0.3,
+    vx: (Math.random() - 0.5) * 0.3, vy: -Math.random() * 0.4 - 0.1,
+    alpha: Math.random() * 0.5 + 0.1,
+    life: Math.random() * 300 + 100, maxLife: 0
+  };
+}
+for (let i = 0; i < 120; i++) { const p = createParticle(); p.life = Math.random() * p.life; particles.push(p); }
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach((p, i) => {
+    p.x += p.vx; p.y += p.vy; p.life--;
+    const ratio = p.life / (p.maxLife || p.life + 1);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(201,168,76,${p.alpha * (p.life > 50 ? 1 : p.life / 50)})`;
+    ctx.fill();
+    if (p.life <= 0 || p.y < 0) particles[i] = createParticle();
+  });
+  // Mouse interaction
+  particles.forEach(p => {
+    const dx = p.x - mx, dy = p.y - my;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 100) { p.vx += dx * 0.0003; p.vy += dy * 0.0003; }
+  });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// ============================================================
+// ENTRY
+// ============================================================
+document.getElementById('entry-code-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') verifyCode();
+});
+
+function togglePrivacy() {
+  const box = document.getElementById('privacy-text');
+  const arrow = document.getElementById('privacy-arrow');
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  arrow.style.transform = open ? '' : 'rotate(90deg)';
+}
+
+function verifyCode() {
+  const agree = document.getElementById('privacy-agree');
+  if (agree && !agree.checked) {
+    const err = document.getElementById('entry-error');
+    err.textContent = '개인정보 수집·이용에 동의해 주세요.';
+    err.style.color = '#e0a040';
+    agree.closest('label').style.animation = 'none';
+    setTimeout(() => { agree.closest('label').style.animation = ''; }, 300);
+    return;
+  }
+  const val = document.getElementById('entry-code-input').value.trim().toUpperCase();
+  const codes = DB.get('codes', []);
+  const found = codes.find(c => c.code.toUpperCase() === val);
+  if (found) {
+    currentCode = found.code;
+    currentOrg = found.org;
+    currentCodeObj = found;
+    document.getElementById('entry-error').textContent = '';
+    enterMain();
+  } else {
+    document.getElementById('entry-error').textContent = '유효하지 않은 입장 코드입니다.';
+    document.getElementById('entry-error').style.color = '';
+    document.getElementById('entry-code-input').style.borderColor = '#c0392b';
+    setTimeout(() => document.getElementById('entry-code-input').style.borderColor = '', 1500);
+  }
+}
+
+function enterMain() {
+  showPage('page-main');
+  renderMain();
+}
+
+// ============================================================
+// PAGE SWITCHING
+// ============================================================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'page-admin') {
+    if (!isAdminLoggedIn) { openModal('modal-admin-login'); return; }
+    renderAdmin();
+    document.getElementById('admin-date').textContent = new Date().toLocaleDateString('ko-KR');
+  }
+  if (id === 'page-main') {
+
+    setupScrollAnimations();
+    if (isAdminLoggedIn) document.getElementById('welcome-edit-btn').style.display = 'inline-block';
+  } else {
+  }
+}
+
+// ============================================================
+// MAIN PAGE RENDER
+// ============================================================
+function renderMain() {
+  // 코드 전용 텍스트 우선, 없으면 전역 텍스트
+  const globalText = DB.get('welcome_text', '');
+  const codeText = currentCodeObj?.welcome_text?.trim();
+  const wt = codeText || globalText;
+  document.getElementById('main-welcome-text').innerHTML = wt.replace(/\n/g, '<br>');
+  document.getElementById('header-logo-text').textContent = DB.get('logo_text', 'VIP Private');
+
+  // Nav menus
+  const menus = DB.get('menus', []);
+  const nav = document.getElementById('header-nav-items');
+  nav.innerHTML = '';
+  const showPayment = currentCodeObj?.show_payment !== false;
+  menus.filter(m => m.visible).forEach(m => {
+    if (m.url) {
+      const a = document.createElement('a');
+      a.href = m.url; a.target = '_blank'; a.textContent = m.name;
+      if (m.payment && showPayment) a.textContent += ' 💳';
+      nav.appendChild(a);
+    } else {
+      const btn = document.createElement('button');
+      btn.textContent = m.name;
+      if (m.payment && showPayment) btn.textContent += ' 💳';
+      nav.appendChild(btn);
+    }
+  });
+
+  // Links
+  renderLinks();
+
+  // Reservation form
+  renderReservationForm();
+}
+
+function renderLinks() {
+  const allLinks = DB.get('links', []);
+  const codeVisLinks = currentCodeObj?.visible_links; // null = 전체, array = 허용 ID 목록
+  const grid = document.getElementById('links-grid');
+  grid.innerHTML = '';
+
+  // 전역 예약 버튼 표시 여부
+  const resBar = document.getElementById('global-reservation-bar-wrap');
+  if (resBar) resBar.style.display = (currentCodeObj?.show_reservation === false) ? 'none' : 'block';
+
+  const links = allLinks.filter(l => {
+    if (l.visible === false) return false;
+    if (codeVisLinks) return codeVisLinks.includes(l.id);
+    return true;
+  });
+  links.forEach(l => {
+    const card = document.createElement('a');
+    const hasUrl = l.url && l.url.startsWith('http');
+    const domain = (l.url||'').replace('https://','').replace('http://','').split('/')[0];
+
+    const resBtn = l.res_img ? `
+      <div onclick="event.preventDefault();event.stopPropagation();openReservationFromCard(${l.id});"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0;border-top:1px solid rgba(201,168,76,0.15);cursor:pointer;background:rgba(201,168,76,0.04);">
+        <span style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;">특별가 예약 문의</span>
+        <span style="color:var(--gold);font-size:11px;">→</span>
+      </div>` : '';
+
+    if (hasUrl && l.preview !== false) {
+      // 썸네일 미리보기 카드 (커스텀 이미지 우선, 없으면 파비콘 + 도메인 플레이스홀더)
+      card.className = 'link-card fade-in';
+      card.href = l.url; card.target = '_blank';
+      // 커스텀 썸네일 있으면 이미지, 없으면 라이브 프록시 미리보기
+      const previewContent = l.thumb_img
+        ? `<img src="${l.thumb_img}" class="preview-shot" alt="${l.title}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+           <div class="preview-fallback" style="display:none;">
+             <img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" style="width:40px;height:40px;opacity:0.6;" onerror="this.style.display='none'">
+             <span style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">${domain}</span>
+           </div>`
+        : `<iframe class="live-preview" data-src="${l.url}" src="about:blank"></iframe>
+           <div class="link-card-preview-overlay"></div>
+           <div class="preview-fallback" style="display:none;position:absolute;inset:0;">
+             <img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" style="width:40px;height:40px;opacity:0.6;" onerror="this.style.display='none'">
+             <span style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">${domain}</span>
+           </div>`;
+      card.innerHTML = `
+        <div class="link-card-preview">
+          ${previewContent}
+          <div class="link-card-preview-overlay"></div>
+          ${l.badge ? `<div style="position:absolute;top:10px;right:10px;z-index:3;font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid var(--gold-dark);padding:3px 9px;background:rgba(5,5,5,0.8);text-transform:uppercase;">${l.badge}</div>` : ''}
+        </div>
+        <div class="link-card-body">
+          <span class="link-card-icon">${l.icon || '🌐'}</span>
+          <div class="link-card-info">
+            <div class="link-card-title">${l.title}</div>
+            <div class="link-card-url">${domain}</div>
+          </div>
+          ${l.badge ? `<span class="link-card-badge">${l.badge}</span>` : ''}
+        </div>
+        ${resBtn}`;
+    } else {
+      // 일반 카드 (URL 없거나 미리보기 비활성)
+      card.className = 'link-card no-preview fade-in';
+      card.href = l.url || '#'; card.target = '_blank';
+      card.innerHTML = `
+        <div class="link-card-body">
+          <div class="link-card-icon">${l.icon || '🌐'}</div>
+          <div class="link-card-info">
+            <div class="link-card-title">${l.title}</div>
+            <div class="link-card-url">${domain}</div>
+          </div>
+          ${l.badge ? `<span class="link-card-badge">${l.badge}</span>` : ''}
+        </div>
+        ${resBtn}`;
+    }
+    grid.appendChild(card);
+  });
+
+  // 라이브 프리뷰 iframe 로드 + 스케일
+  requestAnimationFrame(() => {
+    grid.querySelectorAll('.live-preview').forEach(iframe => {
+      const preview = iframe.closest('.link-card-preview');
+      const w = (preview?.offsetWidth) || 300;
+      const scale = w / 1280;
+      iframe.style.transform = `scale(${scale})`;
+      iframe.style.height = Math.ceil(190 / scale) + 'px';
+      loadLivePreview(iframe, iframe.dataset.src);
+    });
+  });
+
+  setupScrollAnimations();
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+function handleSearch(e) {
+  if (e.key === 'Enter') {
+    const q = document.getElementById('main-search').value.trim();
+    if (q) window.open('https://www.google.com/search?q=' + encodeURIComponent(q), '_blank');
+  }
+}
+
+let recognition = null;
+function startVoice() {
+  const btn = document.getElementById('voice-btn');
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    showToast('이 브라우저는 음성 인식을 지원하지 않습니다.', 'error'); return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'ko-KR'; recognition.interimResults = false;
+  btn.classList.add('listening');
+  recognition.start();
+  recognition.onresult = e => {
+    document.getElementById('main-search').value = e.results[0][0].transcript;
+    btn.classList.remove('listening');
+  };
+  recognition.onerror = () => btn.classList.remove('listening');
+  recognition.onend = () => btn.classList.remove('listening');
+}
+
+// ============================================================
+// RESERVATION FORM
+// ============================================================
+const FIELD_DEFS = {
+  service: { label: '문의 메뉴 선택', type: 'service', placeholder: '' },
+  name: { label: '예약자명', type: 'text', placeholder: '홍길동' },
+  dates: { label: '사용일자', type: 'dates', placeholder: '' },
+  region: { label: '지역', type: 'select', options: () => DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']) },
+  count: { label: '인원수', type: 'number', placeholder: '인원 수' },
+  contact: { label: '연락처 / 이메일', type: 'contact', placeholder: '' },
+  reply_method: { label: '답변 수단', type: 'radio', options: ['문자','카카오톡','전화'] },
+  memo: { label: '문의 내용', type: 'textarea', placeholder: '기타 문의사항을 입력하세요.' }
+};
+
+function renderReservationForm() {
+  const fields = DB.get('form_fields', Object.keys(FIELD_DEFS));
+  const container = document.getElementById('reservation-form-fields');
+  container.innerHTML = '';
+  fields.forEach(f => {
+    const def = FIELD_DEFS[f]; if (!def) return;
+    const group = document.createElement('div');
+    group.className = 'form-group';
+    let html = `<label class="form-label">${def.label}</label>`;
+    if (def.type === 'service') {
+      const menus = DB.get('menus', []).filter(m => m.visible);
+      html += `<select class="form-select" name="service" required>
+        <option value="">메뉴를 선택하세요</option>
+        ${menus.map(m => `<option value="${m.id}|${m.name}">${m.name}</option>`).join('')}
+      </select>`;
+    } else if (def.type === 'text' || def.type === 'number') {
+      html += `<input type="${def.type}" class="form-input" name="${f}" placeholder="${def.placeholder}" required>`;
+    } else if (def.type === 'dates') {
+      const today = new Date().toISOString().split('T')[0];
+      html += `<div class="form-row">
+        <input type="date" class="form-input" name="date_start" min="${today}" value="${today}" required
+          onchange="const e=this.form.querySelector('[name=date_end]');if(e&&e.value<this.value){e.value=this.value;e.min=this.value;}this.min='${today}'">
+        <input type="date" class="form-input" name="date_end" min="${today}" value="${today}" required>
+      </div>`;
+    } else if (def.type === 'select') {
+      const opts = typeof def.options === 'function' ? def.options() : def.options;
+      html += `<select class="form-select" name="${f}" required>
+        <option value="">선택하세요</option>
+        ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+      </select>`;
+    } else if (def.type === 'contact') {
+      html += `<div class="form-row">
+        <input type="text" class="form-input" name="phone" placeholder="연락처">
+        <input type="email" class="form-input" name="email" placeholder="이메일">
+      </div>
+      <p style="font-size:10px;color:var(--text-dim);margin-top:6px;letter-spacing:1px;">연락처 또는 이메일 중 하나를 입력하세요.</p>`;
+    } else if (def.type === 'radio') {
+      html += `<div class="form-radio-group">
+        ${def.options.map(o => `
+          <label class="form-radio-label">
+            <input type="radio" name="${f}" value="${o}"> ${o}
+          </label>`).join('')}
+      </div>`;
+    } else if (def.type === 'textarea') {
+      html += `<textarea class="form-textarea" name="${f}" placeholder="${def.placeholder}"></textarea>`;
+    }
+    group.innerHTML = html;
+    container.appendChild(group);
+  });
+}
+
+async function submitReservation(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+  const obj = {};
+  for (let [k,v] of data.entries()) obj[k] = v;
+
+  const id = DB.get('res_id_counter', 1000) + 1;
+  DB.set('res_id_counter', id);
+
+  // 서비스 선택 파싱 (id|name 형식)
+  const [serviceMenuId, serviceName] = (obj.service || '|').split('|');
+
+  const record = {
+    id, org: currentOrg || '직접방문', code: currentCode || '',
+    service_id: serviceMenuId || '', service_name: serviceName || '-',
+    name: obj.name || '-', date_start: obj.date_start || '-', date_end: obj.date_end || '-',
+    region: obj.region || '-', count: obj.count || '-',
+    phone: obj.phone || '-', email: obj.email || '-',
+    reply_method: obj.reply_method || '-', memo: obj.memo || '-',
+    timestamp: new Date().toISOString(),
+    tg_status: 'pending', tg_id: null
+  };
+
+  // 메뉴에 지정된 채널 찾기
+  const menus = DB.get('menus', []);
+  const targetMenu = menus.find(m => String(m.id) === String(serviceMenuId));
+  const targetChannel = targetMenu?.tg_channel || null;
+
+  const tgResult = await sendToTelegram(record, targetChannel);
+  record.tg_status = tgResult.ok ? 'sent' : 'failed';
+  record.tg_id = tgResult.message_id || null;
+
+  const reservations = DB.get('reservations', []);
+  reservations.unshift(record);
+  DB.set('reservations', reservations);
+
+  closeModal('modal-reservation');
+  form.reset();
+  showToast(record.tg_status === 'sent' ? '문의가 전송되었습니다. 빠르게 연락드리겠습니다.' : '문의가 접수되었습니다.', 'gold');
+}
+
+async function sendToTelegram(record, targetChannelId = null) {
+  const token = DB.get('tg_token', '');
+  const allChannels = DB.get('tg_channels', []);
+  if (!token || allChannels.length === 0) return { ok: false };
+
+  // 관리자 채널은 항상 수신, 메뉴 지정 채널은 추가로 포함
+  const adminChannels = allChannels.filter(c => c.is_admin);
+  const targetChannels = targetChannelId
+    ? allChannels.filter(c => c.id === targetChannelId && !c.is_admin)
+    : allChannels.filter(c => !c.is_admin);
+  const channels = [...adminChannels, ...targetChannels].filter(
+    (c, i, arr) => arr.findIndex(x => x.id === c.id) === i // 중복 제거
+  );
+
+  if (channels.length === 0) return { ok: false };
+
+  const msg = `📋 <b>[VIP 예약문의 #${record.id}]</b>\n\n` +
+    `🗂 메뉴: ${record.service_name || '-'}\n` +
+    `🏢 단체명: ${record.org}\n` +
+    `👤 예약자: ${record.name}\n` +
+    `📅 일자: ${record.date_start} ~ ${record.date_end}\n` +
+    `📍 지역: ${record.region}\n` +
+    `👥 인원: ${record.count}명\n` +
+    `📞 연락처: ${record.phone}\n` +
+    `📧 이메일: ${record.email}\n` +
+    `💬 답변수단: ${record.reply_method}\n` +
+    `📝 문의내용: ${record.memo}\n\n` +
+    `⏰ ${new Date(record.timestamp).toLocaleString('ko-KR')}\n` +
+    `🔖 참조번호: #${record.id}`;
+
+  let lastResult = { ok: false };
+  for (const ch of channels) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: ch.id, text: msg, parse_mode: 'HTML' })
+      });
+      const json = await res.json();
+      if (json.ok) lastResult = { ok: true, message_id: json.result?.message_id };
+    } catch (err) { console.error('Telegram error:', err); }
+  }
+  return lastResult;
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function adminLogin() {
+  const pw = document.getElementById('admin-pw-input').value;
+  if (pw === DB.get('admin_pw', 'admin1234')) {
+    isAdminLoggedIn = true;
+    closeModal('modal-admin-login');
+    document.getElementById('admin-pw-input').value = '';
+    document.getElementById('admin-login-error').textContent = '';
+    showPage('page-admin');
+  } else {
+    document.getElementById('admin-login-error').textContent = '비밀번호가 올바르지 않습니다.';
+  }
+}
+
+function toggleLoginSection(showLogin) {
+  document.getElementById('admin-login-section').style.display = showLogin ? '' : 'none';
+  document.getElementById('admin-changepw-section').style.display = showLogin ? 'none' : '';
+  document.getElementById('modal-old-pw').value = '';
+  document.getElementById('modal-new-pw').value = '';
+  document.getElementById('modal-new-pw2').value = '';
+  document.getElementById('modal-pw-error').textContent = '';
+}
+
+function changeAdminPwModal() {
+  const old = document.getElementById('modal-old-pw').value;
+  const nw  = document.getElementById('modal-new-pw').value;
+  const nw2 = document.getElementById('modal-new-pw2').value;
+  const errEl = document.getElementById('modal-pw-error');
+  if (old !== DB.get('admin_pw', 'admin1234')) { errEl.textContent = '현재 비밀번호가 올바르지 않습니다.'; return; }
+  if (nw.length < 6) { errEl.textContent = '새 비밀번호는 6자 이상이어야 합니다.'; return; }
+  if (nw !== nw2) { errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; return; }
+  DB.set('admin_pw', nw);
+  closeModal('modal-admin-login');
+  toggleLoginSection(true);
+  showToast('비밀번호가 변경되었습니다. 다시 로그인하세요.', 'gold');
+}
+
+function goToPasswordTab() {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-settings').classList.add('active');
+  document.querySelectorAll('.tab-btn')[7].classList.add('active');
+}
+document.getElementById('admin-pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') adminLogin();
+});
+
+function adminLogout() {
+  isAdminLoggedIn = false;
+  showPage('page-entry');
+  document.getElementById('welcome-edit-btn').style.display = 'none';
+}
+
+function exitAdmin() {
+  if (currentCode) { showPage('page-main'); renderMain(); }
+  else showPage('page-entry');
+}
+
+function renderAdmin() {
+  const banner = document.getElementById('pw-warning-banner');
+  banner.style.display = DB.get('admin_pw', 'admin1234') === 'admin1234' ? 'flex' : 'none';
+  refreshMenuTgSelects();
+  renderStats();
+  renderCodesAdmin();
+  renderContentCodeTexts();
+  renderTgAdmin();
+  renderLinksAdmin();
+  renderMenusAdmin();
+  renderReservationsAdmin();
+  renderFormFieldsAdmin();
+  renderRegionOptions();
+  document.getElementById('admin-welcome-text').value = DB.get('welcome_text', '');
+  document.getElementById('admin-logo-text').value = DB.get('logo_text', '');
+  renderAdminResImgPreview();
+}
+
+function renderContentCodeTexts() {
+  const el = document.getElementById('content-code-text-list');
+  if (!el) return;
+  const codes = DB.get('codes', []);
+  if (codes.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-dim);font-size:13px;letter-spacing:1px;padding:16px 0;">등록된 입장코드가 없습니다. 먼저 입장코드 탭에서 코드를 추가하세요.</p>';
+    return;
+  }
+  el.innerHTML = codes.map(c => {
+    const hasFile = !!c.res_img;
+    const isPDF   = c.res_img_type === 'pdf';
+    return `
+    <div style="margin-bottom:24px;padding:20px;border:1px solid rgba(201,168,76,0.2);background:rgba(255,255,255,0.01);">
+      <!-- 코드 헤더 -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.1);">
+        <span style="font-family:'Courier New';font-size:15px;color:var(--gold);letter-spacing:3px;">${c.code}</span>
+        <span style="font-size:12px;color:var(--text);letter-spacing:1px;">${c.org}</span>
+        <span style="font-size:10px;color:var(--text-dim);margin-left:auto;">메뉴: ${c.menus || '전체'}</span>
+      </div>
+
+      <!-- 전용 메인 텍스트 -->
+      <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">전용 메인 텍스트</div>
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:20px;">
+        <textarea id="cct-${c.id}" class="form-textarea" rows="2"
+          style="min-height:60px;flex:1;"
+          placeholder="비워두면 기본 메인 텍스트가 표시됩니다.">${c.welcome_text || ''}</textarea>
+        <button class="btn-secondary" style="white-space:nowrap;padding:10px 18px;"
+          onclick="saveCodeTextFromContent(${c.id})">저장</button>
+      </div>
+
+      <!-- 전용 첨부 파일 -->
+      <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;">
+        전용 첨부 파일 (이미지 / PDF)
+        ${hasFile ? `<span style="color:#27ae60;margin-left:8px;font-size:9px;">● 적용중</span>` : `<span style="color:var(--text-dim);margin-left:8px;font-size:9px;">미설정 (전역 파일 사용)</span>`}
+      </div>
+
+      <!-- URL 입력 -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="text" class="form-input" id="cfile-url-${c.id}"
+          placeholder="이미지 또는 PDF URL 입력" style="flex:1;"
+          value="${(c.res_img && c.res_img.startsWith('http')) ? c.res_img : ''}">
+        <button class="btn-secondary" style="white-space:nowrap;" onclick="saveCodeFileUrl(${c.id})">URL 적용</button>
+      </div>
+
+      <!-- 파일 업로드 -->
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+        border:1px dashed rgba(201,168,76,0.3);background:rgba(201,168,76,0.02);
+        cursor:pointer;margin-bottom:12px;transition:all 0.3s;"
+        onmouseover="this.style.borderColor='rgba(201,168,76,0.6)'"
+        onmouseout="this.style.borderColor='rgba(201,168,76,0.3)'">
+        <span style="font-size:16px;">📎</span>
+        <span id="cfile-name-${c.id}" style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">
+          ${hasFile && !c.res_img.startsWith('http') ? (isPDF ? '📄 PDF 등록됨' : '🖼 이미지 등록됨') : '클릭하여 파일 선택'}
+        </span>
+        <input type="file" accept="image/*,.pdf" style="display:none;"
+          onchange="loadCodeFile(${c.id}, this)">
+      </label>
+
+      <!-- 현재 파일 미리보기 + 삭제 -->
+      ${hasFile ? `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        ${!isPDF ? `<img src="${c.res_img}" style="height:60px;border:1px solid rgba(201,168,76,0.2);object-fit:cover;">` : `<span style="font-size:11px;color:var(--text);">📄 PDF 파일</span>`}
+        <button class="btn-danger" onclick="deleteCodeFile(${c.id})">파일 삭제</button>
+      </div>` : ''}
+
+      <!-- 표시 링크 / 예약버튼 / 결제창 -->
+      <div style="padding-top:16px;border-top:1px solid rgba(201,168,76,0.1);">
+        <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">화면 표시 설정</div>
+
+        <!-- 예약버튼 / 결제창 토글 -->
+        <div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="cshow-res-${c.id}" ${c.show_reservation !== false ? 'checked' : ''}
+              style="accent-color:var(--gold);width:14px;height:14px;">
+            <span style="font-size:11px;color:var(--text);letter-spacing:1px;">예약 문의 버튼 표시</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="cshow-pay-${c.id}" ${c.show_payment !== false ? 'checked' : ''}
+              style="accent-color:var(--gold);width:14px;height:14px;">
+            <span style="font-size:11px;color:var(--text);letter-spacing:1px;">결제 창 표시 (💳)</span>
+          </label>
+        </div>
+
+        <!-- 표시 링크 선택 -->
+        <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">
+          표시할 링크 (체크 해제 시 해당 코드에서 숨김)
+        </div>
+        <div id="clinks-${c.id}" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+          ${DB.get('links',[]).filter(l=>l.visible!==false).map(l => {
+            const checked = !c.visible_links || c.visible_links.includes(l.id);
+            return `<label style="display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(201,168,76,0.2);cursor:pointer;font-size:10px;color:var(--text);">
+              <input type="checkbox" value="${l.id}" ${checked ? 'checked' : ''}
+                style="accent-color:var(--gold);">
+              ${l.icon || ''} ${l.title}
+            </label>`;
+          }).join('')}
+          ${DB.get('links',[]).filter(l=>l.visible!==false).length === 0 ? '<span style="font-size:10px;color:var(--text-dim);">등록된 링크 없음</span>' : ''}
+        </div>
+
+        <button class="btn-secondary" style="font-size:10px;padding:8px 18px;"
+          onclick="saveCodeDisplaySettings(${c.id})">설정 저장</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 입장코드별 파일 관리 ──────────────────────────
+function saveCodeFileUrl(id) {
+  const url = document.getElementById('cfile-url-' + id)?.value.trim();
+  if (!url) { showToast('URL을 입력하세요.', 'error'); return; }
+  const codes = DB.get('codes', []);
+  const c = codes.find(c => c.id === id);
+  if (c) { c.res_img = url; c.res_img_type = url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'; }
+  DB.set('codes', codes);
+  renderContentCodeTexts();
+  showToast(`[${c?.code}] 파일이 저장되었습니다.`, 'gold');
+}
+
+function loadCodeFile(id, input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const isPDF = file.type === 'application/pdf';
+  const nameEl = document.getElementById('cfile-name-' + id);
+  if (nameEl) nameEl.textContent = file.name;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('파일이 5MB를 초과합니다. URL 방식을 권장합니다.', 'error');
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const codes = DB.get('codes', []);
+      const c = codes.find(c => c.id === id);
+      if (c) { c.res_img = e.target.result; c.res_img_type = isPDF ? 'pdf' : 'image'; }
+      DB.set('codes', codes);
+      renderContentCodeTexts();
+      showToast(isPDF ? 'PDF가 업로드되었습니다.' : '이미지가 업로드되었습니다.', 'gold');
+    } catch { showToast('파일이 너무 큽니다. URL을 사용해 주세요.', 'error'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteCodeFile(id) {
+  const codes = DB.get('codes', []);
+  const c = codes.find(c => c.id === id);
+  if (c) { c.res_img = ''; c.res_img_type = ''; }
+  DB.set('codes', codes);
+  renderContentCodeTexts();
+  showToast('파일이 삭제되었습니다.');
+}
+function saveCodeDisplaySettings(id) {
+  const codes = DB.get('codes', []);
+  const c = codes.find(c => c.id === id);
+  if (!c) return;
+
+  c.show_reservation = document.getElementById('cshow-res-' + id)?.checked !== false
+    ? document.getElementById('cshow-res-' + id)?.checked ?? true
+    : false;
+  c.show_payment = document.getElementById('cshow-pay-' + id)?.checked !== false
+    ? document.getElementById('cshow-pay-' + id)?.checked ?? true
+    : false;
+
+  // 체크된 링크 ID 수집
+  const wrap = document.getElementById('clinks-' + id);
+  const allLinks = DB.get('links', []).filter(l => l.visible !== false);
+  if (wrap && allLinks.length > 0) {
+    const checked = [...wrap.querySelectorAll('input[type=checkbox]')]
+      .filter(cb => cb.checked)
+      .map(cb => Number(cb.value));
+    // 전체 선택이면 null (제한 없음), 일부 선택이면 배열 저장
+    c.visible_links = checked.length === allLinks.length ? null : checked;
+  } else {
+    c.visible_links = null;
+  }
+
+  DB.set('codes', codes);
+
+  // 현재 로그인된 코드와 같으면 즉시 반영
+  if (currentCodeObj?.id === id) {
+    currentCodeObj = c;
+    renderLinks();
+  }
+  showToast(`[${c.code}] 설정이 저장되었습니다.`, 'gold');
+}
+// ─────────────────────────────────────────────────
+
+function saveCodeTextFromContent(id) {
+  const ta = document.getElementById('cct-' + id);
+  if (!ta) return;
+  const codes = DB.get('codes', []);
+  const c = codes.find(c => c.id === id);
+  if (c) {
+    c.welcome_text = ta.value.trim();
+    // 입장코드 탭 textarea도 동기화
+    const mirror = document.getElementById('code-text-' + id);
+    if (mirror) mirror.value = ta.value.trim();
+  }
+  DB.set('codes', codes);
+  showToast(`[${c?.code}] 텍스트가 저장되었습니다.`, 'gold');
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Stats
+function renderStats() {
+  const res = DB.get('reservations', []);
+  const codes = DB.get('codes', []);
+  const today = new Date().toDateString();
+  const todayRes = res.filter(r => new Date(r.timestamp).toDateString() === today);
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${res.length}</div><div class="stat-label">총 예약문의</div></div>
+    <div class="stat-card"><div class="stat-value">${todayRes.length}</div><div class="stat-label">오늘 문의</div></div>
+    <div class="stat-card"><div class="stat-value">${codes.length}</div><div class="stat-label">등록 코드</div></div>
+    <div class="stat-card"><div class="stat-value">${res.filter(r=>r.tg_status==='sent').length}</div><div class="stat-label">텔레그램 전송</div></div>
+  `;
+  // Recent
+  const recentEl = document.getElementById('recent-reservations');
+  if (res.length === 0) { recentEl.innerHTML = '<p style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px;">예약 문의가 없습니다.</p>'; return; }
+  recentEl.innerHTML = `<table class="data-table">
+    <tr><th>#</th><th>단체명</th><th>예약자</th><th>연락처</th><th>일자</th><th>지역</th><th>전송</th></tr>
+    ${res.slice(0,5).map(r => `<tr>
+      <td>#${r.id}</td><td>${r.org}</td><td>${r.name}</td>
+      <td>${r.phone !== '-' ? r.phone : r.email}</td>
+      <td>${r.date_start}</td><td>${r.region}</td>
+      <td><span class="badge badge-${r.tg_status==='sent'?'success':r.tg_status==='failed'?'fail':'pending'}">${r.tg_status==='sent'?'전송완료':r.tg_status==='failed'?'실패':'대기'}</span></td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+// Codes
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('new-code-val').value = code;
+}
+
+function addCode() {
+  const org = document.getElementById('new-code-org').value.trim();
+  const code = document.getElementById('new-code-val').value.trim().toUpperCase();
+  const menus = document.getElementById('new-code-menus').value.trim();
+  const welcome_text = document.getElementById('new-code-text').value.trim();
+  if (!org || !code) { showToast('단체명과 코드를 입력하세요.', 'error'); return; }
+  const codes = DB.get('codes', []);
+  if (codes.find(c => c.code.toUpperCase() === code)) { showToast('이미 존재하는 코드입니다.', 'error'); return; }
+  codes.push({ id: Date.now(), code, org, menus, welcome_text, created: new Date().toISOString() });
+  DB.set('codes', codes);
+  document.getElementById('new-code-org').value = '';
+  document.getElementById('new-code-val').value = '';
+  document.getElementById('new-code-menus').value = '';
+  document.getElementById('new-code-text').value = '';
+  renderCodesAdmin();
+  showToast('코드가 추가되었습니다.', 'gold');
+}
+
+function saveCodeText(id) {
+  const ta = document.getElementById('code-text-' + id);
+  if (!ta) return;
+  const codes = DB.get('codes', []);
+  const c = codes.find(c => c.id === id);
+  if (c) { c.welcome_text = ta.value.trim(); }
+  DB.set('codes', codes);
+  showToast('저장되었습니다.', 'gold');
+}
+
+function deleteCode(id) {
+  let codes = DB.get('codes', []);
+  codes = codes.filter(c => c.id !== id);
+  DB.set('codes', codes);
+  renderCodesAdmin();
+  showToast('코드가 삭제되었습니다.');
+}
+
+function renderCodesAdmin() {
+  const codes = DB.get('codes', []);
+  const el = document.getElementById('codes-list');
+  if (!el) return;
+  el.innerHTML = codes.length === 0
+    ? '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;">등록된 코드가 없습니다.</p>'
+    : codes.map(c => `
+      <div class="code-item" style="flex-direction:column;align-items:flex-start;gap:14px;">
+        <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
+          <div class="code-item-info">
+            <div class="code-item-code">${c.code}</div>
+            <div class="code-item-meta">${c.org} · 메뉴: ${c.menus || '전체'} · ${new Date(c.created).toLocaleDateString('ko-KR')}</div>
+          </div>
+          <button class="btn-danger" onclick="deleteCode(${c.id})">삭제</button>
+        </div>
+        <div style="width:100%;">
+          <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:7px;">
+            코드 전용 메인 텍스트
+            <span style="color:var(--text-dim);letter-spacing:1px;text-transform:none;font-size:9px;">
+              (비워두면 기본 텍스트 표시)
+            </span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <textarea id="code-text-${c.id}" class="form-textarea" rows="2"
+              style="min-height:60px;flex:1;"
+              placeholder="이 코드 전용 환영 메시지...">${c.welcome_text || ''}</textarea>
+            <button class="btn-secondary" style="white-space:nowrap;padding:10px 18px;"
+              onclick="saveCodeText(${c.id})">저장</button>
+          </div>
+        </div>
+      </div>`).join('');
+}
+
+// Telegram
+function saveTgToken() {
+  const token = document.getElementById('tg-bot-token').value.trim();
+  DB.set('tg_token', token);
+  showToast('토큰이 저장되었습니다.', 'gold');
+}
+
+function addTgChannel() {
+  const id = document.getElementById('new-tg-id').value.trim();
+  const name = document.getElementById('new-tg-name').value.trim();
+  const isAdmin = document.getElementById('new-tg-is-admin')?.checked || false;
+  if (!id) { showToast('Chat ID를 입력하세요.', 'error'); return; }
+  const channels = DB.get('tg_channels', []);
+  if (channels.find(c => c.id === id)) { showToast('이미 등록된 채널입니다.', 'error'); return; }
+  channels.push({ id, name: name || id, is_admin: isAdmin });
+  DB.set('tg_channels', channels);
+  document.getElementById('new-tg-id').value = '';
+  document.getElementById('new-tg-name').value = '';
+  if (document.getElementById('new-tg-is-admin')) document.getElementById('new-tg-is-admin').checked = false;
+  renderTgAdmin();
+  refreshMenuTgSelects();
+  showToast('채널이 추가되었습니다.', 'gold');
+}
+
+async function testTgChannel(chId) {
+  const token = DB.get('tg_token', '');
+  if (!token) { showToast('Bot Token을 먼저 저장하세요.', 'error'); return; }
+  const channels = DB.get('tg_channels', []);
+  const ch = channels.find(c => c.id === chId);
+  if (!ch) return;
+  showToast(`[${ch.name}] 테스트 전송 중...`, 'gold');
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: ch.id,
+        text: `✅ <b>[VIP 연결 테스트]</b>\n\n채널명: ${ch.name}\nChat ID: <code>${ch.id}</code>\n유형: ${ch.is_admin ? '관리자 채널 (전체 수신)' : '일반 채널'}\n\n⏰ ${new Date().toLocaleString('ko-KR')}`,
+        parse_mode: 'HTML'
+      })
+    });
+    const json = await res.json();
+    json.ok ? showToast(`✓ [${ch.name}] 전송 성공`, 'gold') : showToast(`✗ [${ch.name}] 실패: ${json.description}`, 'error');
+  } catch(e) { showToast('네트워크 오류: ' + e.message, 'error'); }
+}
+
+async function testTgAll() {
+  const token = DB.get('tg_token', '');
+  if (!token) { showToast('Bot Token을 먼저 저장하세요.', 'error'); return; }
+  const channels = DB.get('tg_channels', []);
+  if (channels.length === 0) { showToast('등록된 채널이 없습니다.', 'error'); return; }
+  showToast(`전체 ${channels.length}개 채널 테스트 중...`, 'gold');
+  let ok = 0, fail = 0;
+  for (const ch of channels) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: ch.id,
+          text: `✅ <b>[VIP 전체 채널 테스트]</b>\n\n채널명: ${ch.name}\nChat ID: <code>${ch.id}</code>\n유형: ${ch.is_admin ? '관리자 채널 (전체 수신)' : '일반 채널'}\n\n⏰ ${new Date().toLocaleString('ko-KR')}`,
+          parse_mode: 'HTML'
+        })
+      });
+      const json = await res.json();
+      json.ok ? ok++ : fail++;
+    } catch(e) { fail++; }
+  }
+  showToast(`테스트 완료 — 성공: ${ok} / 실패: ${fail}`, fail > 0 ? 'error' : 'gold');
+}
+
+function toggleTgAdmin(chId) {
+  const channels = DB.get('tg_channels', []);
+  const ch = channels.find(c => c.id === chId);
+  if (ch) ch.is_admin = !ch.is_admin;
+  DB.set('tg_channels', channels);
+  renderTgAdmin();
+  showToast(ch?.is_admin ? '관리자 채널로 설정되었습니다.' : '일반 채널로 변경되었습니다.', 'gold');
+}
+
+function deleteTgChannel(chId) {
+  let channels = DB.get('tg_channels', []);
+  channels = channels.filter(c => c.id !== chId);
+  DB.set('tg_channels', channels);
+  // 해당 채널 쓰는 메뉴 초기화
+  let menus = DB.get('menus', []);
+  menus.forEach(m => { if (m.tg_channel === chId) m.tg_channel = ''; });
+  DB.set('menus', menus);
+  renderTgAdmin();
+  refreshMenuTgSelects();
+  showToast('채널이 삭제되었습니다.');
+}
+
+function renderTgAdmin() {
+  const channels = DB.get('tg_channels', []);
+  const el = document.getElementById('tg-list');
+  if (!el) return;
+  document.getElementById('tg-bot-token').value = DB.get('tg_token', '');
+  el.innerHTML = channels.length === 0
+    ? '<p style="color:var(--text-dim);font-size:13px;padding:16px 0;letter-spacing:1px;">등록된 채널이 없습니다.</p>'
+    : channels.map(c => `
+      <div class="tg-item" style="flex-wrap:wrap;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div class="tg-item-id" style="display:flex;align-items:center;gap:8px;">
+            ${c.name}
+            ${c.is_admin ? '<span style="font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid var(--gold-dark);padding:2px 7px;">관리자</span>' : ''}
+          </div>
+          <div class="tg-sub" style="font-size:11px;color:var(--text);margin-top:4px;font-family:monospace;">${c.id}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="toggleTgAdmin('${c.id.replace(/'/g,"\\'")}')"
+            style="padding:5px 12px;font-size:10px;letter-spacing:1px;border:1px solid ${c.is_admin ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.15)'};background:${c.is_admin ? 'rgba(201,168,76,0.15)' : 'transparent'};color:${c.is_admin ? 'var(--gold)' : 'var(--text-dim)'};cursor:pointer;">
+            ${c.is_admin ? '관리자 해제' : '관리자 지정'}
+          </button>
+          <button onclick="testTgChannel('${c.id.replace(/'/g,"\\'")}')"
+            style="padding:5px 12px;font-size:10px;letter-spacing:1px;border:1px solid rgba(201,168,76,0.3);background:transparent;color:var(--gold);cursor:pointer;">
+            테스트
+          </button>
+          <button class="btn-danger" onclick="deleteTgChannel('${c.id.replace(/'/g,"\\'")}')">삭제</button>
+        </div>
+      </div>`).join('');
+
+  const feedbacks = DB.get('feedbacks', []);
+  const fb = document.getElementById('feedback-list');
+  if (fb) fb.innerHTML = feedbacks.length === 0
+    ? '<p style="color:var(--text-dim);font-size:13px;letter-spacing:1px;">수집된 피드백이 없습니다.</p>'
+    : `<table class="data-table"><tr><th>#</th><th>참조번호</th><th>내용</th><th>수신일시</th></tr>
+      ${feedbacks.map(f => `<tr><td>${f.id}</td><td>#${f.ref_id}</td><td>${f.text}</td><td>${new Date(f.timestamp).toLocaleString('ko-KR')}</td></tr>`).join('')}
+      </table>`;
+}
+
+// 메뉴 추가 폼의 채널 드롭다운 갱신
+function refreshMenuTgSelects() {
+  const channels = DB.get('tg_channels', []);
+  const opts = '<option value="">전체 채널로 전송 (기본)</option>'
+    + channels.map(c => `<option value="${c.id}">${c.name} (${c.id})</option>`).join('');
+  const sel = document.getElementById('new-menu-tg');
+  if (sel) sel.innerHTML = opts;
+}
+
+// Links
+function addLink() {
+  const title = document.getElementById('new-link-title').value.trim();
+  const url = document.getElementById('new-link-url').value.trim();
+  const icon = document.getElementById('new-link-icon').value.trim() || '🌐';
+  const badge = document.getElementById('new-link-badge').value.trim();
+  if (!title || !url) { showToast('이름과 URL을 입력하세요.', 'error'); return; }
+  const links = DB.get('links', []);
+  links.push({ id: Date.now(), title, url, icon, badge, visible: true });
+  DB.set('links', links);
+  ['new-link-title','new-link-url','new-link-icon','new-link-badge'].forEach(id => document.getElementById(id).value = '');
+  renderLinksAdmin();
+  showToast('링크가 추가되었습니다.', 'gold');
+}
+
+function toggleLink(id) {
+  const links = DB.get('links', []);
+  const l = links.find(l => l.id === id);
+  if (l) l.visible = !l.visible;
+  DB.set('links', links);
+  renderLinksAdmin();
+}
+
+function deleteLink(id) {
+  let links = DB.get('links', []);
+  links = links.filter(l => l.id !== id);
+  DB.set('links', links);
+  renderLinksAdmin();
+  showToast('링크가 삭제되었습니다.');
+}
+
+function renderLinksAdmin() {
+  const links = DB.get('links', []);
+  const el = document.getElementById('links-admin-list');
+  if (!el) return;
+  el.innerHTML = links.length === 0 ? '<p style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px;">등록된 링크가 없습니다.</p>' :
+    links.map(l => `
+      <div class="menu-item" style="flex-direction:column;align-items:stretch;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="menu-item-info">
+            <div class="menu-item-name">${l.icon} ${l.title} ${l.badge ? `<span style="font-size:9px;color:var(--gold);border:1px solid var(--gold-dark);padding:1px 6px;">${l.badge}</span>` : ''}</div>
+            <div class="menu-item-url">${l.url}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <label class="toggle-switch">
+              <input type="checkbox" ${l.visible ? 'checked' : ''} onchange="toggleLink(${l.id})">
+              <span class="toggle-slider"></span>
+            </label>
+            <button class="btn-danger" onclick="deleteLink(${l.id})">삭제</button>
+          </div>
+        </div>
+        <!-- 카드 썸네일 이미지 -->
+        <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">카드 썸네일 이미지 (미리보기 영역)</div>
+          ${l.thumb_img ? `<img src="${l.thumb_img}" style="width:100%;max-height:100px;object-fit:cover;object-position:top;margin-bottom:8px;border:1px solid rgba(201,168,76,0.2);">` : ''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input id="link-thumb-url-${l.id}" type="text" placeholder="썸네일 이미지 URL"
+              style="flex:1;min-width:160px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;"
+              value="${l.thumb_img && !l.thumb_img.startsWith('data:') ? l.thumb_img : ''}">
+            <button onclick="saveLinkThumbUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL저장</button>
+            <label style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">
+              파일선택
+              <input type="file" accept="image/*" style="display:none;" onchange="loadLinkThumb(${l.id},this)">
+            </label>
+            ${l.thumb_img ? `<button onclick="deleteLinkThumb(${l.id})" style="padding:6px 10px;background:rgba(180,50,50,0.2);border:1px solid rgba(180,50,50,0.4);color:#e88;font-size:10px;cursor:pointer;">삭제</button>` : ''}
+          </div>
+        </div>
+        <div style="padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:4px;">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">예약문의 안내 자료 (이 카드 전용)</div>
+          ${l.res_img ? `
+            <div style="margin-bottom:8px;">
+              ${l.res_img_type === 'pdf'
+                ? `<embed src="${l.res_img}" type="application/pdf" style="width:100%;height:120px;border:1px solid rgba(201,168,76,0.2);">`
+                : `<img src="${l.res_img}" style="max-width:100%;max-height:120px;border:1px solid rgba(201,168,76,0.2);cursor:zoom-in;" onclick="window.open(this.src,'_blank')">`
+              }
+            </div>` : ''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input id="link-file-url-${l.id}" type="text" placeholder="이미지/PDF URL 직접 입력"
+              style="flex:1;min-width:160px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;"
+              value="${l.res_img && !l.res_img.startsWith('data:') ? l.res_img : ''}">
+            <button onclick="saveLinkFileUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL저장</button>
+            <label style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">
+              파일선택
+              <input type="file" accept="image/*,application/pdf" style="display:none;" onchange="loadLinkFile(${l.id},this)">
+            </label>
+            ${l.res_img ? `<button onclick="deleteLinkFile(${l.id})" style="padding:6px 10px;background:rgba(180,50,50,0.2);border:1px solid rgba(180,50,50,0.4);color:#e88;font-size:10px;cursor:pointer;">삭제</button>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+}
+
+function saveLinkFileUrl(id) {
+  const input = document.getElementById('link-file-url-' + id);
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) { showToast('URL을 입력하세요.', 'error'); return; }
+  const ext = url.split('?')[0].split('.').pop().toLowerCase();
+  const fileType = ext === 'pdf' ? 'pdf' : 'image';
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  l.res_img = url;
+  l.res_img_type = fileType;
+  DB.set('links', links);
+  renderLinksAdmin();
+  showToast('카드 안내 자료 URL이 저장되었습니다.', 'gold');
+}
+
+function loadLinkFile(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('파일은 5MB 이하만 가능합니다.', 'error'); return; }
+  const fileType = file.type === 'application/pdf' ? 'pdf' : 'image';
+  const reader = new FileReader();
+  reader.onload = e => {
+    const links = DB.get('links', []);
+    const l = links.find(x => x.id === id);
+    if (!l) return;
+    l.res_img = e.target.result;
+    l.res_img_type = fileType;
+    DB.set('links', links);
+    renderLinksAdmin();
+    showToast('카드 안내 자료가 업로드되었습니다.', 'gold');
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteLinkFile(id) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  delete l.res_img;
+  delete l.res_img_type;
+  DB.set('links', links);
+  renderLinksAdmin();
+  showToast('카드 안내 자료가 삭제되었습니다.');
+}
+
+function saveLinkThumbUrl(id) {
+  const input = document.getElementById('link-thumb-url-' + id);
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) { showToast('URL을 입력하세요.', 'error'); return; }
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  l.thumb_img = url;
+  DB.set('links', links);
+  renderLinksAdmin();
+  renderLinks();
+  showToast('썸네일이 저장되었습니다.', 'gold');
+}
+
+function loadLinkThumb(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { showToast('이미지는 3MB 이하만 가능합니다.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const links = DB.get('links', []);
+    const l = links.find(x => x.id === id);
+    if (!l) return;
+    l.thumb_img = e.target.result;
+    DB.set('links', links);
+    renderLinksAdmin();
+    renderLinks();
+    showToast('썸네일이 업로드되었습니다.', 'gold');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function loadLivePreview(iframe, url) {
+  if (!url) return;
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`
+  ];
+  for (const proxyUrl of proxies) {
+    try {
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      let html = await res.text();
+      // base 태그 주입으로 상대경로 자산 로드
+      const origin = new URL(url).origin;
+      html = html.replace(/<head([^>]*)>/i, `<head$1><base href="${url}"><style>body{overflow:hidden!important;pointer-events:none;}</style>`);
+      const blob = new Blob([html], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
+      iframe.src = blobUrl;
+      return;
+    } catch(e) { /* 다음 프록시 시도 */ }
+  }
+  // 모든 프록시 실패 → 파비콘 플레이스홀더
+  iframe.style.display = 'none';
+  const fb = iframe.closest('.link-card-preview')?.querySelector('.preview-fallback');
+  if (fb) fb.style.display = 'flex';
+}
+
+function linkThumbFallback(img) {
+  try {
+    const list = JSON.parse(img.dataset.fallbacks || '[]');
+    const idx = parseInt(img.dataset.fallbackIdx || '0');
+    if (idx < list.length) {
+      img.dataset.fallbackIdx = idx + 1;
+      img.src = list[idx];
+    } else {
+      // 모든 서비스 실패 → 파비콘 플레이스홀더 표시
+      img.style.display = 'none';
+      const fb = img.nextElementSibling;
+      if (fb) fb.style.display = 'flex';
+    }
+  } catch(e) {
+    img.style.display = 'none';
+    const fb = img.nextElementSibling;
+    if (fb) fb.style.display = 'flex';
+  }
+}
+
+function deleteLinkThumb(id) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  delete l.thumb_img;
+  DB.set('links', links);
+  renderLinksAdmin();
+  renderLinks();
+  showToast('썸네일이 삭제되었습니다.');
+}
+
+// Menus
+function addMenu() {
+  const name = document.getElementById('new-menu-name').value.trim();
+  const url = document.getElementById('new-menu-url').value.trim();
+  const payment = document.getElementById('new-menu-payment').checked;
+  const tg_channel = document.getElementById('new-menu-tg').value;
+  if (!name) { showToast('메뉴 이름을 입력하세요.', 'error'); return; }
+  const menus = DB.get('menus', []);
+  menus.push({ id: Date.now(), name, url, payment, tg_channel, visible: true });
+  DB.set('menus', menus);
+  document.getElementById('new-menu-name').value = '';
+  document.getElementById('new-menu-url').value = '';
+  document.getElementById('new-menu-payment').checked = false;
+  document.getElementById('new-menu-tg').value = '';
+  renderMenusAdmin();
+  showToast('메뉴가 추가되었습니다.', 'gold');
+}
+
+function toggleMenu(id) {
+  const menus = DB.get('menus', []);
+  const m = menus.find(m => m.id === id);
+  if (m) m.visible = !m.visible;
+  DB.set('menus', menus);
+  renderMenusAdmin();
+}
+
+function setMenuTgChannel(id, chId) {
+  const menus = DB.get('menus', []);
+  const m = menus.find(m => m.id === id);
+  if (m) m.tg_channel = chId;
+  DB.set('menus', menus);
+  showToast('채널이 저장되었습니다.', 'gold');
+}
+
+function deleteMenu(id) {
+  let menus = DB.get('menus', []);
+  menus = menus.filter(m => m.id !== id);
+  DB.set('menus', menus);
+  renderMenusAdmin();
+  showToast('메뉴가 삭제되었습니다.');
+}
+
+function renderMenusAdmin() {
+  const menus = DB.get('menus', []);
+  const channels = DB.get('tg_channels', []);
+  const el = document.getElementById('menus-admin-list');
+  if (!el) return;
+
+  const chOpts = '<option value="">전체 채널 (기본)</option>'
+    + channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+  el.innerHTML = menus.length === 0
+    ? '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:20px;letter-spacing:1px;">등록된 메뉴가 없습니다.</p>'
+    : menus.map(m => {
+        const assignedCh = channels.find(c => c.id === m.tg_channel);
+        return `
+        <div class="menu-item" style="flex-wrap:wrap;gap:12px;">
+          <div class="menu-item-info">
+            <div class="menu-item-name">
+              ${m.name}
+              ${m.payment ? '<span style="font-size:10px;color:var(--gold);margin-left:8px;">💳 결제</span>' : ''}
+            </div>
+            <div class="menu-item-url">${m.url || '(URL 없음)'}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:5px;text-transform:uppercase;">전송 채널</div>
+              <select class="form-select" style="padding:7px 12px;font-size:11px;min-width:160px;"
+                onchange="setMenuTgChannel(${m.id}, this.value)">
+                ${chOpts.replace(`value="${m.tg_channel || ''}"`, `value="${m.tg_channel || ''}" selected`)}
+              </select>
+            </div>
+            <label class="toggle-switch" style="margin-top:18px;">
+              <input type="checkbox" ${m.visible ? 'checked' : ''} onchange="toggleMenu(${m.id})">
+              <span class="toggle-slider"></span>
+            </label>
+            <button class="btn-danger" style="margin-top:18px;" onclick="deleteMenu(${m.id})">삭제</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  refreshMenuTgSelects();
+}
+
+// Reservations
+function renderReservationsAdmin(filter = {}) {
+  let res = DB.get('reservations', []);
+  if (filter.org) res = res.filter(r => r.org === filter.org);
+  if (filter.tg) res = res.filter(r => r.tg_status === filter.tg);
+
+  // Filter org dropdown
+  const orgs = [...new Set(DB.get('reservations', []).map(r => r.org))];
+  const orgSel = document.getElementById('filter-org');
+  if (orgSel) {
+    orgSel.innerHTML = '<option value="">전체 단체</option>' + orgs.map(o => `<option value="${o}">${o}</option>`).join('');
+  }
+
+  const el = document.getElementById('reservation-table');
+  if (!el) return;
+  if (res.length === 0) { el.innerHTML = '<p style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px;">예약 데이터가 없습니다.</p>'; return; }
+  el.innerHTML = `<table class="data-table">
+    <tr><th>#ID</th><th>일시</th><th>단체명</th><th>예약자</th><th>일자</th><th>지역</th><th>인원</th><th>연락처</th><th>이메일</th><th>답변수단</th><th>전송</th></tr>
+    ${res.map(r => `<tr>
+      <td>#${r.id}</td>
+      <td>${new Date(r.timestamp).toLocaleString('ko-KR')}</td>
+      <td>${r.org}</td><td>${r.name}</td>
+      <td>${r.date_start}~${r.date_end}</td>
+      <td>${r.region}</td><td>${r.count}</td>
+      <td>${r.phone}</td><td>${r.email}</td>
+      <td>${r.reply_method}</td>
+      <td><span class="badge badge-${r.tg_status==='sent'?'success':r.tg_status==='failed'?'fail':'pending'}">${r.tg_status==='sent'?'전송완료':r.tg_status==='failed'?'실패':'대기'}</span></td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+function filterReservations() {
+  const org = document.getElementById('filter-org').value;
+  const tg = document.getElementById('filter-tg').value;
+  renderReservationsAdmin({ org, tg });
+}
+
+function exportCSV() {
+  const res = DB.get('reservations', []);
+  if (res.length === 0) { showToast('내보낼 데이터가 없습니다.', 'error'); return; }
+  const headers = ['ID','일시','단체명','예약자','시작일','종료일','지역','인원','연락처','이메일','답변수단','문의내용','전송상태','TG메시지ID'];
+  const rows = res.map(r => [r.id, new Date(r.timestamp).toLocaleString('ko-KR'),
+    r.org, r.name, r.date_start, r.date_end, r.region, r.count,
+    r.phone, r.email, r.reply_method, r.memo, r.tg_status, r.tg_id||'']);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vip_reservations_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// Form fields settings
+function renderFormFieldsAdmin() {
+  const fields = DB.get('form_fields', Object.keys(FIELD_DEFS));
+  const el = document.getElementById('form-fields-settings');
+  if (!el) return;
+  el.innerHTML = Object.entries(FIELD_DEFS).map(([k, def]) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid rgba(201,168,76,0.1);margin-bottom:8px;">
+      <span style="font-size:12px;color:var(--text);">${def.label}</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="ff-${k}" ${fields.includes(k) ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>`).join('');
+}
+
+function saveFormFields() {
+  const selected = Object.keys(FIELD_DEFS).filter(k => {
+    const el = document.getElementById('ff-'+k);
+    return el && el.checked;
+  });
+  DB.set('form_fields', selected);
+  renderReservationForm();
+  showToast('폼 항목이 저장되었습니다.', 'gold');
+}
+
+// Region options
+function renderRegionOptions() {
+  const opts = DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
+  const el = document.getElementById('region-options-list');
+  if (!el) return;
+  el.innerHTML = opts.map((o, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.1);margin-bottom:4px;">
+      <span style="font-size:12px;color:var(--text);">${o}</span>
+      <button onclick="deleteRegionOption(${i})" style="background:none;border:none;color:#e88;font-size:11px;cursor:pointer;padding:2px 6px;">✕</button>
+    </div>`).join('');
+}
+
+function addRegionOption() {
+  const input = document.getElementById('new-region-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const opts = DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
+  if (opts.includes(val)) { showToast('이미 존재하는 지역입니다.', 'error'); return; }
+  opts.push(val);
+  DB.set('region_options', opts);
+  input.value = '';
+  renderRegionOptions();
+  renderReservationForm();
+  showToast('지역이 추가되었습니다.', 'gold');
+}
+
+function deleteRegionOption(idx) {
+  const opts = DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
+  opts.splice(idx, 1);
+  DB.set('region_options', opts);
+  renderRegionOptions();
+  renderReservationForm();
+  showToast('지역이 삭제되었습니다.');
+}
+
+// Content
+function saveWelcomeText() {
+  const text = document.getElementById('admin-welcome-text').value;
+  DB.set('welcome_text', text);
+  document.getElementById('main-welcome-text').innerHTML = text.replace(/\n/g,'<br>');
+  showToast('텍스트가 저장되었습니다.', 'gold');
+}
+
+// ── 예약 폼 첨부파일 관리 (이미지 + PDF) ──────────
+function saveResImg(type) {
+  let src = '', fileType = '';
+  if (type === 'url') {
+    src = document.getElementById('admin-res-img-url').value.trim();
+    if (!src) { showToast('URL을 입력하세요.', 'error'); return; }
+    fileType = src.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image';
+  }
+  DB.set('reservation_img', src);
+  DB.set('reservation_img_type', fileType);
+  applyResImg();
+  renderAdminResImgPreview();
+  showToast('저장되었습니다.', 'gold');
+}
+
+function loadResImgFile(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const isPDF = file.type === 'application/pdf';
+
+  // 파일명 표시
+  const label = document.getElementById('upload-filename');
+  if (label) label.textContent = file.name;
+
+  // 크기 제한 안내 (5MB 초과 시 경고)
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('파일이 5MB를 초과합니다. URL 방식을 권장합니다.', 'error');
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    try {
+      DB.set('reservation_img', src);
+      DB.set('reservation_img_type', isPDF ? 'pdf' : 'image');
+      applyResImg();
+      renderAdminResImgPreview();
+      showToast(isPDF ? 'PDF가 업로드되었습니다.' : '이미지가 업로드되었습니다.', 'gold');
+    } catch(err) {
+      showToast('파일이 너무 큽니다. URL을 직접 입력해 주세요.', 'error');
+    }
+  };
+  reader.onerror = () => showToast('파일을 읽을 수 없습니다.', 'error');
+  reader.readAsDataURL(file);
+}
+
+function deleteResImg() {
+  DB.set('reservation_img', '');
+  DB.set('reservation_img_type', '');
+  applyResImg();
+  renderAdminResImgPreview();
+  const urlInput = document.getElementById('admin-res-img-url');
+  if (urlInput) urlInput.value = '';
+  const label = document.getElementById('upload-filename');
+  if (label) label.textContent = '클릭하여 파일 선택';
+  const fileInput = document.getElementById('admin-res-img-file');
+  if (fileInput) fileInput.value = '';
+  showToast('첨부 파일이 삭제되었습니다.');
+}
+
+function applyResImg() {
+  // 우선순위: 카드 전용 → 입장코드 전용 → 전역
+  const cardSrc  = currentLinkObj?.res_img  || '';
+  const cardType = currentLinkObj?.res_img_type || '';
+  const codeSrc  = currentCodeObj?.res_img  || '';
+  const codeType = currentCodeObj?.res_img_type || '';
+  // 코드 로그인 상태면 글로벌 기본값 무시 (코드별 설정만 사용)
+  const globalSrc  = currentCodeObj ? '' : DB.get('reservation_img', '');
+  const globalType = currentCodeObj ? 'image' : DB.get('reservation_img_type', 'image');
+  const src      = cardSrc || codeSrc || globalSrc;
+  const fileType = cardSrc ? cardType : (codeSrc ? codeType : globalType);
+
+  const wrap = document.getElementById('reservation-file-wrap');
+  const img  = document.getElementById('reservation-img');
+  const pdf  = document.getElementById('reservation-pdf');
+  if (!wrap) return;
+
+  // 이전 Blob URL 해제
+  if (_pdfBlobUrl) { URL.revokeObjectURL(_pdfBlobUrl); _pdfBlobUrl = null; }
+
+  if (!src) {
+    wrap.style.display = 'none';
+    if (img) { img.src = ''; img.style.display = 'none'; }
+    if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
+    return;
+  }
+  wrap.style.display = 'block';
+  if (fileType === 'pdf') {
+    if (img) { img.src = ''; img.style.display = 'none'; }
+    if (pdf) {
+      // base64 data URL은 iframe에서 차단됨 → Blob URL로 변환
+      let displaySrc = src;
+      if (src.startsWith('data:')) {
+        try {
+          const base64 = src.split(',')[1];
+          const bin = atob(base64);
+          const arr = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+          const blob = new Blob([arr], { type: 'application/pdf' });
+          _pdfBlobUrl = URL.createObjectURL(blob);
+          displaySrc = _pdfBlobUrl;
+        } catch(e) { console.warn('PDF Blob 변환 실패', e); }
+      }
+      pdf.src = displaySrc;
+      pdf.style.display = 'block';
+    }
+  } else {
+    if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
+    if (img) { img.src = src; img.style.display = 'block'; }
+  }
+}
+
+function renderAdminResImgPreview() {
+  const src      = DB.get('reservation_img', '');
+  const fileType = DB.get('reservation_img_type', 'image');
+  const preview    = document.getElementById('admin-res-img-preview');
+  const imgThumb   = document.getElementById('admin-res-img-thumb');
+  const pdfThumb   = document.getElementById('admin-res-pdf-thumb');
+  const urlInput   = document.getElementById('admin-res-img-url');
+  if (!preview) return;
+
+  if (src) {
+    preview.style.display = 'block';
+    if (fileType === 'pdf') {
+      if (imgThumb) imgThumb.style.display = 'none';
+      if (pdfThumb) pdfThumb.style.display = 'block';
+    } else {
+      if (pdfThumb) pdfThumb.style.display = 'none';
+      if (imgThumb) { imgThumb.src = src; imgThumb.style.display = 'block'; }
+    }
+    if (urlInput && src.startsWith('http')) urlInput.value = src;
+  } else {
+    preview.style.display = 'none';
+    if (imgThumb) { imgThumb.src = ''; imgThumb.style.display = 'none'; }
+    if (pdfThumb) pdfThumb.style.display = 'none';
+  }
+}
+// ─────────────────────────────────────────────────
+
+function saveLogoText() {
+  const text = document.getElementById('admin-logo-text').value.trim();
+  DB.set('logo_text', text);
+  document.getElementById('header-logo-text').textContent = text;
+  showToast('로고 텍스트가 저장되었습니다.', 'gold');
+}
+
+function openWelcomeEdit() {
+  document.getElementById('inline-welcome-text').value = DB.get('welcome_text', '');
+  openModal('modal-welcome-edit');
+}
+
+function saveWelcomeTextInline() {
+  const text = document.getElementById('inline-welcome-text').value;
+  DB.set('welcome_text', text);
+  document.getElementById('main-welcome-text').innerHTML = text.replace(/\n/g,'<br>');
+  if (document.getElementById('admin-welcome-text'))
+    document.getElementById('admin-welcome-text').value = text;
+  closeModal('modal-welcome-edit');
+  showToast('텍스트가 저장되었습니다.', 'gold');
+}
+
+// Password
+function changeAdminPw() {
+  const old = document.getElementById('admin-old-pw').value;
+  const nw = document.getElementById('admin-new-pw').value;
+  const nw2 = document.getElementById('admin-new-pw2').value;
+  if (old !== DB.get('admin_pw')) { showToast('현재 비밀번호가 올바르지 않습니다.', 'error'); return; }
+  if (nw !== nw2) { showToast('새 비밀번호가 일치하지 않습니다.', 'error'); return; }
+  if (nw.length < 6) { showToast('비밀번호는 6자 이상이어야 합니다.', 'error'); return; }
+  DB.set('admin_pw', nw);
+  document.getElementById('admin-old-pw').value = '';
+  document.getElementById('admin-new-pw').value = '';
+  document.getElementById('admin-new-pw2').value = '';
+  showToast('비밀번호가 변경되었습니다.', 'gold');
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+  if (id === 'modal-reservation') applyResImg();
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+  if (id === 'modal-reservation') currentLinkObj = null; // 카드 컨텍스트 초기화
+}
+function openReservationFromCard(linkId) {
+  const links = DB.get('links', []);
+  currentLinkObj = links.find(l => l.id === linkId) || null;
+  openModal('modal-reservation');
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+// ============================================================
+// SCROLL ANIMATIONS
+// ============================================================
+function setupScrollAnimations() {
+  const els = document.querySelectorAll('.fade-in');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  els.forEach(el => obs.observe(el));
+}
+
+// ============================================================
+// ADMIN GHOST ICON — 우하단 근처 마우스 접근 시만 희미하게 표시
+// ============================================================
+(function() {
+  const ghost = document.getElementById('admin-ghost');
+  document.addEventListener('mousemove', e => {
+    const dx = window.innerWidth  - e.clientX;
+    const dy = window.innerHeight - e.clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    // 80px 이내 접근 시 서서히 나타남 (최대 opacity 0.25)
+    const op = dist < 80 ? Math.max(0, (80 - dist) / 80 * 0.25) : 0;
+    ghost.style.opacity = op;
+  });
+  // 터치 환경: 우하단 코너 3초 롱프레스로 표시
+  let touchTimer;
+  document.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    const dx = window.innerWidth  - t.clientX;
+    const dy = window.innerHeight - t.clientY;
+    if (dx < 60 && dy < 60) {
+      touchTimer = setTimeout(() => {
+        ghost.style.opacity = '0.4';
+        setTimeout(() => ghost.style.opacity = '0', 2000);
+      }, 1500);
+    }
+  });
+  document.addEventListener('touchend', () => clearTimeout(touchTimer));
+})();
+
+// iframe 스케일 재조정 (창 크기 변경 시)
+function rescaleIframes() {
+  document.querySelectorAll('.link-card-preview').forEach(preview => {
+    const iframe = preview.querySelector('iframe');
+    if (!iframe) return;
+    const w = preview.offsetWidth || 300;
+    const scale = w / 1280;
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.height = Math.ceil(190 / scale) + 'px';
+  });
+}
+window.addEventListener('resize', rescaleIframes);
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => {
+  setupScrollAnimations();
+});
+</script>
+</body>
+</html>
