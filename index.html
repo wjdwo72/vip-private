@@ -1130,9 +1130,9 @@
           <div id="res-gallery-track" style="overflow:hidden;border:1px solid rgba(201,168,76,0.2);">
             <div id="res-gallery-inner" style="display:flex;transition:transform 0.35s ease;"></div>
           </div>
-          <button id="res-prev" onclick="resGallery(-1)"
+          <button type="button" id="res-prev" onclick="event.preventDefault();resGallery(-1)"
             style="position:absolute;left:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);border:none;color:var(--gold);font-size:24px;padding:8px 12px;cursor:pointer;z-index:5;display:none;">‹</button>
-          <button id="res-next" onclick="resGallery(1)"
+          <button type="button" id="res-next" onclick="event.preventDefault();resGallery(1)"
             style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);border:none;color:var(--gold);font-size:24px;padding:8px 12px;cursor:pointer;z-index:5;display:none;">›</button>
           <div id="res-dots" style="text-align:center;padding:8px 0;display:none;"></div>
         </div>
@@ -2921,7 +2921,7 @@ function _renderResGallery() {
   track.ontouchend   = e => {
     if (track._touchX === null) return;
     const dx = e.changedTouches[0].clientX - track._touchX;
-    if (Math.abs(dx) > 40) resGallery(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 40) { e.preventDefault(); resGallery(dx < 0 ? 1 : -1); }
     track._touchX = null;
   };
 }
