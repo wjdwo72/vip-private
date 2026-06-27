@@ -1126,10 +1126,10 @@
         <!-- PDF 뷰어 (iframe 방식 / 모바일은 버튼) -->
         <iframe id="reservation-pdf" src="" frameborder="0"
           style="width:100%;height:500px;border:1px solid rgba(201,168,76,0.2);display:none;background:#1a1a1a;"></iframe>
-        <a id="reservation-pdf-btn" href="" target="_blank"
-          style="display:none;width:100%;padding:16px;text-align:center;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:13px;letter-spacing:2px;text-decoration:none;">
+        <button id="reservation-pdf-btn" onclick="openPdfMobile()"
+          style="display:none;width:100%;padding:16px;text-align:center;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:13px;letter-spacing:2px;cursor:pointer;">
           📄 안내자료 PDF 열기 →
-        </a>
+        </button>
       </div>
       <button type="submit" class="btn-primary">문의 전송</button>
     </form>
@@ -2836,9 +2836,9 @@ function applyResImg() {
       } catch(e) { console.warn('PDF Blob 변환 실패', e); }
     }
     if (isMobile) {
-      // 모바일: iframe 대신 버튼으로 PDF 열기
+      // 모바일: iframe 대신 버튼으로 PDF 다운로드/열기
       if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
-      if (pdfBtn) { pdfBtn.href = displaySrc; pdfBtn.style.display = 'block'; }
+      if (pdfBtn) { pdfBtn.dataset.src = displaySrc; pdfBtn.style.display = 'block'; }
     } else {
       if (pdfBtn) pdfBtn.style.display = 'none';
       if (pdf) { pdf.src = displaySrc; pdf.style.display = 'block'; }
@@ -2847,6 +2847,23 @@ function applyResImg() {
     if (pdf) { pdf.src = 'about:blank'; pdf.style.display = 'none'; }
     if (pdfBtn) pdfBtn.style.display = 'none';
     if (img) { img.src = src; img.style.display = 'block'; }
+  }
+}
+
+function openPdfMobile() {
+  const btn = document.getElementById('reservation-pdf-btn');
+  const src = btn?.dataset.src;
+  if (!src) return;
+  // blob URL이면 <a download> 트릭으로 다운로드 → 기기 PDF 앱에서 열림
+  if (src.startsWith('blob:')) {
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = '안내자료.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } else {
+    window.open(src, '_blank');
   }
 }
 
