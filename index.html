@@ -1000,6 +1000,34 @@
         </div>
         <button class="btn-primary" onclick="changeAdminPw()">비밀번호 변경</button>
       </div>
+
+      <!-- Firebase 클라우드 동기화 -->
+      <div class="admin-section" style="border:1px solid rgba(201,168,76,0.3);">
+        <div class="admin-section-title">☁ 클라우드 동기화 (Firebase)</div>
+        <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.8;margin-bottom:16px;">
+          모든 기기(PC·모바일)에서 같은 입장코드·예약DB·설정을 공유합니다.<br>
+          Firebase 무료 계정으로 설정하세요.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Firebase Database URL</label>
+          <input type="text" class="form-input" id="fb-url"
+            placeholder="https://your-project-default-rtdb.firebaseio.com"
+            value="${localStorage.getItem('vip_firebase_url')||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Database Secret (레거시 토큰)</label>
+          <input type="text" class="form-input" id="fb-secret"
+            placeholder="Secret 키 입력"
+            value="${localStorage.getItem('vip_firebase_secret')||''}">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+          <button class="btn-primary" onclick="saveFbConfig()">저장 및 연결</button>
+          <button class="btn-secondary" onclick="cloudPull()">↓ 클라우드에서 가져오기</button>
+          <button class="btn-secondary" onclick="cloudPush()">↑ 클라우드로 올리기</button>
+        </div>
+        <div id="cloud-status" style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-top:10px;"></div>
+      </div>
+
       <div class="admin-section">
         <div class="admin-section-title">예약 폼 항목 설정</div>
         <p style="font-size:11px;color:var(--text-dim);letter-spacing:1px;line-height:1.8;margin-bottom:16px;">
@@ -1106,12 +1134,74 @@
 
 <script>
 // ============================================================
-// DATA STORE (localStorage)
+// DATA STORE (localStorage + Firebase 클라우드 동기화)
 // ============================================================
+const CLOUD_KEYS = ['codes','menus','links','tg_channels','tg_token',
+  'admin_pw','welcome_text','logo_text','reservation_img','reservation_img_type',
+  'form_fields','region_options','reservations','feedbacks'];
+
+let _cloudTimer = null;
 const DB = {
   get(k, def) { try { return JSON.parse(localStorage.getItem('vip_'+k)) ?? def; } catch { return def; } },
-  set(k, v) { localStorage.setItem('vip_'+k, JSON.stringify(v)); }
+  setLocal(k, v) { localStorage.setItem('vip_'+k, JSON.stringify(v)); },
+  set(k, v) {
+    localStorage.setItem('vip_'+k, JSON.stringify(v));
+    // 클라우드 동기화 (1.5초 debounce)
+    clearTimeout(_cloudTimer);
+    _cloudTimer = setTimeout(cloudPush, 1500);
+  }
 };
+
+function _fbBase() {
+  const url = localStorage.getItem('vip_firebase_url') || '';
+  const secret = localStorage.getItem('vip_firebase_secret') || '';
+  return (url && secret) ? { url: url.replace(/\/+$/,''), secret } : null;
+}
+
+async function cloudPush() {
+  const fb = _fbBase(); if (!fb) return;
+  const data = {};
+  CLOUD_KEYS.forEach(k => { const v = DB.get(k, null); if (v !== null) data[k] = v; });
+  try {
+    const r = await fetch(`${fb.url}/vip.json?auth=${fb.secret}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const ok = r.ok;
+    document.getElementById('cloud-status') && (document.getElementById('cloud-status').textContent = ok ? '✓ 동기화 완료 ' + new Date().toLocaleTimeString('ko-KR') : '✗ 동기화 실패');
+  } catch(e) { console.warn('cloudPush 실패:', e); }
+}
+
+async function cloudPull(silent) {
+  const fb = _fbBase(); if (!fb) return false;
+  try {
+    const r = await fetch(`${fb.url}/vip.json?auth=${fb.secret}`);
+    if (!r.ok) { if (!silent) showToast('Firebase 연결 실패: ' + r.status, 'error'); return false; }
+    const data = await r.json();
+    if (!data || typeof data !== 'object') return false;
+    CLOUD_KEYS.forEach(k => { if (data[k] !== undefined) DB.setLocal(k, data[k]); });
+    if (!silent) showToast('클라우드에서 데이터를 불러왔습니다.', 'gold');
+    return true;
+  } catch(e) { if (!silent) showToast('네트워크 오류: ' + e.message, 'error'); return false; }
+}
+
+async function saveFbConfig() {
+  const url = document.getElementById('fb-url').value.trim();
+  const secret = document.getElementById('fb-secret').value.trim();
+  if (!url || !secret) { showToast('URL과 Secret을 모두 입력하세요.', 'error'); return; }
+  localStorage.setItem('vip_firebase_url', url);
+  localStorage.setItem('vip_firebase_secret', secret);
+  showToast('설정 저장 중...', 'gold');
+  const ok = await cloudPull(true);
+  if (ok) {
+    showToast('Firebase 연결 성공! 데이터를 불러왔습니다.', 'gold');
+    renderAdmin(); renderMain && renderMain();
+  } else {
+    // 연결 실패 시 현재 데이터 업로드 시도
+    await cloudPush();
+    showToast('Firebase에 현재 데이터를 업로드했습니다.', 'gold');
+  }
+}
 
 // Defaults
 function initDefaults() {
@@ -1211,6 +1301,12 @@ function animateParticles() {
   requestAnimationFrame(animateParticles);
 }
 animateParticles();
+
+// 페이지 로드시 Firebase에서 데이터 동기화
+(async () => {
+  const ok = await cloudPull(true);
+  if (ok) { try { renderAdmin && renderAdmin(); } catch(e){} }
+})();
 
 // ============================================================
 // ENTRY
