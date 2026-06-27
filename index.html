@@ -1648,11 +1648,7 @@ const FIELD_DEFS = {
   service: { label: '문의 메뉴 선택', type: 'service', placeholder: '' },
   name: { label: '예약자명', type: 'text', placeholder: '홍길동' },
   dates: { label: '사용일자', type: 'dates', placeholder: '' },
-  region: { label: '지역', type: 'select', options: () => {
-    if (currentLinkObj && currentLinkObj.sub_categories && currentLinkObj.sub_categories.length)
-      return currentLinkObj.sub_categories;
-    return DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
-  }},
+  region: { label: '지역', type: 'region' },
   count: { label: '인원수', type: 'number', placeholder: '인원 수' },
   contact: { label: '연락처 / 이메일', type: 'contact', placeholder: '' },
   reply_method: { label: '답변 수단', type: 'radio', options: ['문자','카카오톡','전화'] },
@@ -1683,6 +1679,21 @@ function renderReservationForm() {
           onchange="const e=this.form.querySelector('[name=date_end]');if(e&&e.value<this.value){e.value=this.value;e.min=this.value;}this.min='${today}'">
         <input type="date" class="form-input" name="date_end" min="${today}" value="${today}" required>
       </div>`;
+    } else if (def.type === 'region') {
+      let regionOpts = _getRegionOpts();
+      // 카드별 sub_categories가 있으면 그걸 지역명으로 사용 (세부항목 없음)
+      if (currentLinkObj && currentLinkObj.sub_categories && currentLinkObj.sub_categories.length) {
+        regionOpts = currentLinkObj.sub_categories.map(s => ({name: s, items: []}));
+      }
+      html += `<select class="form-select" name="region" required onchange="onRegionChange(this)">
+        <option value="">선택하세요</option>
+        ${regionOpts.map(o => `<option value="${o.name}">${o.name}</option>`).join('')}
+      </select>
+      <div id="region-sub-wrap" style="display:none;margin-top:8px;">
+        <select class="form-select" name="region_sub">
+          <option value="">세부항목 선택</option>
+        </select>
+      </div>`;
     } else if (def.type === 'select') {
       const opts = typeof def.options === 'function' ? def.options() : def.options;
       html += `<select class="form-select" name="${f}" required>
@@ -1708,6 +1719,24 @@ function renderReservationForm() {
     group.innerHTML = html;
     container.appendChild(group);
   });
+}
+
+function onRegionChange(sel) {
+  const wrap = document.getElementById('region-sub-wrap');
+  if (!wrap) return;
+  const regionName = sel.value;
+  let regionOpts = _getRegionOpts();
+  if (currentLinkObj && currentLinkObj.sub_categories && currentLinkObj.sub_categories.length)
+    regionOpts = currentLinkObj.sub_categories.map(s => ({name: s, items: []}));
+  const found = regionOpts.find(o => o.name === regionName);
+  if (found && found.items && found.items.length) {
+    const subSel = wrap.querySelector('select');
+    subSel.innerHTML = `<option value="">세부항목 선택</option>` +
+      found.items.map(it => `<option value="${it}">${it}</option>`).join('');
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
 }
 
 async function submitReservation(e) {
@@ -2910,28 +2939,49 @@ function saveFormFields() {
   showToast('폼 항목이 저장되었습니다.', 'gold');
 }
 
-// Region options
+// Region options — {name, items:[]} 구조
+function _normalizeRegionOpts(raw) {
+  if (!raw || !raw.length) return [];
+  return raw.map(o => typeof o === 'string' ? {name: o, items: []} : o);
+}
+function _getRegionOpts() {
+  return _normalizeRegionOpts(DB.get('region_options', []));
+}
+
 function renderRegionOptions() {
-  const opts = DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
+  const opts = _getRegionOpts();
   const el = document.getElementById('region-options-list');
   if (!el) return;
-  el.style.display = 'flex';
-  el.style.flexWrap = 'wrap';
-  el.style.gap = '8px';
+  el.style.display = 'block';
   el.innerHTML = opts.map((o, i) => `
-    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:12px;letter-spacing:1px;border-radius:2px;">
-      ${o}
-      <button type="button" onclick="deleteRegionOption(${i})" style="background:none;border:none;color:#e88;font-size:13px;cursor:pointer;padding:0;line-height:1;">✕</button>
-    </span>`).join('');
+    <div style="margin-bottom:8px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.04);padding:10px 12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:12px;color:var(--gold);letter-spacing:1px;flex:1;">${o.name}</span>
+        <button type="button" onclick="deleteRegionOption(${i})" style="background:none;border:none;color:#e88;font-size:12px;cursor:pointer;">✕ 삭제</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
+        ${(o.items||[]).map((item, j) => `
+          <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--text);font-size:11px;">
+            ${item}
+            <button type="button" onclick="deleteRegionSubItem(${i},${j})" style="background:none;border:none;color:#e88;font-size:11px;cursor:pointer;padding:0 0 0 2px;">✕</button>
+          </span>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <input id="sub-item-input-${i}" type="text" placeholder="세부항목 입력 (예: 디럭스 오션 2/4)"
+          style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:5px 8px;font-size:11px;"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addRegionSubItem(${i});}">
+        <button type="button" onclick="addRegionSubItem(${i})" style="padding:5px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:10px;cursor:pointer;">+ 추가</button>
+      </div>
+    </div>`).join('');
 }
 
 function addRegionOption() {
   const input = document.getElementById('new-region-input');
   const val = input.value.trim();
   if (!val) return;
-  const opts = DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
-  if (opts.includes(val)) { showToast('이미 존재하는 지역입니다.', 'error'); return; }
-  opts.push(val);
+  const opts = _getRegionOpts();
+  if (opts.find(o => o.name === val)) { showToast('이미 존재하는 지역입니다.', 'error'); return; }
+  opts.push({name: val, items: []});
   DB.set('region_options', opts);
   input.value = '';
   renderRegionOptions();
@@ -2939,8 +2989,30 @@ function addRegionOption() {
   showToast('지역이 추가되었습니다.', 'gold');
 }
 
+function addRegionSubItem(idx) {
+  const input = document.getElementById('sub-item-input-' + idx);
+  const val = input?.value.trim();
+  if (!val) return;
+  const opts = _getRegionOpts();
+  if (!opts[idx]) return;
+  opts[idx].items = [...(opts[idx].items||[]), val];
+  DB.set('region_options', opts);
+  input.value = '';
+  renderRegionOptions();
+  showToast('세부항목 추가됨', 'gold');
+}
+
+function deleteRegionSubItem(idx, subIdx) {
+  const opts = _getRegionOpts();
+  if (!opts[idx]) return;
+  opts[idx].items = (opts[idx].items||[]).filter((_,i) => i !== subIdx);
+  DB.set('region_options', opts);
+  renderRegionOptions();
+  showToast('세부항목 삭제됨');
+}
+
 function deleteRegionOption(idx) {
-  const opts = DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
+  const opts = _getRegionOpts();
   opts.splice(idx, 1);
   DB.set('region_options', opts);
   renderRegionOptions();
