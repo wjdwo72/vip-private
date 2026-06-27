@@ -2915,11 +2915,14 @@ function renderRegionOptions() {
   const opts = DB.get('region_options', ['서울','경기','인천','부산','대구','광주','대전','기타']);
   const el = document.getElementById('region-options-list');
   if (!el) return;
+  el.style.display = 'flex';
+  el.style.flexWrap = 'wrap';
+  el.style.gap = '8px';
   el.innerHTML = opts.map((o, i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.1);margin-bottom:4px;">
-      <span style="font-size:12px;color:var(--text);">${o}</span>
-      <button onclick="deleteRegionOption(${i})" style="background:none;border:none;color:#e88;font-size:11px;cursor:pointer;padding:2px 6px;">✕</button>
-    </div>`).join('');
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:12px;letter-spacing:1px;border-radius:2px;">
+      ${o}
+      <button type="button" onclick="deleteRegionOption(${i})" style="background:none;border:none;color:#e88;font-size:13px;cursor:pointer;padding:0;line-height:1;">✕</button>
+    </span>`).join('');
 }
 
 function addRegionOption() {
