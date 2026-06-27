@@ -248,6 +248,12 @@
     width: 100%; height: 100%; object-fit: cover; object-position: top;
     border: none; display: block;
   }
+  .card-slideshow { position:relative; width:100%; height:100%; overflow:hidden; }
+  .card-slideshow img {
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top;
+    opacity:0; transition:opacity 0.8s ease;
+  }
+  .card-slideshow img.active { opacity:1; }
   .link-card-preview iframe.live-preview {
     width: 1280px; height: 760px; border: none; pointer-events: none;
     transform-origin: top left; transform: scale(0.234375);
@@ -1454,14 +1460,14 @@ function renderLinks() {
       // 썸네일 미리보기 카드 (커스텀 이미지 우선, 없으면 파비콘 + 도메인 플레이스홀더)
       card.className = 'link-card fade-in';
       card.href = l.url; card.target = '_blank';
-      // 커스텀 썸네일 있으면 이미지, 없으면 라이브 프록시 미리보기
-      const previewContent = l.thumb_img
-        ? `<img src="${l.thumb_img}" class="preview-shot" alt="${l.title}"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-           <div class="preview-fallback" style="display:none;">
-             <img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" style="width:40px;height:40px;opacity:0.6;" onerror="this.style.display='none'">
-             <span style="font-size:11px;color:var(--text-dim);letter-spacing:1px;">${domain}</span>
-           </div>`
+      // 커스텀 썸네일 있으면 이미지(슬라이드), 없으면 라이브 프록시 미리보기
+      const thumbImgs = (l.thumb_imgs && l.thumb_imgs.length) ? l.thumb_imgs : (l.thumb_img ? [l.thumb_img] : []);
+      const previewContent = thumbImgs.length
+        ? (thumbImgs.length === 1
+          ? `<img src="${thumbImgs[0]}" class="preview-shot" alt="${l.title}" onerror="this.style.display='none';">`
+          : `<div class="card-slideshow" data-id="${l.id}">
+               ${thumbImgs.map((src,i) => `<img src="${src}" class="${i===0?'active':''}" onerror="this.style.display='none';">`).join('')}
+             </div>`)
         : `<iframe class="live-preview" data-src="${l.url}" src="about:blank"></iframe>
            <div class="link-card-preview-overlay"></div>
            <div class="preview-fallback" style="display:none;position:absolute;inset:0;">
@@ -1499,6 +1505,18 @@ function renderLinks() {
         ${resBtn}`;
     }
     grid.appendChild(card);
+  });
+
+  // 슬라이드쇼 자동 전환
+  grid.querySelectorAll('.card-slideshow').forEach(ss => {
+    const imgs = ss.querySelectorAll('img');
+    if (imgs.length < 2) return;
+    let idx = 0;
+    setInterval(() => {
+      imgs[idx].classList.remove('active');
+      idx = (idx + 1) % imgs.length;
+      imgs[idx].classList.add('active');
+    }, 3000);
   });
 
   // 라이브 프리뷰 iframe 로드 + 스케일
@@ -2293,20 +2311,24 @@ function renderLinksAdmin() {
             <button class="btn-danger" onclick="deleteLink(${l.id})">삭제</button>
           </div>
         </div>
-        <!-- 카드 썸네일 이미지 -->
+        <!-- 카드 썸네일 이미지 (다중 슬라이드) -->
         <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
-          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">카드 썸네일 이미지 (미리보기 영역)</div>
-          ${l.thumb_img ? `<img src="${l.thumb_img}" style="width:100%;max-height:100px;object-fit:cover;object-position:top;margin-bottom:8px;border:1px solid rgba(201,168,76,0.2);">` : ''}
+          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">카드 썸네일 이미지 (슬라이드 — 여러 장 추가 가능)</div>
+          <div id="thumb-list-${l.id}" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+            ${((l.thumb_imgs && l.thumb_imgs.length) ? l.thumb_imgs : (l.thumb_img ? [l.thumb_img] : [])).map((src,i) => `
+              <div style="position:relative;width:80px;height:60px;border:1px solid rgba(201,168,76,0.3);">
+                <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+                <button onclick="deleteLinkThumbAt(${l.id},${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.7);border:none;color:#e88;font-size:10px;cursor:pointer;padding:1px 4px;">✕</button>
+              </div>`).join('')}
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <input id="link-thumb-url-${l.id}" type="text" placeholder="썸네일 이미지 URL"
-              style="flex:1;min-width:160px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;"
-              value="${l.thumb_img && !l.thumb_img.startsWith('data:') ? l.thumb_img : ''}">
-            <button onclick="saveLinkThumbUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL저장</button>
+            <input id="link-thumb-url-${l.id}" type="text" placeholder="이미지 URL 입력 후 추가"
+              style="flex:1;min-width:160px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;" value="">
+            <button onclick="addLinkThumbUrl(${l.id})" style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">URL추가</button>
             <label style="padding:6px 12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">
-              파일선택
-              <input type="file" accept="image/*" style="display:none;" onchange="loadLinkThumb(${l.id},this)">
+              파일추가
+              <input type="file" accept="image/*" style="display:none;" onchange="addLinkThumbFile(${l.id},this)">
             </label>
-            ${l.thumb_img ? `<button onclick="deleteLinkThumb(${l.id})" style="padding:6px 10px;background:rgba(180,50,50,0.2);border:1px solid rgba(180,50,50,0.4);color:#e88;font-size:10px;cursor:pointer;">삭제</button>` : ''}
           </div>
         </div>
         <div style="padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:4px;">
@@ -2380,7 +2402,13 @@ function deleteLinkFile(id) {
   showToast('카드 안내 자료가 삭제되었습니다.');
 }
 
-function saveLinkThumbUrl(id) {
+function _getThumbImgs(l) {
+  if (l.thumb_imgs && l.thumb_imgs.length) return l.thumb_imgs;
+  if (l.thumb_img) return [l.thumb_img];
+  return [];
+}
+
+function addLinkThumbUrl(id) {
   const input = document.getElementById('link-thumb-url-' + id);
   if (!input) return;
   const url = input.value.trim();
@@ -2388,30 +2416,48 @@ function saveLinkThumbUrl(id) {
   const links = DB.get('links', []);
   const l = links.find(x => x.id === id);
   if (!l) return;
-  l.thumb_img = url;
+  l.thumb_imgs = [..._getThumbImgs(l), url];
+  delete l.thumb_img;
   DB.set('links', links);
-  renderLinksAdmin();
-  renderLinks();
-  showToast('썸네일이 저장되었습니다.', 'gold');
+  input.value = '';
+  renderLinksAdmin(); renderLinks();
+  showToast('썸네일 추가됨', 'gold');
 }
 
-function loadLinkThumb(id, input) {
+function addLinkThumbFile(id, input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 3 * 1024 * 1024) { showToast('이미지는 3MB 이하만 가능합니다.', 'error'); return; }
+  if (file.size > 2 * 1024 * 1024) { showToast('이미지는 2MB 이하만 가능합니다.', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
     const links = DB.get('links', []);
     const l = links.find(x => x.id === id);
     if (!l) return;
-    l.thumb_img = e.target.result;
+    l.thumb_imgs = [..._getThumbImgs(l), e.target.result];
+    delete l.thumb_img;
     DB.set('links', links);
-    renderLinksAdmin();
-    renderLinks();
-    showToast('썸네일이 업로드되었습니다.', 'gold');
+    renderLinksAdmin(); renderLinks();
+    showToast('썸네일 추가됨', 'gold');
   };
   reader.readAsDataURL(file);
 }
+
+function deleteLinkThumbAt(id, idx) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  const imgs = _getThumbImgs(l);
+  imgs.splice(idx, 1);
+  l.thumb_imgs = imgs;
+  delete l.thumb_img;
+  DB.set('links', links);
+  renderLinksAdmin(); renderLinks();
+  showToast('이미지 삭제됨');
+}
+
+function saveLinkThumbUrl(id) { addLinkThumbUrl(id); }
+
+function loadLinkThumb(id, input) { addLinkThumbFile(id, input); }
 
 async function loadLivePreview(iframe, url) {
   if (!url) return;
