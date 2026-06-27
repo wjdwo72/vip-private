@@ -2192,7 +2192,7 @@ function renderStats() {
     ${res.slice(0,5).map(r => `<tr>
       <td>#${r.id}</td><td>${r.org}</td><td>${r.name}</td>
       <td>${r.phone !== '-' ? r.phone : r.email}</td>
-      <td>${r.date_start}</td><td>${r.region}</td>
+      <td>${r.date_start}</td><td>${r.region}${r.region_sub ? '<br><span style="font-size:10px;color:var(--text-dim);">└ ' + r.region_sub + '</span>' : ''}</td>
       <td><span class="badge badge-${r.tg_status==='sent'?'success':r.tg_status==='failed'?'fail':'pending'}">${r.tg_status==='sent'?'전송완료':r.tg_status==='failed'?'실패':'대기'}</span></td>
     </tr>`).join('')}
   </table>`;
@@ -2853,7 +2853,7 @@ function renderReservationsAdmin(filter = {}) {
       <td>${new Date(r.timestamp).toLocaleString('ko-KR')}</td>
       <td>${r.org}</td><td>${r.name}</td>
       <td>${r.date_start}~${r.date_end}</td>
-      <td>${r.region}</td><td>${r.count}</td>
+      <td>${r.region}${r.region_sub ? '<br><span style="font-size:10px;color:var(--text-dim);">└ ' + r.region_sub + '</span>' : ''}</td><td>${r.count}</td>
       <td>${r.phone}</td><td>${r.email}</td>
       <td>${r.reply_method}</td>
       <td><span class="badge badge-${r.tg_status==='sent'?'success':r.tg_status==='failed'?'fail':'pending'}">${r.tg_status==='sent'?'전송완료':r.tg_status==='failed'?'실패':'대기'}</span></td>
