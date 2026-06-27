@@ -1238,7 +1238,32 @@ async function cloudPull(silent) {
       const remoteTs = data._sync_ts || 0;
       if (localTs >= remoteTs && localTs > 0) return false; // 로컬이 최신
     }
-    CLOUD_KEYS.forEach(k => { if (data[k] !== undefined) DB.setLocal(k, data[k]); });
+    const IMG_FIELDS = ['res_imgs','thumb_imgs','res_img','thumb_img'];
+    CLOUD_KEYS.forEach(k => {
+      if (data[k] === undefined) return;
+      if (k === 'links' || k === 'codes') {
+        // 이미지 필드는 로컬 값 유지 (base64는 로컬에만 저장)
+        const local = DB.get(k, []);
+        const merged = data[k].map(remote => {
+          const loc = local.find(x => x.id === remote.id);
+          if (!loc) return remote;
+          const out = {...remote};
+          IMG_FIELDS.forEach(f => {
+            const lv = loc[f];
+            const rv = remote[f];
+            // 배열: 로컬에 실제 데이터 있으면 유지
+            if (Array.isArray(lv) && lv.some(s => s && s.startsWith('data:'))) out[f] = lv;
+            else if (Array.isArray(rv) && rv.some(s => s && s.startsWith('data:'))) out[f] = rv;
+            // 단일값: 로컬 base64 유지
+            else if (typeof lv === 'string' && lv.startsWith('data:')) out[f] = lv;
+          });
+          return out;
+        });
+        DB.setLocal(k, merged);
+      } else {
+        DB.setLocal(k, data[k]);
+      }
+    });
     if (data._sync_ts) localStorage.setItem('vip__sync_ts', String(data._sync_ts));
     if (!silent) showToast('클라우드에서 데이터를 불러왔습니다.', 'gold');
     return true;
