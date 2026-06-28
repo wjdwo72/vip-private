@@ -2558,6 +2558,19 @@ function renderLinksAdmin() {
             <button class="btn-danger" onclick="deleteLink(${l.id})">삭제</button>
           </div>
         </div>
+        <!-- 결제 설정 -->
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.18);border-radius:4px;margin-bottom:4px;">
+          <span style="font-size:9px;letter-spacing:2px;color:var(--gold);">💳 결제</span>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="link-pay-on-${l.id}" ${l.payment_enabled ? 'checked' : ''}
+              style="width:13px;height:13px;accent-color:var(--gold);">
+            <span style="font-size:11px;color:var(--text);">ON</span>
+          </label>
+          <input type="text" id="link-pay-price-${l.id}" value="${l.payment_price||''}"
+            placeholder="가격 표시 (예: 75,000원~)"
+            style="flex:1;min-width:140px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:5px 9px;font-size:11px;">
+          <button type="button" onclick="saveLinkPayment(${l.id})" style="padding:5px 14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;white-space:nowrap;">저장</button>
+        </div>
         <!-- 카드 썸네일 이미지 (다중 슬라이드) -->
         <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
           <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">카드 썸네일 이미지 (슬라이드 — 여러 장 추가 가능)</div>
@@ -2576,24 +2589,6 @@ function renderLinksAdmin() {
               파일추가(여러장)
               <input type="file" accept="image/*" multiple style="display:none;" onchange="addLinkThumbFile(${l.id},this)">
             </label>
-          </div>
-        </div>
-        <!-- 결제 설정 -->
-        <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
-          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:10px;">결제 설정</div>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input type="checkbox" id="link-pay-on-${l.id}" ${l.payment_enabled ? 'checked' : ''}
-                style="width:14px;height:14px;accent-color:var(--gold);"
-                onchange="saveLinkPayment(${l.id})">
-              <span style="font-size:11px;color:var(--text);letter-spacing:1px;">결제 ON</span>
-            </label>
-            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:160px;">
-              <input type="text" id="link-pay-price-${l.id}" value="${l.payment_price||''}"
-                placeholder="가격 표시 (예: 75,000원~)"
-                style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:5px 9px;font-size:11px;">
-              <button type="button" onclick="saveLinkPayment(${l.id})" style="padding:5px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:10px;cursor:pointer;">저장</button>
-            </div>
           </div>
         </div>
         <!-- 링크 전용 예약 지역 -->
