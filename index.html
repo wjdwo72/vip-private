@@ -1798,11 +1798,24 @@ function onRegionChange(sel) {
   const found = regionOpts.find(o => o.name === regionName);
   if (found && found.items && found.items.length) {
     const subSel = wrap.querySelector('select');
+    const normItems = found.items.map(_normSubItem);
     subSel.innerHTML = `<option value="">세부항목 선택</option>` +
-      found.items.map(it => `<option value="${it}">${it}</option>`).join('');
+      normItems.map(it => `<option value="${it.name}" data-price="${it.price||''}">${it.name}${it.price ? ' ('+it.price+')' : ''}</option>`).join('');
+    subSel.onchange = () => onSubItemChange(subSel, normItems);
     wrap.style.display = 'block';
   } else {
     wrap.style.display = 'none';
+  }
+}
+
+function onSubItemChange(subSel, items) {
+  const selected = items.find(it => it.name === subSel.value);
+  if (!selected || !selected.price) return;
+  const pw = document.getElementById('res-payment-wrap');
+  const pp = document.getElementById('res-payment-price');
+  if (pw && pp) {
+    pp.textContent = selected.price;
+    pw.style.display = 'block';
   }
 }
 
@@ -3169,6 +3182,8 @@ function _getRegionOpts() {
   return _normalizeRegionOpts(DB.get('region_options', []));
 }
 
+function _normSubItem(item) { return typeof item === 'string' ? {name: item, price: ''} : item; }
+
 function renderRegionOptions() {
   const opts = _getRegionOpts();
   const el = document.getElementById('region-options-list');
@@ -3180,17 +3195,22 @@ function renderRegionOptions() {
         <span style="font-size:12px;color:var(--gold);letter-spacing:1px;flex:1;">${o.name}</span>
         <button type="button" onclick="deleteRegionOption(${i})" style="background:none;border:none;color:#e88;font-size:12px;cursor:pointer;">✕ 삭제</button>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-        ${(o.items||[]).map((item, j) => `
-          <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--text);font-size:11px;">
-            ${item}
-            <button type="button" onclick="deleteRegionSubItem(${i},${j})" style="background:none;border:none;color:#e88;font-size:11px;cursor:pointer;padding:0 0 0 2px;">✕</button>
-          </span>`).join('')}
+      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+        ${(o.items||[]).map(_normSubItem).map((item, j) => `
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="flex:1;padding:4px 10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:11px;">${item.name}</span>
+            <input type="text" value="${item.price||''}" placeholder="가격 (예: 75,000원~)"
+              style="width:140px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;"
+              onchange="updateRegionSubItemPrice(${i},${j},this.value)">
+            <button type="button" onclick="deleteRegionSubItem(${i},${j})" style="background:none;border:none;color:#e88;font-size:11px;cursor:pointer;padding:0 4px;">✕</button>
+          </div>`).join('')}
       </div>
       <div style="display:flex;gap:6px;">
-        <input id="sub-item-input-${i}" type="text" placeholder="세부항목 입력 (예: 디럭스 오션 2/4)"
-          style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:5px 8px;font-size:11px;"
+        <input id="sub-item-input-${i}" type="text" placeholder="세부항목명 (예: 디럭스 오션 2/4)"
+          style="flex:2;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:5px 8px;font-size:11px;"
           onkeydown="if(event.key==='Enter'){event.preventDefault();addRegionSubItem(${i});}">
+        <input id="sub-item-price-${i}" type="text" placeholder="가격"
+          style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:5px 8px;font-size:11px;">
         <button type="button" onclick="addRegionSubItem(${i})" style="padding:5px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:10px;cursor:pointer;">+ 추가</button>
       </div>
     </div>`).join('');
@@ -3211,16 +3231,25 @@ function addRegionOption() {
 }
 
 function addRegionSubItem(idx) {
-  const input = document.getElementById('sub-item-input-' + idx);
-  const val = input?.value.trim();
-  if (!val) return;
+  const nameEl  = document.getElementById('sub-item-input-' + idx);
+  const priceEl = document.getElementById('sub-item-price-' + idx);
+  const name = nameEl?.value.trim();
+  if (!name) return;
   const opts = _getRegionOpts();
   if (!opts[idx]) return;
-  opts[idx].items = [...(opts[idx].items||[]), val];
+  opts[idx].items = [...(opts[idx].items||[]).map(_normSubItem), {name, price: priceEl?.value.trim()||''}];
   DB.set('region_options', opts);
-  input.value = '';
+  nameEl.value = ''; if (priceEl) priceEl.value = '';
   renderRegionOptions();
   showToast('세부항목 추가됨', 'gold');
+}
+
+function updateRegionSubItemPrice(idx, subIdx, price) {
+  const opts = _getRegionOpts();
+  if (!opts[idx]) return;
+  opts[idx].items = (opts[idx].items||[]).map(_normSubItem);
+  if (opts[idx].items[subIdx]) opts[idx].items[subIdx].price = price;
+  DB.set('region_options', opts);
 }
 
 function deleteRegionSubItem(idx, subIdx) {
