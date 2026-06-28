@@ -1534,7 +1534,7 @@ function renderLinks() {
 
   // 전역 예약 버튼 표시 여부
   const resBar = document.getElementById('global-reservation-bar-wrap');
-  if (resBar) resBar.style.display = (currentCodeObj?.show_reservation === false) ? 'none' : 'block';
+  if (resBar) resBar.style.display = 'none';
 
   const links = allLinks.filter(l => {
     if (l.visible === false) return false;
@@ -1667,7 +1667,7 @@ const FIELD_DEFS = {
   service: { label: '문의 메뉴 선택', type: 'service', placeholder: '' },
   name: { label: '예약자명', type: 'text', placeholder: '홍길동' },
   dates: { label: '사용일자', type: 'dates', placeholder: '' },
-  region: { label: '지역', type: 'region' },
+  region: { label: '품명', type: 'region' },
   count: { label: '인원수', type: 'number', placeholder: '인원 수' },
   contact: { label: '연락처 / 이메일', type: 'contact', placeholder: '' },
   reply_method: { label: '답변 수단', type: 'radio', options: ['문자','카카오톡','전화'] },
