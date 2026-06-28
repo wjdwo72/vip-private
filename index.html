@@ -2173,6 +2173,7 @@ function renderContentCodeTexts() {
         <span style="font-family:'Courier New';font-size:15px;color:var(--gold);letter-spacing:3px;">${c.code}</span>
         <span style="font-size:12px;color:var(--text);letter-spacing:1px;">${c.org}</span>
         <span style="font-size:10px;color:var(--text-dim);margin-left:auto;">메뉴: ${c.menus || '전체'}</span>
+        <button class="btn-danger" style="padding:5px 14px;font-size:11px;" onclick="deleteCodeFromContent(${c.id})">삭제</button>
       </div>
 
       <!-- 전용 메인 텍스트 -->
@@ -2529,9 +2530,20 @@ function saveCodeText(id) {
 }
 
 function deleteCode(id) {
+  if (!confirm('이 입장코드를 삭제하시겠습니까?')) return;
   let codes = DB.get('codes', []);
   codes = codes.filter(c => c.id !== id);
   DB.set('codes', codes);
+  renderCodesAdmin();
+  showToast('코드가 삭제되었습니다.');
+}
+
+function deleteCodeFromContent(id) {
+  const codes = DB.get('codes', []);
+  const c = codes.find(x => x.id === id);
+  if (!confirm(`"${c?.code || id}" 코드를 삭제하시겠습니까?`)) return;
+  DB.set('codes', codes.filter(x => x.id !== id));
+  renderContentCodeTexts();
   renderCodesAdmin();
   showToast('코드가 삭제되었습니다.');
 }
