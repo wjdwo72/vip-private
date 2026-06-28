@@ -2061,18 +2061,29 @@ function renderContentCodeTexts() {
           }).join('')}
         </div>
 
-        <!-- 표시 링크 선택 -->
+        <!-- 표시 링크 선택 + 결제 설정 -->
         <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">
           표시할 링크 (체크 해제 시 해당 코드에서 숨김)
         </div>
-        <div id="clinks-${c.id}" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <div id="clinks-${c.id}" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
           ${DB.get('links',[]).filter(l=>l.visible!==false).map(l => {
             const checked = !c.visible_links || c.visible_links.includes(l.id);
-            return `<label style="display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(201,168,76,0.2);cursor:pointer;font-size:10px;color:var(--text);">
-              <input type="checkbox" value="${l.id}" ${checked ? 'checked' : ''}
-                style="accent-color:var(--gold);">
-              ${l.icon || ''} ${l.title}
-            </label>`;
+            const lps = (c.link_payment||{})[l.id] || {};
+            const payOn = lps.enabled !== undefined ? lps.enabled : (l.payment_enabled || false);
+            const payPrice = lps.price !== undefined ? lps.price : (l.payment_price || '');
+            return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 10px;border:1px solid rgba(201,168,76,0.2);background:rgba(0,0,0,0.2);">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;min-width:100px;">
+                <input type="checkbox" class="clink-check" value="${l.id}" ${checked ? 'checked' : ''} style="accent-color:var(--gold);">
+                <span style="font-size:10px;color:var(--text);">${l.icon||''} ${l.title}</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--text-dim);">
+                <input type="checkbox" id="cpay-on-${c.id}-${l.id}" ${payOn ? 'checked' : ''} style="accent-color:var(--gold);width:12px;height:12px;">
+                💳 결제
+              </label>
+              <input type="text" id="cpay-price-${c.id}-${l.id}" value="${payPrice}"
+                placeholder="가격 (예: 75,000원~)"
+                style="flex:1;min-width:120px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.15);color:var(--text);padding:4px 8px;font-size:10px;">
+            </div>`;
           }).join('')}
           ${DB.get('links',[]).filter(l=>l.visible!==false).length === 0 ? '<span style="font-size:10px;color:var(--text-dim);">등록된 링크 없음</span>' : ''}
         </div>
@@ -2163,15 +2174,25 @@ function saveCodeDisplaySettings(id) {
     c.form_fields = checkedFields.length === allFieldKeys.length ? null : checkedFields;
   }
 
-  // 체크된 링크 ID 수집
+  // 체크된 링크 ID 수집 + 링크별 결제 설정
   const wrap = document.getElementById('clinks-' + id);
   const allLinks = DB.get('links', []).filter(l => l.visible !== false);
   if (wrap && allLinks.length > 0) {
-    const checked = [...wrap.querySelectorAll('input[type=checkbox]')]
+    const checked = [...wrap.querySelectorAll('input.clink-check')]
       .filter(cb => cb.checked)
       .map(cb => Number(cb.value));
-    // 전체 선택이면 null (제한 없음), 일부 선택이면 배열 저장
     c.visible_links = checked.length === allLinks.length ? null : checked;
+
+    // 링크별 결제 설정 수집
+    const lp = {};
+    allLinks.forEach(l => {
+      const onEl    = document.getElementById(`cpay-on-${id}-${l.id}`);
+      const priceEl = document.getElementById(`cpay-price-${id}-${l.id}`);
+      if (onEl || priceEl) {
+        lp[l.id] = { enabled: onEl?.checked || false, price: priceEl?.value.trim() || '' };
+      }
+    });
+    c.link_payment = lp;
   } else {
     c.visible_links = null;
   }
@@ -3304,12 +3325,18 @@ function _getResImgs(obj) {
 }
 
 function applyResImg() {
-  // 결제 정보
+  // 결제 정보 — 코드별 링크 설정 우선, 없으면 링크 전역 설정
   const pw = document.getElementById('res-payment-wrap');
   const pp = document.getElementById('res-payment-price');
   if (pw && pp) {
-    if (currentLinkObj?.payment_enabled && currentLinkObj?.payment_price) {
-      pp.textContent = currentLinkObj.payment_price;
+    let payEnabled = currentLinkObj?.payment_enabled || false;
+    let payPrice   = currentLinkObj?.payment_price   || '';
+    if (currentCodeObj?.link_payment && currentLinkObj) {
+      const lps = currentCodeObj.link_payment[currentLinkObj.id];
+      if (lps) { payEnabled = lps.enabled; payPrice = lps.price || payPrice; }
+    }
+    if (payEnabled && payPrice) {
+      pp.textContent = payPrice;
       pw.style.display = 'block';
     } else { pw.style.display = 'none'; }
   }
