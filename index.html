@@ -3337,7 +3337,10 @@ function changeAdminPw() {
 // ============================================================
 function openModal(id) {
   document.getElementById(id).classList.add('active');
-  if (id === 'modal-reservation') applyResImg();
+  if (id === 'modal-reservation') {
+    renderReservationForm();
+    applyResImg();
+  }
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('active');
