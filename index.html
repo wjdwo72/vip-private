@@ -1675,7 +1675,7 @@ const FIELD_DEFS = {
 };
 
 function renderReservationForm() {
-  const fields = DB.get('form_fields', Object.keys(FIELD_DEFS));
+  const fields = (currentCodeObj && currentCodeObj.form_fields) || DB.get('form_fields', Object.keys(FIELD_DEFS));
   const container = document.getElementById('reservation-form-fields');
   container.innerHTML = '';
   fields.forEach(f => {
@@ -1996,6 +1996,23 @@ function renderContentCodeTexts() {
           </label>
         </div>
 
+        <!-- 예약폼 항목 선택 -->
+        <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;margin-top:4px;">
+          예약폼 표시 항목 (체크 해제 시 해당 코드에서 숨김 / 비워두면 전역 설정 따름)
+        </div>
+        <div id="cfields-${c.id}" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+          ${Object.entries(FIELD_DEFS).map(([k, def]) => {
+            const codeFields = c.form_fields;
+            const globalFields = DB.get('form_fields', Object.keys(FIELD_DEFS));
+            const checked = codeFields ? codeFields.includes(k) : globalFields.includes(k);
+            return `<label style="display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(201,168,76,0.2);cursor:pointer;font-size:10px;color:var(--text);">
+              <input type="checkbox" value="${k}" ${checked ? 'checked' : ''}
+                style="accent-color:var(--gold);">
+              ${def.label}
+            </label>`;
+          }).join('')}
+        </div>
+
         <!-- 표시 링크 선택 -->
         <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;">
           표시할 링크 (체크 해제 시 해당 코드에서 숨김)
@@ -2087,6 +2104,16 @@ function saveCodeDisplaySettings(id) {
   c.show_payment = document.getElementById('cshow-pay-' + id)?.checked !== false
     ? document.getElementById('cshow-pay-' + id)?.checked ?? true
     : false;
+
+  // 체크된 예약폼 항목 수집
+  const fieldsWrap = document.getElementById('cfields-' + id);
+  if (fieldsWrap) {
+    const allFieldKeys = Object.keys(FIELD_DEFS);
+    const checkedFields = [...fieldsWrap.querySelectorAll('input[type=checkbox]')]
+      .filter(cb => cb.checked).map(cb => cb.value);
+    // 전체 선택이면 null (전역 설정 따름), 일부면 배열 저장
+    c.form_fields = checkedFields.length === allFieldKeys.length ? null : checkedFields;
+  }
 
   // 체크된 링크 ID 수집
   const wrap = document.getElementById('clinks-' + id);
