@@ -765,7 +765,10 @@
           <div><label class="form-label" style="font-size:9px;">中文</label><textarea class="form-textarea" id="admin-welcome-text-zh" rows="2" placeholder="中文文本"></textarea></div>
           <div><label class="form-label" style="font-size:9px;">Español</label><textarea class="form-textarea" id="admin-welcome-text-es" rows="2" placeholder="Texto en español"></textarea></div>
         </div>
-        <button class="btn-primary" onclick="saveWelcomeText()">저장</button>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn-primary" onclick="saveWelcomeText()">저장</button>
+          <button class="btn-secondary" onclick="autoTranslateWelcome()" id="translate-btn" style="display:flex;align-items:center;gap:6px;">🌐 자동 번역</button>
+        </div>
       </div>
       <div class="admin-section">
         <div class="admin-section-title">사이트 로고 텍스트</div>
@@ -3469,6 +3472,33 @@ function deleteRegionOption(idx) {
 }
 
 // Content
+async function autoTranslateWelcome() {
+  const text = document.getElementById('admin-welcome-text').value.trim();
+  if (!text) { showToast('한국어 텍스트를 먼저 입력하세요.', 'error'); return; }
+  const btn = document.getElementById('translate-btn');
+  btn.textContent = '번역 중...'; btn.disabled = true;
+  const targets = [
+    {lang:'en', code:'ko|en', id:'admin-welcome-text-en'},
+    {lang:'ja', code:'ko|ja', id:'admin-welcome-text-ja'},
+    {lang:'zh', code:'ko|zh-CN', id:'admin-welcome-text-zh'},
+    {lang:'es', code:'ko|es', id:'admin-welcome-text-es'},
+  ];
+  let ok = 0;
+  for (const t of targets) {
+    try {
+      const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${t.code}`);
+      const j = await r.json();
+      const translated = j?.responseData?.translatedText;
+      if (translated && j.responseStatus === 200) {
+        const el = document.getElementById(t.id);
+        if (el) { el.value = translated; ok++; }
+      }
+    } catch(e) { console.error('번역 오류', t.lang, e); }
+  }
+  btn.textContent = '🌐 자동 번역'; btn.disabled = false;
+  showToast(ok > 0 ? `${ok}개 언어 번역 완료! 저장 버튼을 눌러 적용하세요.` : '번역 실패. 잠시 후 다시 시도하세요.', ok > 0 ? 'gold' : 'error');
+}
+
 function saveWelcomeText() {
   const text = document.getElementById('admin-welcome-text').value;
   DB.set('welcome_text', text);
