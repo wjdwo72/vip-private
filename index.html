@@ -1877,7 +1877,10 @@ function onRegionChange(sel) {
     _resSubItems = found.items.map(_normSubItem);
     const subSel = wrap.querySelector('select');
     subSel.innerHTML = `<option value="">${t('select_sub') || '세부항목 선택'}</option>` +
-      _resSubItems.map(it => `<option value="${it.name}" data-price="${it.price||''}">${it.name}${it.price ? ' ('+it.price+')' : ''}</option>`).join('');
+      _resSubItems.map(it => {
+        const displayName = (it.name_langs && it.name_langs[_lang]) || it.name;
+        return `<option value="${it.name}" data-price="${it.price||''}">${displayName}${it.price ? ' ('+it.price+')' : ''}</option>`;
+      }).join('');
     subSel.onchange = () => updateCartPreview();
     wrap.style.display = 'block';
   } else {
@@ -2804,12 +2807,27 @@ function renderLinksAdmin() {
                 </div>
                 <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
                   ${items.map(_normSubItem).map((it,j) => `
-                    <div style="display:flex;align-items:center;gap:5px;">
-                      <span style="flex:1;padding:3px 8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:10px;">${it.name}</span>
-                      <input type="text" value="${it.price||''}" placeholder="가격"
-                        style="width:130px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:3px 7px;font-size:10px;"
-                        onchange="updateLinkSubItemPrice(${l.id},${i},${j},this.value)">
-                      <button type="button" onclick="deleteLinkSubItem(${l.id},${i},${j})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;padding:0 4px;">✕</button>
+                    <div>
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <span style="flex:1;padding:3px 8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:10px;">${it.name}</span>
+                        <input type="text" value="${it.price||''}" placeholder="가격"
+                          style="width:110px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:3px 7px;font-size:10px;"
+                          onchange="updateLinkSubItemPrice(${l.id},${i},${j},this.value)">
+                        <button type="button" onclick="toggleSubTrans('lgt-${l.id}-${i}-${j}')" style="background:none;border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;padding:2px 6px;">🌐</button>
+                        <button type="button" onclick="deleteLinkSubItem(${l.id},${i},${j})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;padding:0 4px;">✕</button>
+                      </div>
+                      <div id="lgt-${l.id}-${i}-${j}" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(201,168,76,0.15);padding:7px 9px;margin-top:3px;">
+                        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
+                          ${['en','ja','zh','es'].map(lg => `
+                            <div style="display:flex;align-items:center;gap:3px;flex:1;min-width:130px;">
+                              <span style="font-size:9px;color:var(--gold);width:18px;">${lg.toUpperCase()}</span>
+                              <input type="text" value="${it.name_langs&&it.name_langs[lg]||''}" placeholder="${lg}"
+                                style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:3px 6px;font-size:10px;"
+                                onchange="saveLinkSubItemLang(${l.id},${i},${j},'${lg}',this.value)">
+                            </div>`).join('')}
+                        </div>
+                        <button type="button" onclick="autoTranslateLinkSub(${l.id},${i},${j},'${it.name.replace(/'/g,"\\'")}')" style="padding:3px 10px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;">🌐 자동번역</button>
+                      </div>
                     </div>`).join('')}
                 </div>
                 <div style="display:flex;gap:5px;">
@@ -3383,7 +3401,10 @@ function _getRegionOpts() {
   return _normalizeRegionOpts(DB.get('region_options', []));
 }
 
-function _normSubItem(item) { return typeof item === 'string' ? {name: item, price: ''} : item; }
+function _normSubItem(item) {
+  if (typeof item === 'string') return {name: item, price: '', name_langs: {}};
+  return {...item, name_langs: item.name_langs || {}};
+}
 
 function renderRegionOptions() {
   const opts = _getRegionOpts();
@@ -3398,12 +3419,27 @@ function renderRegionOptions() {
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
         ${(o.items||[]).map(_normSubItem).map((item, j) => `
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="flex:1;padding:4px 10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:11px;">${item.name}</span>
-            <input type="text" value="${item.price||''}" placeholder="가격 (예: 75,000원~)"
-              style="width:140px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;"
-              onchange="updateRegionSubItemPrice(${i},${j},this.value)">
-            <button type="button" onclick="deleteRegionSubItem(${i},${j})" style="background:none;border:none;color:#e88;font-size:11px;cursor:pointer;padding:0 4px;">✕</button>
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="flex:1;padding:4px 10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:11px;">${item.name}</span>
+              <input type="text" value="${item.price||''}" placeholder="가격"
+                style="width:120px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;"
+                onchange="updateRegionSubItemPrice(${i},${j},this.value)">
+              <button type="button" onclick="toggleSubTrans('rgt-${i}-${j}')" style="background:none;border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;padding:3px 7px;">🌐</button>
+              <button type="button" onclick="deleteRegionSubItem(${i},${j})" style="background:none;border:none;color:#e88;font-size:11px;cursor:pointer;padding:0 4px;">✕</button>
+            </div>
+            <div id="rgt-${i}-${j}" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(201,168,76,0.15);padding:8px 10px;margin-top:4px;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+                ${['en','ja','zh','es'].map(l => `
+                  <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:140px;">
+                    <span style="font-size:9px;color:var(--gold);width:18px;">${l.toUpperCase()}</span>
+                    <input type="text" value="${item.name_langs&&item.name_langs[l]||''}" placeholder="${l}"
+                      style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:3px 7px;font-size:10px;"
+                      onchange="saveRegionSubItemLang(${i},${j},'${l}',this.value)">
+                  </div>`).join('')}
+              </div>
+              <button type="button" onclick="autoTranslateRegionSub(${i},${j},'${item.name.replace(/'/g,"\\'")}')" style="padding:4px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;">🌐 자동번역</button>
+            </div>
           </div>`).join('')}
       </div>
       <div style="display:flex;gap:6px;">
@@ -3443,6 +3479,78 @@ function addRegionSubItem(idx) {
   nameEl.value = ''; if (priceEl) priceEl.value = '';
   renderRegionOptions();
   showToast('세부항목 추가됨', 'gold');
+}
+
+function toggleSubTrans(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function _translateItem(name, targets) {
+  const results = {};
+  for (const {l, code} of targets) {
+    try {
+      const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(name)}&langpair=${code}`);
+      const j = await r.json();
+      if (j?.responseStatus === 200) results[l] = j.responseData.translatedText;
+    } catch(e) {}
+  }
+  return results;
+}
+
+const TRANS_TARGETS = [
+  {l:'en', code:'ko|en'}, {l:'ja', code:'ko|ja'},
+  {l:'zh', code:'ko|zh-CN'}, {l:'es', code:'ko|es'}
+];
+
+async function autoTranslateRegionSub(idx, subIdx, name) {
+  showToast('번역 중...', 'gold');
+  const res = await _translateItem(name, TRANS_TARGETS);
+  const opts = _getRegionOpts();
+  if (!opts[idx]) return;
+  opts[idx].items = (opts[idx].items||[]).map(_normSubItem);
+  if (!opts[idx].items[subIdx]) return;
+  opts[idx].items[subIdx].name_langs = {...(opts[idx].items[subIdx].name_langs||{}), ...res};
+  DB.set('region_options', opts);
+  renderRegionOptions();
+  showToast('번역 완료', 'gold');
+}
+
+function saveRegionSubItemLang(idx, subIdx, lang, val) {
+  const opts = _getRegionOpts();
+  if (!opts[idx]) return;
+  opts[idx].items = (opts[idx].items||[]).map(_normSubItem);
+  if (!opts[idx].items[subIdx]) return;
+  opts[idx].items[subIdx].name_langs = {...(opts[idx].items[subIdx].name_langs||{}), [lang]: val};
+  DB.set('region_options', opts);
+}
+
+async function autoTranslateLinkSub(id, catIdx, subIdx, name) {
+  showToast('번역 중...', 'gold');
+  const res = await _translateItem(name, TRANS_TARGETS);
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  const cats = (l.sub_categories||[]).map(c => typeof c==='string'?{name:c,items:[]}:c);
+  if (!cats[catIdx]) return;
+  cats[catIdx].items = (cats[catIdx].items||[]).map(_normSubItem);
+  if (!cats[catIdx].items[subIdx]) return;
+  cats[catIdx].items[subIdx].name_langs = {...(cats[catIdx].items[subIdx].name_langs||{}), ...res};
+  l.sub_categories = cats;
+  DB.set('links', links);
+  renderLinksAdmin();
+  showToast('번역 완료', 'gold');
+}
+
+function saveLinkSubItemLang(id, catIdx, subIdx, lang, val) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  const cats = (l.sub_categories||[]).map(c => typeof c==='string'?{name:c,items:[]}:c);
+  if (!cats[catIdx]) return;
+  cats[catIdx].items = (cats[catIdx].items||[]).map(_normSubItem);
+  if (!cats[catIdx].items[subIdx]) return;
+  cats[catIdx].items[subIdx].name_langs = {...(cats[catIdx].items[subIdx].name_langs||{}), [lang]: val};
+  l.sub_categories = cats;
+  DB.set('links', links);
 }
 
 function updateRegionSubItemPrice(idx, subIdx, price) {
