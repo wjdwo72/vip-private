@@ -1195,7 +1195,7 @@
 // DATA STORE (localStorage + Firebase 클라우드 동기화)
 // ============================================================
 const CLOUD_KEYS = ['codes','menus','links','tg_channels','tg_token',
-  'admin_pw','welcome_text','logo_text','reservation_img','reservation_img_type',
+  'admin_pw','welcome_text','welcome_text_langs','logo_text','reservation_img','reservation_img_type',
   'form_fields','region_options','reservations','feedbacks','entry_logs'];
 
 let _cloudTimer = null;
@@ -3274,6 +3274,22 @@ function deleteMenu(id) {
   showToast('메뉴가 삭제되었습니다.');
 }
 
+async function autoTranslateMenuName(id, name) {
+  showToast('번역 중...', 'gold');
+  const langs = await _translateItem(name, TRANS_TARGETS).catch(() => ({}));
+  const menus = DB.get('menus', []);
+  const m = menus.find(x => x.id === id); if (!m) return;
+  if (!m.name_langs) m.name_langs = {};
+  Object.assign(m.name_langs, langs);
+  DB.set('menus', menus);
+  ['en','ja','zh','es'].forEach(l => {
+    const el = document.getElementById(`menu-lang-${id}-${l}`);
+    if (el && langs[l]) el.value = langs[l];
+  });
+  renderMain();
+  showToast('번역 완료', 'gold');
+}
+
 function saveMenuNameLang(id, lang, val) {
   const menus = DB.get('menus', []);
   const m = menus.find(x => x.id === id); if (!m) return;
@@ -3321,15 +3337,17 @@ function renderMenusAdmin() {
           </div>
           <div style="width:100%;padding:8px 0 0;border-top:1px solid rgba(201,168,76,0.1);margin-top:4px;">
             <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">메뉴명 번역 (선택)</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
               ${['en','ja','zh','es'].map(l => `
                 <div style="display:flex;align-items:center;gap:4px;">
                   <span style="font-size:9px;color:var(--text-dim);width:20px;">${l.toUpperCase()}</span>
-                  <input type="text" value="${(m.name_langs&&m.name_langs[l])||''}" placeholder="${l}"
+                  <input type="text" id="menu-lang-${m.id}-${l}" value="${(m.name_langs&&m.name_langs[l])||''}" placeholder="${l}"
                     style="width:100px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;"
                     onchange="saveMenuNameLang(${m.id},'${l}',this.value)">
                 </div>`).join('')}
             </div>
+            <button type="button" class="btn-secondary" style="font-size:9px;padding:4px 10px;"
+              onclick="autoTranslateMenuName(${m.id},'${m.name.replace(/'/g,"\\'")}')">🌐 자동번역</button>
           </div>
         </div>`;
       }).join('');
