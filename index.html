@@ -754,23 +754,6 @@
     <!-- TAB: Content -->
     <div id="tab-content" class="tab-content">
       <div class="admin-section">
-        <div class="admin-section-title">메인 텍스트 수정</div>
-        <div class="form-group">
-          <label class="form-label">환영 메시지 (한국어 기본)</label>
-          <textarea class="form-textarea" id="admin-welcome-text" rows="3"></textarea>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-          <div><label class="form-label" style="font-size:9px;">EN</label><textarea class="form-textarea" id="admin-welcome-text-en" rows="2" placeholder="English welcome text"></textarea></div>
-          <div><label class="form-label" style="font-size:9px;">日本語</label><textarea class="form-textarea" id="admin-welcome-text-ja" rows="2" placeholder="日本語テキスト"></textarea></div>
-          <div><label class="form-label" style="font-size:9px;">中文</label><textarea class="form-textarea" id="admin-welcome-text-zh" rows="2" placeholder="中文文本"></textarea></div>
-          <div><label class="form-label" style="font-size:9px;">Español</label><textarea class="form-textarea" id="admin-welcome-text-es" rows="2" placeholder="Texto en español"></textarea></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:4px;">
-          <button class="btn-primary" onclick="saveWelcomeText()">저장</button>
-          <button class="btn-secondary" onclick="autoTranslateWelcome()" id="translate-btn" style="display:flex;align-items:center;gap:6px;">🌐 자동 번역</button>
-        </div>
-      </div>
-      <div class="admin-section">
         <div class="admin-section-title">사이트 로고 텍스트</div>
         <div class="input-group">
           <input type="text" class="form-input" id="admin-logo-text" placeholder="로고 텍스트">
@@ -853,6 +836,23 @@
 
     <!-- TAB: Codes -->
     <div id="tab-codes" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">메인 텍스트 수정</div>
+        <div class="form-group">
+          <label class="form-label">환영 메시지 (한국어 기본)</label>
+          <textarea class="form-textarea" id="admin-welcome-text" rows="3"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div><label class="form-label" style="font-size:9px;">EN</label><textarea class="form-textarea" id="admin-welcome-text-en" rows="2" placeholder="English welcome text"></textarea></div>
+          <div><label class="form-label" style="font-size:9px;">日本語</label><textarea class="form-textarea" id="admin-welcome-text-ja" rows="2" placeholder="日本語テキスト"></textarea></div>
+          <div><label class="form-label" style="font-size:9px;">中文</label><textarea class="form-textarea" id="admin-welcome-text-zh" rows="2" placeholder="中文文本"></textarea></div>
+          <div><label class="form-label" style="font-size:9px;">Español</label><textarea class="form-textarea" id="admin-welcome-text-es" rows="2" placeholder="Texto en español"></textarea></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn-primary" onclick="saveWelcomeText()">저장</button>
+          <button class="btn-secondary" onclick="autoTranslateWelcome()" id="translate-btn" style="display:flex;align-items:center;gap:6px;">🌐 자동 번역</button>
+        </div>
+      </div>
       <div class="admin-section">
         <div class="admin-section-title">새 입장 코드 생성</div>
         <div class="form-row">
