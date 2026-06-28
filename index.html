@@ -1816,7 +1816,7 @@ function renderReservationForm() {
       }
       html += `<select class="form-select" name="region" required onchange="onRegionChange(this)">
         <option value="">${t('select_region')||'선택하세요'}</option>
-        ${regionOpts.map(o => `<option value="${o.name}">${o.name}</option>`).join('')}
+        ${regionOpts.map(o => `<option value="${o.name}">${(o.name_langs&&o.name_langs[_lang])||o.name}</option>`).join('')}
       </select>
       <div id="region-sub-wrap" style="display:none;margin-top:8px;">
         <select class="form-select" name="region_sub" style="margin-bottom:6px;">
@@ -2801,9 +2801,22 @@ function renderLinksAdmin() {
               const items = typeof cat === 'string' ? [] : (cat.items||[]);
               return `
               <div style="margin-bottom:10px;border:1px solid rgba(201,168,76,0.2);padding:8px 10px;background:rgba(0,0,0,0.2);">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                  <span style="color:var(--gold);font-size:12px;letter-spacing:1px;font-weight:500;">▸ ${name}</span>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                  <span style="color:var(--gold);font-size:12px;letter-spacing:1px;font-weight:500;flex:1;">▸ ${name}</span>
+                  <button type="button" onclick="toggleSubTrans('lgc-${l.id}-${i}')" style="background:none;border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;padding:2px 6px;">🌐</button>
                   <button type="button" onclick="deleteLinkSubCat(${l.id},${i})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;letter-spacing:1px;">✕ 삭제</button>
+                </div>
+                <div id="lgc-${l.id}-${i}" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(201,168,76,0.15);padding:7px 9px;margin-bottom:5px;">
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
+                    ${['en','ja','zh','es'].map(lg => {const catObj = typeof cat==='string'?{}:(cat||{}); return `
+                      <div style="display:flex;align-items:center;gap:3px;flex:1;min-width:130px;">
+                        <span style="font-size:9px;color:var(--gold);width:18px;">${lg.toUpperCase()}</span>
+                        <input type="text" value="${(catObj.name_langs&&catObj.name_langs[lg])||''}" placeholder="${lg}"
+                          style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:3px 6px;font-size:10px;"
+                          onchange="saveLinkCatLang(${l.id},${i},'${lg}',this.value)">
+                      </div>`;}).join('')}
+                  </div>
+                  <button type="button" onclick="autoTranslateLinkCat(${l.id},${i},'${name.replace(/'/g,"\\'")}')" style="padding:3px 10px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;">🌐 자동번역</button>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
                   ${items.map(_normSubItem).map((it,j) => `
@@ -3413,9 +3426,22 @@ function renderRegionOptions() {
   el.style.display = 'block';
   el.innerHTML = opts.map((o, i) => `
     <div style="margin-bottom:8px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.04);padding:10px 12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
         <span style="font-size:12px;color:var(--gold);letter-spacing:1px;flex:1;">${o.name}</span>
+        <button type="button" onclick="toggleSubTrans('rgc-${i}')" style="background:none;border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;padding:2px 7px;">🌐</button>
         <button type="button" onclick="deleteRegionOption(${i})" style="background:none;border:none;color:#e88;font-size:12px;cursor:pointer;">✕ 삭제</button>
+      </div>
+      <div id="rgc-${i}" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(201,168,76,0.15);padding:7px 10px;margin-bottom:6px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px;">
+          ${['en','ja','zh','es'].map(l => `
+            <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:140px;">
+              <span style="font-size:9px;color:var(--gold);width:18px;">${l.toUpperCase()}</span>
+              <input type="text" value="${o.name_langs&&o.name_langs[l]||''}" placeholder="${l}"
+                style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:3px 7px;font-size:10px;"
+                onchange="saveRegionCatLang(${i},'${l}',this.value)">
+            </div>`).join('')}
+        </div>
+        <button type="button" onclick="autoTranslateRegionCat(${i},'${o.name.replace(/'/g,"\\'")}')" style="padding:3px 10px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;">🌐 자동번역</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
         ${(o.items||[]).map(_normSubItem).map((item, j) => `
@@ -3479,6 +3505,43 @@ function addRegionSubItem(idx) {
   nameEl.value = ''; if (priceEl) priceEl.value = '';
   renderRegionOptions();
   showToast('세부항목 추가됨', 'gold');
+}
+
+function saveRegionCatLang(idx, lang, val) {
+  const opts = _getRegionOpts();
+  if (!opts[idx]) return;
+  opts[idx].name_langs = {...(opts[idx].name_langs||{}), [lang]: val};
+  DB.set('region_options', opts);
+}
+async function autoTranslateRegionCat(idx, name) {
+  showToast('번역 중...', 'gold');
+  const res = await _translateItem(name, TRANS_TARGETS);
+  const opts = _getRegionOpts();
+  if (!opts[idx]) return;
+  opts[idx].name_langs = {...(opts[idx].name_langs||{}), ...res};
+  DB.set('region_options', opts);
+  renderRegionOptions();
+  showToast('번역 완료', 'gold');
+}
+function saveLinkCatLang(id, catIdx, lang, val) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  const cats = (l.sub_categories||[]).map(c => typeof c==='string'?{name:c,items:[]}:c);
+  if (!cats[catIdx]) return;
+  cats[catIdx].name_langs = {...(cats[catIdx].name_langs||{}), [lang]: val};
+  l.sub_categories = cats; DB.set('links', links);
+}
+async function autoTranslateLinkCat(id, catIdx, name) {
+  showToast('번역 중...', 'gold');
+  const res = await _translateItem(name, TRANS_TARGETS);
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  const cats = (l.sub_categories||[]).map(c => typeof c==='string'?{name:c,items:[]}:c);
+  if (!cats[catIdx]) return;
+  cats[catIdx].name_langs = {...(cats[catIdx].name_langs||{}), ...res};
+  l.sub_categories = cats; DB.set('links', links);
+  renderLinksAdmin();
+  showToast('번역 완료', 'gold');
 }
 
 function toggleSubTrans(id) {
