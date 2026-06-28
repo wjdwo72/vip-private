@@ -875,7 +875,8 @@
         <div class="form-group">
           <label class="form-label">코드 전용 메인 텍스트 <span style="color:var(--text-dim);font-size:9px;letter-spacing:1px;">(비워두면 기본 텍스트 사용)</span></label>
           <textarea class="form-textarea" id="new-code-text" rows="3"
-            placeholder="이 코드로 입장한 회원에게만 보이는 텍스트를 입력하세요."></textarea>
+            placeholder="이 코드로 입장한 회원에게만 보이는 텍스트를 입력하세요."
+            oninput="(function(v){const el=document.getElementById('admin-welcome-text');if(el)el.value=v;})(this.value)"></textarea>
         </div>
         <button class="btn-primary" onclick="addCode()">코드 추가</button>
       </div>
@@ -2408,16 +2409,21 @@ function quickAddCode() {
   renderCodesAdmin();
 }
 
-function saveCodeTextFromContent(id) {
+async function saveCodeTextFromContent(id) {
   const ta = document.getElementById('cct-' + id);
   if (!ta) return;
   const codes = DB.get('codes', []);
   const c = codes.find(c => c.id === id);
-  if (c) {
-    c.welcome_text = ta.value.trim();
-    // 입장코드 탭 textarea도 동기화
-    const mirror = document.getElementById('code-text-' + id);
-    if (mirror) mirror.value = ta.value.trim();
+  if (!c) return;
+  const text = ta.value.trim();
+  c.welcome_text = text;
+  const mirror = document.getElementById('code-text-' + id);
+  if (mirror) mirror.value = text;
+  if (text) {
+    showToast('번역 중...', 'gold');
+    c.welcome_text_langs = await _translateItem(text, TRANS_TARGETS).catch(() => ({}));
+  } else {
+    c.welcome_text_langs = {};
   }
   DB.set('codes', codes);
   showToast(`[${c?.code}] 텍스트가 저장되었습니다.`, 'gold');
@@ -2501,7 +2507,7 @@ function generateCode() {
   document.getElementById('new-code-val').value = code;
 }
 
-function addCode() {
+async function addCode() {
   const org = document.getElementById('new-code-org').value.trim();
   const code = document.getElementById('new-code-val').value.trim().toUpperCase();
   const menus = document.getElementById('new-code-menus').value.trim();
@@ -2509,22 +2515,37 @@ function addCode() {
   if (!org || !code) { showToast('단체명과 코드를 입력하세요.', 'error'); return; }
   const codes = DB.get('codes', []);
   if (codes.find(c => c.code.toUpperCase() === code)) { showToast('이미 존재하는 코드입니다.', 'error'); return; }
-  codes.push({ id: Date.now(), code, org, menus, welcome_text, created: new Date().toISOString() });
+  let welcome_text_langs = {};
+  if (welcome_text) {
+    showToast('번역 중...', 'gold');
+    welcome_text_langs = await _translateItem(welcome_text, TRANS_TARGETS).catch(() => ({}));
+  }
+  codes.push({ id: Date.now(), code, org, menus, welcome_text, welcome_text_langs, created: new Date().toISOString() });
   DB.set('codes', codes);
   document.getElementById('new-code-org').value = '';
   document.getElementById('new-code-val').value = '';
   document.getElementById('new-code-menus').value = '';
   document.getElementById('new-code-text').value = '';
+  const kwEl = document.getElementById('admin-welcome-text');
+  if (kwEl) kwEl.value = '';
   renderCodesAdmin();
   showToast('코드가 추가되었습니다.', 'gold');
 }
 
-function saveCodeText(id) {
+async function saveCodeText(id) {
   const ta = document.getElementById('code-text-' + id);
   if (!ta) return;
   const codes = DB.get('codes', []);
   const c = codes.find(c => c.id === id);
-  if (c) { c.welcome_text = ta.value.trim(); }
+  if (!c) return;
+  const text = ta.value.trim();
+  c.welcome_text = text;
+  if (text) {
+    showToast('번역 중...', 'gold');
+    c.welcome_text_langs = await _translateItem(text, TRANS_TARGETS).catch(() => ({}));
+  } else {
+    c.welcome_text_langs = {};
+  }
   DB.set('codes', codes);
   showToast('저장되었습니다.', 'gold');
 }
