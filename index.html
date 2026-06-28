@@ -1546,12 +1546,12 @@ function renderLinks() {
     const hasUrl = l.url && l.url.startsWith('http');
     const domain = (l.url||'').replace('https://','').replace('http://','').split('/')[0];
 
-    const resBtn = l.res_img ? `
+    const resBtn = `
       <div onclick="event.preventDefault();event.stopPropagation();openReservationFromCard(${l.id});"
         style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0;border-top:1px solid rgba(201,168,76,0.15);cursor:pointer;background:rgba(201,168,76,0.04);">
         <span style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;">특별가 예약 문의</span>
         <span style="color:var(--gold);font-size:11px;">→</span>
-      </div>` : '';
+      </div>`;
 
     if (hasUrl && l.preview !== false) {
       // 썸네일 미리보기 카드 (커스텀 이미지 우선, 없으면 파비콘 + 도메인 플레이스홀더)
@@ -3186,17 +3186,12 @@ function applyResImg() {
   const wrap = document.getElementById('reservation-file-wrap');
   if (!wrap) return;
 
-  // 우선순위: 카드 전용 → 입장코드 전용 → 전역 → 모든 카드 이미지 합산
+  // 우선순위: 카드 전용 → 입장코드 전용 → 전역
   let imgs = _getResImgs(currentLinkObj);
   if (!imgs.length) imgs = _getResImgs(currentCodeObj);
-  if (!imgs.length && !currentCodeObj) {
+  if (!imgs.length) {
     const g = DB.get('reservation_img','');
     if (g) imgs = [g];
-  }
-  // 카드 컨텍스트 없고 이미지도 없으면 → 등록된 모든 카드 이미지 합산
-  if (!imgs.length && !currentLinkObj) {
-    const allLinks = DB.get('links', []);
-    allLinks.forEach(l => { imgs = imgs.concat(_getResImgs(l)); });
   }
 
   if (!imgs.length) { wrap.style.display = 'none'; return; }
