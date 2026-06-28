@@ -129,6 +129,14 @@
     font-size: 11px; letter-spacing: 2px; color: #c0392b;
     min-height: 18px; text-align: center;
   }
+  .lang-btn {
+    padding: 4px 9px; background: transparent;
+    border: 1px solid rgba(201,168,76,0.35); color: var(--text-dim);
+    font-size: 10px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1);
+  }
 
   /* ===== MAIN PAGE ===== */
   #page-main { justify-content: flex-start; padding-top: 0; }
@@ -610,13 +618,21 @@
 </div>
 
 <!-- ===== ENTRY PAGE ===== -->
-<div id="page-entry" class="page active">
+<div id="page-entry" class="page active" style="position:relative;">
+  <!-- 언어 선택 -->
+  <div style="position:absolute;top:16px;right:16px;display:flex;gap:6px;z-index:10;">
+    <button type="button" onclick="setLang('ko')" class="lang-btn" data-lang="ko">한</button>
+    <button type="button" onclick="setLang('en')" class="lang-btn" data-lang="en">EN</button>
+    <button type="button" onclick="setLang('ja')" class="lang-btn" data-lang="ja">日</button>
+    <button type="button" onclick="setLang('zh')" class="lang-btn" data-lang="zh">中</button>
+    <button type="button" onclick="setLang('es')" class="lang-btn" data-lang="es">ES</button>
+  </div>
   <div class="entry-logo">Private Access</div>
   <div class="entry-title">V I P</div>
   <div class="entry-sub">Exclusive Members Only</div>
   <div class="entry-divider"></div>
   <div class="entry-box">
-    <div class="entry-label">입장 코드를 입력하세요</div>
+    <div class="entry-label" data-i18n="entry_label">입장 코드를 입력하세요</div>
     <div class="entry-input-wrap">
       <input type="text" id="entry-code-input" class="entry-input"
              placeholder="● ● ● ● ● ●"
@@ -627,12 +643,12 @@
       <div style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:6px;"
            onclick="togglePrivacy()">
         <span id="privacy-arrow" style="display:inline-block;transition:transform 0.3s;">▶</span>
-        개인정보 수집·이용 동의 (필수)
+        <span data-i18n="privacy_title">개인정보 수집·이용 동의 (필수)</span>
       </div>
       <div id="privacy-text" style="display:none;max-height:160px;overflow-y:auto;
            padding:14px 16px;margin-bottom:12px;
            background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);
-           font-size:10px;color:var(--text-dim);line-height:1.9;letter-spacing:0.5px;">
+           font-size:10px;color:var(--text-dim);line-height:1.9;letter-spacing:0.5px;" data-i18n-html="privacy_body">
         <b style="color:var(--gold);">개인정보 수집·이용 동의</b><br><br>
         <b>수집 항목:</b> 예약자명, 연락처, 이메일, 사용일자, 지역, 인원수, 문의내용<br><br>
         <b>수집 목적:</b> 특별가 예약 문의 접수 및 처리, 예약 확인 및 안내, 고객 맞춤 서비스 제공<br><br>
@@ -643,12 +659,12 @@
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
         <input type="checkbox" id="privacy-agree"
           style="width:15px;height:15px;accent-color:var(--gold);flex-shrink:0;">
-        <span style="font-size:11px;color:var(--text);letter-spacing:1px;">
+        <span style="font-size:11px;color:var(--text);letter-spacing:1px;" data-i18n="privacy_agree">
           개인정보 수집·이용에 동의합니다
         </span>
       </label>
     </div>
-    <button type="button" class="entry-btn" onclick="verifyCode()">Enter</button>
+    <button type="button" class="entry-btn" id="entry-btn-enter" onclick="verifyCode()">ENTER</button>
     <div class="entry-error" id="entry-error"></div>
   </div>
 </div>
@@ -1124,6 +1140,11 @@
         <!-- rendered dynamically -->
       </div>
       <!-- 예약 폼 하단 첨부 뷰어 (이미지/PDF) -->
+      <!-- 결제 정보 -->
+      <div id="res-payment-wrap" style="display:none;margin:16px 0;padding:14px 16px;border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.06);">
+        <div style="font-size:9px;letter-spacing:3px;color:var(--gold);margin-bottom:6px;">💳 PAYMENT</div>
+        <div id="res-payment-price" style="font-size:15px;color:var(--gold);letter-spacing:2px;"></div>
+      </div>
       <div id="reservation-file-wrap" style="display:none;margin:20px 0 24px;">
         <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">안내 자료</div>
         <!-- 다중 이미지 갤러리 -->
@@ -1164,6 +1185,32 @@ const CLOUD_KEYS = ['codes','menus','links','tg_channels','tg_token',
   'form_fields','region_options','reservations','feedbacks','entry_logs'];
 
 let _cloudTimer = null;
+// ============================================================
+// i18n
+// ============================================================
+const I18N = {
+  ko:{ entry_label:'입장 코드를 입력하세요', privacy_title:'개인정보 수집·이용 동의 (필수)', privacy_agree:'개인정보 수집·이용에 동의합니다', enter_btn:'ENTER', err_agree:'개인정보 수집·이용에 동의해 주세요.', err_code:'유효하지 않은 입장 코드입니다.',
+    privacy_body:`<b style="color:var(--gold);">개인정보 수집·이용 동의</b><br><br><b>수집 항목:</b> 예약자명, 연락처, 이메일, 사용일자, 지역, 인원수, 문의내용<br><br><b>수집 목적:</b> 특별가 예약 문의 접수 및 처리, 예약 확인 및 안내, 고객 맞춤 서비스 제공<br><br><b>보유 기간:</b> 예약 문의 처리 완료 후 1년간 보관 후 파기.<br><br><b>제3자 제공:</b> 수집된 개인정보는 예약 처리 목적 외에 제3자에게 제공되지 않습니다.<br><br>귀하는 개인정보 수집·이용에 동의하지 않을 권리가 있습니다.`},
+  en:{ entry_label:'Enter your access code', privacy_title:'Privacy Policy Agreement (Required)', privacy_agree:'I agree to the collection and use of personal information', enter_btn:'ENTER', err_agree:'Please agree to the privacy policy.', err_code:'Invalid access code.',
+    privacy_body:`<b style="color:var(--gold);">Privacy Policy</b><br><br><b>Items collected:</b> Name, contact, email, dates, region, guests, inquiry<br><br><b>Purpose:</b> Processing VIP reservation inquiries and providing personalized service<br><br><b>Retention:</b> 1 year after inquiry is closed, then deleted.<br><br><b>Third parties:</b> Personal information is not shared with third parties.<br><br>You have the right to refuse consent, but service may be limited.`},
+  ja:{ entry_label:'アクセスコードを入力してください', privacy_title:'個人情報収集・利用同意 (必須)', privacy_agree:'個人情報の収集・利用に同意します', enter_btn:'入場', err_agree:'個人情報の収集・利用に同意してください。', err_code:'無効なアクセスコードです。',
+    privacy_body:`<b style="color:var(--gold);">個人情報収集・利用同意</b><br><br><b>収集項目:</b> 氏名、連絡先、メール、利用日、地域、人数、お問い合わせ内容<br><br><b>利用目的:</b> VIP予約のお問い合わせ対応およびサービス提供<br><br><b>保存期間:</b> 問い合わせ対応後1年間保管後、削除。<br><br><b>第三者提供:</b> 予約処理目的以外では第三者に提供しません。`},
+  zh:{ entry_label:'请输入入场码', privacy_title:'个人信息收集·使用同意 (必填)', privacy_agree:'我同意收集和使用个人信息', enter_btn:'进入', err_agree:'请同意个人信息收集及使用条款。', err_code:'无效的入场码。',
+    privacy_body:`<b style="color:var(--gold);">个人信息收集·使用同意</b><br><br><b>收集项目:</b> 姓名、联系方式、邮箱、使用日期、地区、人数、咨询内容<br><br><b>收集目的:</b> 接收VIP预约咨询及提供服务<br><br><b>保存期限:</b> 咨询处理完成后保存1年后删除。<br><br><b>第三方提供:</b> 个人信息不会用于预约处理目的以外的用途。`},
+  es:{ entry_label:'Ingrese su código de acceso', privacy_title:'Acuerdo de privacidad (Obligatorio)', privacy_agree:'Acepto la recopilación y uso de mis datos personales', enter_btn:'ENTRAR', err_agree:'Por favor, acepte la política de privacidad.', err_code:'Código de acceso no válido.',
+    privacy_body:`<b style="color:var(--gold);">Política de Privacidad</b><br><br><b>Datos recopilados:</b> Nombre, contacto, email, fechas, región, personas, consulta<br><br><b>Propósito:</b> Gestión de consultas de reserva VIP y prestación de servicios<br><br><b>Retención:</b> 1 año tras cerrar la consulta, luego eliminados.<br><br><b>Terceros:</b> Los datos no se comparten con terceros.`}
+};
+let _lang = localStorage.getItem('vip_lang') || 'ko';
+function t(key){ return (I18N[_lang]||I18N.ko)[key]||(I18N.ko)[key]||key; }
+function setLang(lang){
+  _lang = lang; localStorage.setItem('vip_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
+  const tr = I18N[lang]||I18N.ko;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ if(tr[el.dataset.i18n]) el.textContent=tr[el.dataset.i18n]; });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ if(tr[el.dataset.i18nHtml]) el.innerHTML=tr[el.dataset.i18nHtml]; });
+  const eb=document.getElementById('entry-btn-enter'); if(eb) eb.textContent=tr.enter_btn||'ENTER';
+}
+
 const DB = {
   get(k, def) { try { return JSON.parse(localStorage.getItem('vip_'+k)) ?? def; } catch { return def; } },
   setLocal(k, v) { localStorage.setItem('vip_'+k, JSON.stringify(v)); },
@@ -1405,6 +1452,7 @@ function animateParticles() {
   requestAnimationFrame(animateParticles);
 }
 animateParticles();
+setLang(_lang);
 
 // 페이지 로드시 Firebase에서 데이터 동기화
 (async () => {
@@ -1434,7 +1482,7 @@ function verifyCode() {
   const agree = document.getElementById('privacy-agree');
   if (agree && !agree.checked) {
     const err = document.getElementById('entry-error');
-    err.textContent = '개인정보 수집·이용에 동의해 주세요.';
+    err.textContent = t('err_agree');
     err.style.color = '#e0a040';
     agree.closest('label').style.animation = 'none';
     setTimeout(() => { agree.closest('label').style.animation = ''; }, 300);
@@ -1455,7 +1503,7 @@ function verifyCode() {
     DB.set('entry_logs', logs);
     enterMain();
   } else {
-    document.getElementById('entry-error').textContent = '유효하지 않은 입장 코드입니다.';
+    document.getElementById('entry-error').textContent = t('err_code');
     document.getElementById('entry-error').style.color = '';
     document.getElementById('entry-code-input').style.borderColor = '#c0392b';
     setTimeout(() => document.getElementById('entry-code-input').style.borderColor = '', 1500);
@@ -2530,6 +2578,24 @@ function renderLinksAdmin() {
             </label>
           </div>
         </div>
+        <!-- 결제 설정 -->
+        <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:10px;">결제 설정</div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="link-pay-on-${l.id}" ${l.payment_enabled ? 'checked' : ''}
+                style="width:14px;height:14px;accent-color:var(--gold);"
+                onchange="saveLinkPayment(${l.id})">
+              <span style="font-size:11px;color:var(--text);letter-spacing:1px;">결제 ON</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:160px;">
+              <input type="text" id="link-pay-price-${l.id}" value="${l.payment_price||''}"
+                placeholder="가격 표시 (예: 75,000원~)"
+                style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:5px 9px;font-size:11px;">
+              <button type="button" onclick="saveLinkPayment(${l.id})" style="padding:5px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:10px;cursor:pointer;">저장</button>
+            </div>
+          </div>
+        </div>
         <!-- 링크 전용 예약 지역 -->
         <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
           <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">링크 전용 예약 품명 <span style="font-size:9px;color:var(--text-dim);letter-spacing:0;">(비워두면 전체 목록 사용)</span></div>
@@ -2603,6 +2669,15 @@ function renderLinksAdmin() {
           </div>
         </div>
       </div>`).join('');
+}
+
+function saveLinkPayment(id) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  l.payment_enabled = document.getElementById('link-pay-on-' + id)?.checked || false;
+  l.payment_price   = document.getElementById('link-pay-price-' + id)?.value.trim() || '';
+  DB.set('links', links);
+  showToast('결제 설정 저장됨', 'gold');
 }
 
 function addLinkSubCat(id) {
@@ -3234,6 +3309,16 @@ function _getResImgs(obj) {
 }
 
 function applyResImg() {
+  // 결제 정보
+  const pw = document.getElementById('res-payment-wrap');
+  const pp = document.getElementById('res-payment-price');
+  if (pw && pp) {
+    if (currentLinkObj?.payment_enabled && currentLinkObj?.payment_price) {
+      pp.textContent = currentLinkObj.payment_price;
+      pw.style.display = 'block';
+    } else { pw.style.display = 'none'; }
+  }
+
   const wrap = document.getElementById('reservation-file-wrap');
   if (!wrap) return;
 
