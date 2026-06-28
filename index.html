@@ -1228,12 +1228,7 @@ function setLang(lang){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ if(tr[el.dataset.i18n]) el.textContent=tr[el.dataset.i18n]; });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ if(tr[el.dataset.i18nHtml]) el.innerHTML=tr[el.dataset.i18nHtml]; });
   const eb=document.getElementById('entry-btn-enter'); if(eb) eb.textContent=tr.enter_btn||'ENTER';
-  // 예약폼 재렌더 (관리자 페이지 제외)
-  if (!isAdminLoggedIn) {
-    renderReservationForm();
-    const subSel = document.querySelector('#region-sub-wrap select');
-    if (subSel) { subSel.options[0].textContent = tr.select_sub || '세부항목 선택'; }
-  }
+  // 예약폼은 다음 오픈 시 t()로 재렌더되므로 data-i18n 속성 업데이트로 충분
 }
 
 const DB = {
