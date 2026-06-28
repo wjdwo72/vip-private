@@ -679,7 +679,7 @@
   </header>
 
   <div class="welcome-banner fade-in">
-    <div class="welcome-greeting">Welcome, Valued Member</div>
+    <div class="welcome-greeting" data-i18n="welcome_greeting">Welcome, Valued Member</div>
     <div class="welcome-main-text" id="main-welcome-text">
       오직 선택된 관리자 추가분들을 위한 선택된 정보제공
     </div>
@@ -699,14 +699,14 @@
   </div>
 
   <div class="links-section">
-    <div class="links-title">Quick Access</div>
+    <div class="links-title" data-i18n="quick_access">Quick Access</div>
     <div id="links-grid-wrap">
       <div class="links-grid" id="links-grid">
         <!-- dynamic -->
       </div>
       <div id="global-reservation-bar-wrap" style="margin-top:12px;">
         <div class="header-reservation-bar" onclick="openModal('modal-reservation')" style="display:inline-flex;">
-          <span style="font-size:10px;letter-spacing:3px;color:var(--text);">특별가 예약 문의</span>
+          <span style="font-size:10px;letter-spacing:3px;color:var(--text);" data-i18n="global_inquiry">특별가 예약 문의</span>
           <span style="color:var(--gold);font-size:12px;">→</span>
         </div>
       </div>
@@ -1200,7 +1200,9 @@ const I18N = {
     reply_sms:'문자', reply_kakao:'카카오톡', reply_call:'전화',
     modal_subtitle:'특별가 예약 문의 · 전담 매니저가 직접 안내드립니다',
     name_ph:'홍길동', count_ph:'인원 수', phone_ph:'연락처', email_ph:'이메일',
-    contact_help:'연락처 또는 이메일 중 하나를 입력하세요.', memo_ph:'기타 문의사항을 입력하세요.'},
+    contact_help:'연락처 또는 이메일 중 하나를 입력하세요.', memo_ph:'기타 문의사항을 입력하세요.',
+    welcome_greeting:'Welcome, Valued Member', search_ph:'검색어를 입력하세요...', quick_access:'Quick Access',
+    card_inquiry:'특별가 예약 문의', global_inquiry:'특별가 예약 문의'},
   en:{ entry_label:'Enter your access code', privacy_title:'Privacy Policy Agreement (Required)', privacy_agree:'I agree to the collection and use of personal information', enter_btn:'ENTER', err_agree:'Please agree to the privacy policy.', err_code:'Invalid access code.',
     privacy_body:`<b style="color:var(--gold);">Privacy Policy</b><br><br><b>Items collected:</b> Name, contact, email, dates, region, guests, inquiry<br><br><b>Purpose:</b> Processing VIP reservation inquiries and providing personalized service<br><br><b>Retention:</b> 1 year after inquiry is closed, then deleted.<br><br><b>Third parties:</b> Personal information is not shared with third parties.<br><br>You have the right to refuse consent, but service may be limited.`,
     fl_service:'Select Menu', fl_name:'Name', fl_dates:'Date', fl_region:'Category', fl_count:'Qty', fl_contact:'Phone / Email', fl_reply_method:'Reply Method', fl_memo:'Inquiry',
@@ -1208,7 +1210,9 @@ const I18N = {
     reply_sms:'SMS', reply_kakao:'KakaoTalk', reply_call:'Call',
     modal_subtitle:'Special Rate Inquiry · Our dedicated manager will guide you personally',
     name_ph:'Full Name', count_ph:'Guests', phone_ph:'Phone', email_ph:'Email',
-    contact_help:'Please enter phone or email.', memo_ph:'Please enter your inquiry.'},
+    contact_help:'Please enter phone or email.', memo_ph:'Please enter your inquiry.',
+    welcome_greeting:'Welcome, Valued Member', search_ph:'Search...', quick_access:'Quick Access',
+    card_inquiry:'Special Rate Inquiry', global_inquiry:'Special Rate Inquiry'},
   ja:{ entry_label:'アクセスコードを入力してください', privacy_title:'個人情報収集・利用同意 (必須)', privacy_agree:'個人情報の収集・利用に同意します', enter_btn:'入場', err_agree:'個人情報の収集・利用に同意してください。', err_code:'無効なアクセスコードです。',
     privacy_body:`<b style="color:var(--gold);">個人情報収集・利用同意</b><br><br><b>収集項目:</b> 氏名、連絡先、メール、利用日、地域、人数、お問い合わせ内容<br><br><b>利用目的:</b> VIP予約のお問い合わせ対応およびサービス提供<br><br><b>保存期間:</b> 問い合わせ対応後1年間保管後、削除。<br><br><b>第三者提供:</b> 予約処理目的以外では第三者に提供しません。`,
     fl_service:'メニュー選択', fl_name:'お名前', fl_dates:'ご利用日', fl_region:'品目', fl_count:'数量', fl_contact:'連絡先 / メール', fl_reply_method:'返信方法', fl_memo:'お問い合わせ内容',
@@ -1216,7 +1220,9 @@ const I18N = {
     reply_sms:'SMS', reply_kakao:'カカオトーク', reply_call:'電話',
     modal_subtitle:'特別価格予約のお問い合わせ · 専任マネージャーが直接ご案内いたします',
     name_ph:'お名前', count_ph:'人数', phone_ph:'電話番号', email_ph:'メールアドレス',
-    contact_help:'電話番号またはメールのいずれかを入力してください。', memo_ph:'その他のお問い合わせ内容をご入力ください。'},
+    contact_help:'電話番号またはメールのいずれかを入力してください。', memo_ph:'その他のお問い合わせ内容をご入力ください。',
+    welcome_greeting:'ようこそ、VIPメンバーの皆様', search_ph:'検索キーワードを入力してください...', quick_access:'クイックアクセス',
+    card_inquiry:'特別価格予約のお問い合わせ', global_inquiry:'特別価格予約のお問い合わせ'},
   zh:{ entry_label:'请输入入场码', privacy_title:'个人信息收集·使用同意 (必填)', privacy_agree:'我同意收集和使用个人信息', enter_btn:'进入', err_agree:'请同意个人信息收集及使用条款。', err_code:'无效的入场码。',
     privacy_body:`<b style="color:var(--gold);">个人信息收集·使用同意</b><br><br><b>收集项目:</b> 姓名、联系方式、邮箱、使用日期、地区、人数、咨询内容<br><br><b>收集目的:</b> 接收VIP预约咨询及提供服务<br><br><b>保存期限:</b> 咨询处理完成后保存1年后删除。<br><br><b>第三方提供:</b> 个人信息不会用于预约处理目的以外的用途。`,
     fl_service:'选择菜单', fl_name:'姓名', fl_dates:'使用日期', fl_region:'品类', fl_count:'数量', fl_contact:'电话 / 邮箱', fl_reply_method:'回复方式', fl_memo:'咨询内容',
@@ -1224,7 +1230,9 @@ const I18N = {
     reply_sms:'短信', reply_kakao:'KakaoTalk', reply_call:'电话',
     modal_subtitle:'特别价格预约咨询 · 专属经理将直接为您提供指导',
     name_ph:'姓名', count_ph:'人数', phone_ph:'电话', email_ph:'邮箱',
-    contact_help:'请输入电话或邮箱其中一项。', memo_ph:'请输入其他咨询内容。'},
+    contact_help:'请输入电话或邮箱其中一项。', memo_ph:'请输入其他咨询内容。',
+    welcome_greeting:'欢迎，尊贵会员', search_ph:'请输入搜索词...', quick_access:'快速访问',
+    card_inquiry:'特别价格预约咨询', global_inquiry:'特别价格预约咨询'},
   es:{ entry_label:'Ingrese su código de acceso', privacy_title:'Acuerdo de privacidad (Obligatorio)', privacy_agree:'Acepto la recopilación y uso de mis datos personales', enter_btn:'ENTRAR', err_agree:'Por favor, acepte la política de privacidad.', err_code:'Código de acceso no válido.',
     privacy_body:`<b style="color:var(--gold);">Política de Privacidad</b><br><br><b>Datos recopilados:</b> Nombre, contacto, email, fechas, región, personas, consulta<br><br><b>Propósito:</b> Gestión de consultas de reserva VIP y prestación de servicios<br><br><b>Retención:</b> 1 año tras cerrar la consulta, luego eliminados.<br><br><b>Terceros:</b> Los datos no se comparten con terceros.`,
     fl_service:'Seleccionar menú', fl_name:'Nombre', fl_dates:'Fecha', fl_region:'Categoría', fl_count:'Cantidad', fl_contact:'Teléfono / Email', fl_reply_method:'Método de respuesta', fl_memo:'Consulta',
@@ -1232,7 +1240,9 @@ const I18N = {
     reply_sms:'SMS', reply_kakao:'KakaoTalk', reply_call:'Llamada',
     modal_subtitle:'Consulta de tarifa especial · Nuestro gerente dedicado le guiará personalmente',
     name_ph:'Nombre completo', count_ph:'Personas', phone_ph:'Teléfono', email_ph:'Email',
-    contact_help:'Ingrese teléfono o email.', memo_ph:'Ingrese su consulta.'}
+    contact_help:'Ingrese teléfono o email.', memo_ph:'Ingrese su consulta.',
+    welcome_greeting:'Bienvenido, Miembro VIP', search_ph:'Ingrese palabra de búsqueda...', quick_access:'Acceso Rápido',
+    card_inquiry:'Consulta de Tarifa Especial', global_inquiry:'Consulta de Tarifa Especial'}
 };
 let _lang = localStorage.getItem('vip_lang') || 'ko';
 function t(key){ return (I18N[_lang]||I18N.ko)[key]||(I18N.ko)[key]||key; }
@@ -1243,7 +1253,7 @@ function setLang(lang){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ if(tr[el.dataset.i18n]) el.textContent=tr[el.dataset.i18n]; });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ if(tr[el.dataset.i18nHtml]) el.innerHTML=tr[el.dataset.i18nHtml]; });
   const eb=document.getElementById('entry-btn-enter'); if(eb) eb.textContent=tr.enter_btn||'ENTER';
-  // 예약폼은 다음 오픈 시 t()로 재렌더되므로 data-i18n 속성 업데이트로 충분
+  const si=document.getElementById('main-search'); if(si) si.placeholder=tr.search_ph||'검색어를 입력하세요...';
 }
 
 const DB = {
@@ -1632,7 +1642,7 @@ function renderLinks() {
     const resBtn = `
       <div onclick="event.preventDefault();event.stopPropagation();openReservationFromCard(${l.id});"
         style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0;border-top:1px solid rgba(201,168,76,0.15);cursor:pointer;background:rgba(201,168,76,0.04);">
-        <span style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;">특별가 예약 문의</span>
+        <span style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;" data-i18n="card_inquiry">특별가 예약 문의</span>
         <span style="color:var(--gold);font-size:11px;">→</span>
       </div>`;
 
