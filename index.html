@@ -2639,17 +2639,22 @@ function renderLinksAdmin() {
                   <span style="color:var(--gold);font-size:12px;letter-spacing:1px;font-weight:500;">▸ ${name}</span>
                   <button type="button" onclick="deleteLinkSubCat(${l.id},${i})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;letter-spacing:1px;">✕ 삭제</button>
                 </div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
-                  ${items.map((it,j) => `
-                    <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:10px;">
-                      ${it}
-                      <button type="button" onclick="deleteLinkSubItem(${l.id},${i},${j})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;line-height:1;padding:0 0 0 3px;">✕</button>
-                    </span>`).join('')}
+                <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
+                  ${items.map(_normSubItem).map((it,j) => `
+                    <div style="display:flex;align-items:center;gap:5px;">
+                      <span style="flex:1;padding:3px 8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:10px;">${it.name}</span>
+                      <input type="text" value="${it.price||''}" placeholder="가격"
+                        style="width:130px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:3px 7px;font-size:10px;"
+                        onchange="updateLinkSubItemPrice(${l.id},${i},${j},this.value)">
+                      <button type="button" onclick="deleteLinkSubItem(${l.id},${i},${j})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;padding:0 4px;">✕</button>
+                    </div>`).join('')}
                 </div>
-                <div style="display:flex;gap:6px;">
-                  <input id="sub-item-input-${l.id}-${i}" type="text" placeholder="세부항목 입력"
-                    style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;"
+                <div style="display:flex;gap:5px;">
+                  <input id="sub-item-input-${l.id}-${i}" type="text" placeholder="세부항목명"
+                    style="flex:2;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;"
                     onkeydown="if(event.key==='Enter'){event.preventDefault();addLinkSubItem(${l.id},${i});}">
+                  <input id="sub-item-price-${l.id}-${i}" type="text" placeholder="가격"
+                    style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;">
                   <button type="button" onclick="addLinkSubItem(${l.id},${i})" style="padding:4px 10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:10px;cursor:pointer;">+추가</button>
                 </div>
               </div>`;
@@ -2736,20 +2741,32 @@ function deleteLinkSubCat(id, idx) {
 }
 
 function addLinkSubItem(id, catIdx) {
-  const input = document.getElementById('sub-item-input-' + id + '-' + catIdx);
-  const val = input?.value.trim();
-  if (!val) { showToast('세부항목을 입력하세요.', 'error'); return; }
+  const nameEl  = document.getElementById('sub-item-input-' + id + '-' + catIdx);
+  const priceEl = document.getElementById('sub-item-price-' + id + '-' + catIdx);
+  const name = nameEl?.value.trim();
+  if (!name) { showToast('세부항목을 입력하세요.', 'error'); return; }
   const links = DB.get('links', []);
   const l = links.find(x => x.id === id);
   if (!l) return;
   const cats = (l.sub_categories || []).map(c => typeof c === 'string' ? {name: c, items: []} : c);
   if (!cats[catIdx]) return;
-  cats[catIdx].items = [...(cats[catIdx].items || []), val];
+  cats[catIdx].items = [...(cats[catIdx].items || []).map(_normSubItem), {name, price: priceEl?.value.trim()||''}];
   l.sub_categories = cats;
   DB.set('links', links);
-  if (input) input.value = '';
+  if (nameEl) nameEl.value = ''; if (priceEl) priceEl.value = '';
   renderLinksAdmin();
   showToast('세부항목 추가됨', 'gold');
+}
+
+function updateLinkSubItemPrice(id, catIdx, itemIdx, price) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  const cats = (l.sub_categories || []).map(c => typeof c === 'string' ? {name: c, items: []} : c);
+  if (!cats[catIdx]) return;
+  cats[catIdx].items = (cats[catIdx].items || []).map(_normSubItem);
+  if (cats[catIdx].items[itemIdx]) cats[catIdx].items[itemIdx].price = price;
+  l.sub_categories = cats;
+  DB.set('links', links);
 }
 
 function deleteLinkSubItem(id, catIdx, itemIdx) {
@@ -2758,7 +2775,7 @@ function deleteLinkSubItem(id, catIdx, itemIdx) {
   if (!l) return;
   const cats = (l.sub_categories || []).map(c => typeof c === 'string' ? {name: c, items: []} : c);
   if (!cats[catIdx]) return;
-  cats[catIdx].items = (cats[catIdx].items || []).filter((_,i) => i !== itemIdx);
+  cats[catIdx].items = (cats[catIdx].items || []).map(_normSubItem).filter((_,i) => i !== itemIdx);
   l.sub_categories = cats;
   DB.set('links', links);
   renderLinksAdmin();
