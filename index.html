@@ -2412,21 +2412,25 @@ function quickAddCode() {
 async function saveCodeTextFromContent(id) {
   const ta = document.getElementById('cct-' + id);
   if (!ta) return;
-  const codes = DB.get('codes', []);
-  const c = codes.find(c => c.id === id);
+  let codes = DB.get('codes', []);
+  let c = codes.find(x => x.id === id);
   if (!c) return;
   const text = ta.value.trim();
+  const codeLabel = c.code;
   c.welcome_text = text;
+  if (!text) c.welcome_text_langs = {};
   const mirror = document.getElementById('code-text-' + id);
   if (mirror) mirror.value = text;
+  DB.set('codes', codes);
+  showToast(`[${codeLabel}] 텍스트가 저장되었습니다.`, 'gold');
   if (text) {
     showToast('번역 중...', 'gold');
-    c.welcome_text_langs = await _translateItem(text, TRANS_TARGETS).catch(() => ({}));
-  } else {
-    c.welcome_text_langs = {};
+    const langs = await _translateItem(text, TRANS_TARGETS).catch(() => ({}));
+    codes = DB.get('codes', []);
+    c = codes.find(x => x.id === id);
+    if (c) { c.welcome_text_langs = langs; DB.set('codes', codes); }
+    showToast('번역 완료', 'gold');
   }
-  DB.set('codes', codes);
-  showToast(`[${c?.code}] 텍스트가 저장되었습니다.`, 'gold');
 }
 
 function switchTab(id) {
@@ -2536,19 +2540,22 @@ async function addCode() {
 async function saveCodeText(id) {
   const ta = document.getElementById('code-text-' + id);
   if (!ta) return;
-  const codes = DB.get('codes', []);
-  const c = codes.find(c => c.id === id);
+  let codes = DB.get('codes', []);
+  let c = codes.find(x => x.id === id);
   if (!c) return;
   const text = ta.value.trim();
   c.welcome_text = text;
-  if (text) {
-    showToast('번역 중...', 'gold');
-    c.welcome_text_langs = await _translateItem(text, TRANS_TARGETS).catch(() => ({}));
-  } else {
-    c.welcome_text_langs = {};
-  }
+  if (!text) c.welcome_text_langs = {};
   DB.set('codes', codes);
   showToast('저장되었습니다.', 'gold');
+  if (text) {
+    showToast('번역 중...', 'gold');
+    const langs = await _translateItem(text, TRANS_TARGETS).catch(() => ({}));
+    codes = DB.get('codes', []);
+    c = codes.find(x => x.id === id);
+    if (c) { c.welcome_text_langs = langs; DB.set('codes', codes); }
+    showToast('번역 완료', 'gold');
+  }
 }
 
 function deleteCode(id) {
