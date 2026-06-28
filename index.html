@@ -1141,9 +1141,13 @@
       </div>
       <!-- 예약 폼 하단 첨부 뷰어 (이미지/PDF) -->
       <!-- 결제 정보 -->
+      <!-- 구매 목록 & 결제 -->
       <div id="res-payment-wrap" style="display:none;margin:16px 0;padding:14px 16px;border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.06);">
-        <div style="font-size:9px;letter-spacing:3px;color:var(--gold);margin-bottom:6px;">💳 PAYMENT</div>
-        <div id="res-payment-price" style="font-size:15px;color:var(--gold);letter-spacing:2px;"></div>
+        <div style="font-size:9px;letter-spacing:3px;color:var(--gold);margin-bottom:8px;" data-i18n="cart_title">🛒 구매 목록</div>
+        <div id="res-cart-list" style="margin-bottom:6px;font-size:12px;"></div>
+        <div id="res-cart-total" style="font-size:14px;color:var(--gold);letter-spacing:1px;border-top:1px solid rgba(201,168,76,0.25);padding-top:8px;margin-bottom:10px;"></div>
+        <div id="res-payment-price" style="display:none;font-size:13px;color:var(--gold);letter-spacing:2px;margin-bottom:8px;"></div>
+        <button type="button" id="res-pay-btn" onclick="onPayBtnClick()" style="display:none;width:100%;padding:13px;background:linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.1));border:1px solid rgba(201,168,76,0.5);color:var(--gold);font-size:13px;letter-spacing:3px;cursor:pointer;" data-i18n="pay_btn">💳 결제하기</button>
       </div>
       <div id="reservation-file-wrap" style="display:none;margin:20px 0 24px;">
         <div style="font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">안내 자료</div>
@@ -1159,7 +1163,7 @@
           <div id="res-dots" style="text-align:center;padding:8px 0;display:none;"></div>
         </div>
       </div>
-      <button type="submit" class="btn-primary">문의 전송</button>
+      <button type="submit" class="btn-primary" id="res-submit-btn" data-i18n="submit_btn">문의 전송</button>
     </form>
   </div>
 </div>
@@ -1190,15 +1194,30 @@ let _cloudTimer = null;
 // ============================================================
 const I18N = {
   ko:{ entry_label:'입장 코드를 입력하세요', privacy_title:'개인정보 수집·이용 동의 (필수)', privacy_agree:'개인정보 수집·이용에 동의합니다', enter_btn:'ENTER', err_agree:'개인정보 수집·이용에 동의해 주세요.', err_code:'유효하지 않은 입장 코드입니다.',
-    privacy_body:`<b style="color:var(--gold);">개인정보 수집·이용 동의</b><br><br><b>수집 항목:</b> 예약자명, 연락처, 이메일, 사용일자, 지역, 인원수, 문의내용<br><br><b>수집 목적:</b> 특별가 예약 문의 접수 및 처리, 예약 확인 및 안내, 고객 맞춤 서비스 제공<br><br><b>보유 기간:</b> 예약 문의 처리 완료 후 1년간 보관 후 파기.<br><br><b>제3자 제공:</b> 수집된 개인정보는 예약 처리 목적 외에 제3자에게 제공되지 않습니다.<br><br>귀하는 개인정보 수집·이용에 동의하지 않을 권리가 있습니다.`},
+    privacy_body:`<b style="color:var(--gold);">개인정보 수집·이용 동의</b><br><br><b>수집 항목:</b> 예약자명, 연락처, 이메일, 사용일자, 지역, 인원수, 문의내용<br><br><b>수집 목적:</b> 특별가 예약 문의 접수 및 처리, 예약 확인 및 안내, 고객 맞춤 서비스 제공<br><br><b>보유 기간:</b> 예약 문의 처리 완료 후 1년간 보관 후 파기.<br><br><b>제3자 제공:</b> 수집된 개인정보는 예약 처리 목적 외에 제3자에게 제공되지 않습니다.<br><br>귀하는 개인정보 수집·이용에 동의하지 않을 권리가 있습니다.`,
+    fl_service:'문의 메뉴 선택', fl_name:'예약자명', fl_dates:'사용일자', fl_region:'품명', fl_count:'수량', fl_contact:'연락처 / 이메일', fl_reply_method:'답변 수단', fl_memo:'문의 내용',
+    select_region:'선택하세요', select_sub:'세부항목 선택', qty_label:'수량', add_cart:'+ 추가', cart_title:'🛒 구매 목록', cart_total:'합계', pay_btn:'💳 결제하기', submit_btn:'문의 전송',
+    reply_sms:'문자', reply_kakao:'카카오톡', reply_call:'전화'},
   en:{ entry_label:'Enter your access code', privacy_title:'Privacy Policy Agreement (Required)', privacy_agree:'I agree to the collection and use of personal information', enter_btn:'ENTER', err_agree:'Please agree to the privacy policy.', err_code:'Invalid access code.',
-    privacy_body:`<b style="color:var(--gold);">Privacy Policy</b><br><br><b>Items collected:</b> Name, contact, email, dates, region, guests, inquiry<br><br><b>Purpose:</b> Processing VIP reservation inquiries and providing personalized service<br><br><b>Retention:</b> 1 year after inquiry is closed, then deleted.<br><br><b>Third parties:</b> Personal information is not shared with third parties.<br><br>You have the right to refuse consent, but service may be limited.`},
+    privacy_body:`<b style="color:var(--gold);">Privacy Policy</b><br><br><b>Items collected:</b> Name, contact, email, dates, region, guests, inquiry<br><br><b>Purpose:</b> Processing VIP reservation inquiries and providing personalized service<br><br><b>Retention:</b> 1 year after inquiry is closed, then deleted.<br><br><b>Third parties:</b> Personal information is not shared with third parties.<br><br>You have the right to refuse consent, but service may be limited.`,
+    fl_service:'Select Menu', fl_name:'Name', fl_dates:'Date', fl_region:'Category', fl_count:'Qty', fl_contact:'Phone / Email', fl_reply_method:'Reply Method', fl_memo:'Inquiry',
+    select_region:'Select', select_sub:'Select item', qty_label:'Qty', add_cart:'+ Add', cart_title:'🛒 Order List', cart_total:'Total', pay_btn:'💳 Pay Now', submit_btn:'Send Inquiry',
+    reply_sms:'SMS', reply_kakao:'KakaoTalk', reply_call:'Call'},
   ja:{ entry_label:'アクセスコードを入力してください', privacy_title:'個人情報収集・利用同意 (必須)', privacy_agree:'個人情報の収集・利用に同意します', enter_btn:'入場', err_agree:'個人情報の収集・利用に同意してください。', err_code:'無効なアクセスコードです。',
-    privacy_body:`<b style="color:var(--gold);">個人情報収集・利用同意</b><br><br><b>収集項目:</b> 氏名、連絡先、メール、利用日、地域、人数、お問い合わせ内容<br><br><b>利用目的:</b> VIP予約のお問い合わせ対応およびサービス提供<br><br><b>保存期間:</b> 問い合わせ対応後1年間保管後、削除。<br><br><b>第三者提供:</b> 予約処理目的以外では第三者に提供しません。`},
+    privacy_body:`<b style="color:var(--gold);">個人情報収集・利用同意</b><br><br><b>収集項目:</b> 氏名、連絡先、メール、利用日、地域、人数、お問い合わせ内容<br><br><b>利用目的:</b> VIP予約のお問い合わせ対応およびサービス提供<br><br><b>保存期間:</b> 問い合わせ対応後1年間保管後、削除。<br><br><b>第三者提供:</b> 予約処理目的以外では第三者に提供しません。`,
+    fl_service:'メニュー選択', fl_name:'お名前', fl_dates:'ご利用日', fl_region:'品目', fl_count:'数量', fl_contact:'連絡先 / メール', fl_reply_method:'返信方法', fl_memo:'お問い合わせ内容',
+    select_region:'選択してください', select_sub:'項目を選択', qty_label:'数量', add_cart:'+ 追加', cart_title:'🛒 注文リスト', cart_total:'合計', pay_btn:'💳 決済する', submit_btn:'送信',
+    reply_sms:'SMS', reply_kakao:'カカオトーク', reply_call:'電話'},
   zh:{ entry_label:'请输入入场码', privacy_title:'个人信息收集·使用同意 (必填)', privacy_agree:'我同意收集和使用个人信息', enter_btn:'进入', err_agree:'请同意个人信息收集及使用条款。', err_code:'无效的入场码。',
-    privacy_body:`<b style="color:var(--gold);">个人信息收集·使用同意</b><br><br><b>收集项目:</b> 姓名、联系方式、邮箱、使用日期、地区、人数、咨询内容<br><br><b>收集目的:</b> 接收VIP预约咨询及提供服务<br><br><b>保存期限:</b> 咨询处理完成后保存1年后删除。<br><br><b>第三方提供:</b> 个人信息不会用于预约处理目的以外的用途。`},
+    privacy_body:`<b style="color:var(--gold);">个人信息收集·使用同意</b><br><br><b>收集项目:</b> 姓名、联系方式、邮箱、使用日期、地区、人数、咨询内容<br><br><b>收集目的:</b> 接收VIP预约咨询及提供服务<br><br><b>保存期限:</b> 咨询处理完成后保存1年后删除。<br><br><b>第三方提供:</b> 个人信息不会用于预约处理目的以外的用途。`,
+    fl_service:'选择菜单', fl_name:'姓名', fl_dates:'使用日期', fl_region:'品类', fl_count:'数量', fl_contact:'电话 / 邮箱', fl_reply_method:'回复方式', fl_memo:'咨询内容',
+    select_region:'请选择', select_sub:'选择项目', qty_label:'数量', add_cart:'+ 添加', cart_title:'🛒 订单列表', cart_total:'合计', pay_btn:'💳 立即付款', submit_btn:'发送咨询',
+    reply_sms:'短信', reply_kakao:'KakaoTalk', reply_call:'电话'},
   es:{ entry_label:'Ingrese su código de acceso', privacy_title:'Acuerdo de privacidad (Obligatorio)', privacy_agree:'Acepto la recopilación y uso de mis datos personales', enter_btn:'ENTRAR', err_agree:'Por favor, acepte la política de privacidad.', err_code:'Código de acceso no válido.',
-    privacy_body:`<b style="color:var(--gold);">Política de Privacidad</b><br><br><b>Datos recopilados:</b> Nombre, contacto, email, fechas, región, personas, consulta<br><br><b>Propósito:</b> Gestión de consultas de reserva VIP y prestación de servicios<br><br><b>Retención:</b> 1 año tras cerrar la consulta, luego eliminados.<br><br><b>Terceros:</b> Los datos no se comparten con terceros.`}
+    privacy_body:`<b style="color:var(--gold);">Política de Privacidad</b><br><br><b>Datos recopilados:</b> Nombre, contacto, email, fechas, región, personas, consulta<br><br><b>Propósito:</b> Gestión de consultas de reserva VIP y prestación de servicios<br><br><b>Retención:</b> 1 año tras cerrar la consulta, luego eliminados.<br><br><b>Terceros:</b> Los datos no se comparten con terceros.`,
+    fl_service:'Seleccionar menú', fl_name:'Nombre', fl_dates:'Fecha', fl_region:'Categoría', fl_count:'Cantidad', fl_contact:'Teléfono / Email', fl_reply_method:'Método de respuesta', fl_memo:'Consulta',
+    select_region:'Seleccionar', select_sub:'Seleccionar ítem', qty_label:'Cant.', add_cart:'+ Agregar', cart_title:'🛒 Lista de pedido', cart_total:'Total', pay_btn:'💳 Pagar', submit_btn:'Enviar consulta',
+    reply_sms:'SMS', reply_kakao:'KakaoTalk', reply_call:'Llamada'}
 };
 let _lang = localStorage.getItem('vip_lang') || 'ko';
 function t(key){ return (I18N[_lang]||I18N.ko)[key]||(I18N.ko)[key]||key; }
@@ -1209,6 +1228,12 @@ function setLang(lang){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ if(tr[el.dataset.i18n]) el.textContent=tr[el.dataset.i18n]; });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ if(tr[el.dataset.i18nHtml]) el.innerHTML=tr[el.dataset.i18nHtml]; });
   const eb=document.getElementById('entry-btn-enter'); if(eb) eb.textContent=tr.enter_btn||'ENTER';
+  // 예약폼 재렌더 (관리자 페이지 제외)
+  if (!isAdminLoggedIn) {
+    renderReservationForm();
+    const subSel = document.querySelector('#region-sub-wrap select');
+    if (subSel) { subSel.options[0].textContent = tr.select_sub || '세부항목 선택'; }
+  }
 }
 
 const DB = {
@@ -1730,15 +1755,16 @@ function renderReservationForm() {
     const def = FIELD_DEFS[f]; if (!def) return;
     const group = document.createElement('div');
     group.className = 'form-group';
-    let html = `<label class="form-label">${def.label}</label>`;
+    let html = `<label class="form-label" data-i18n="fl_${f}">${t('fl_'+f)||def.label}</label>`;
     if (def.type === 'service') {
       const menus = DB.get('menus', []).filter(m => m.visible);
       html += `<select class="form-select" name="service" required>
-        <option value="">메뉴를 선택하세요</option>
+        <option value="">${t('select_region')||'선택하세요'}</option>
         ${menus.map(m => `<option value="${m.id}|${m.name}">${m.name}</option>`).join('')}
       </select>`;
     } else if (def.type === 'text' || def.type === 'number') {
-      html += `<input type="${def.type}" class="form-input" name="${f}" placeholder="${def.placeholder}" required>`;
+      const extraAttr = def.type === 'number' ? ' min="1" step="1"' : '';
+      html += `<input type="${def.type}" class="form-input" name="${f}" placeholder="${def.placeholder}"${extraAttr} required onchange="onCountChange(this)">`;
     } else if (def.type === 'dates') {
       const today = new Date().toISOString().split('T')[0];
       html += `<div class="form-row">
@@ -1753,13 +1779,19 @@ function renderReservationForm() {
         regionOpts = currentLinkObj.sub_categories.map(c => typeof c === 'string' ? {name: c, items: []} : c);
       }
       html += `<select class="form-select" name="region" required onchange="onRegionChange(this)">
-        <option value="">선택하세요</option>
+        <option value="">${t('select_region')||'선택하세요'}</option>
         ${regionOpts.map(o => `<option value="${o.name}">${o.name}</option>`).join('')}
       </select>
       <div id="region-sub-wrap" style="display:none;margin-top:8px;">
-        <select class="form-select" name="region_sub">
+        <select class="form-select" name="region_sub" style="margin-bottom:6px;">
           <option value="">세부항목 선택</option>
         </select>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:11px;color:var(--text-dim);white-space:nowrap;" data-i18n="qty_label">수량</span>
+          <input type="number" id="res-cart-qty" min="1" value="1" style="width:70px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 8px;font-size:13px;text-align:center;" onchange="updateCartPreview()">
+          <span id="res-sub-price-preview" style="font-size:12px;color:var(--gold);flex:1;"></span>
+          <button type="button" onclick="addToResCart()" style="padding:7px 16px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;letter-spacing:1px;" data-i18n="add_cart">+ 추가</button>
+        </div>
       </div>`;
     } else if (def.type === 'select') {
       const opts = typeof def.options === 'function' ? def.options() : def.options;
@@ -1774,10 +1806,11 @@ function renderReservationForm() {
       </div>
       <p style="font-size:10px;color:var(--text-dim);margin-top:6px;letter-spacing:1px;">연락처 또는 이메일 중 하나를 입력하세요.</p>`;
     } else if (def.type === 'radio') {
+      const replyMap = {'문자':'reply_sms','카카오톡':'reply_kakao','전화':'reply_call'};
       html += `<div class="form-radio-group">
         ${def.options.map(o => `
           <label class="form-radio-label">
-            <input type="radio" name="${f}" value="${o}"> ${o}
+            <input type="radio" name="${f}" value="${o}"> ${replyMap[o] ? t(replyMap[o]) : o}
           </label>`).join('')}
       </div>`;
     } else if (def.type === 'textarea') {
@@ -1786,6 +1819,14 @@ function renderReservationForm() {
     group.innerHTML = html;
     container.appendChild(group);
   });
+}
+
+let _resCart = [];
+let _resSubItems = []; // current region's sub-items for price lookup
+
+function _priceNum(str) {
+  if (!str) return 0;
+  return parseInt(String(str).replace(/[^0-9]/g, '')) || 0;
 }
 
 function onRegionChange(sel) {
@@ -1797,26 +1838,96 @@ function onRegionChange(sel) {
     regionOpts = currentLinkObj.sub_categories.map(c => typeof c === 'string' ? {name: c, items: []} : c);
   const found = regionOpts.find(o => o.name === regionName);
   if (found && found.items && found.items.length) {
+    _resSubItems = found.items.map(_normSubItem);
     const subSel = wrap.querySelector('select');
-    const normItems = found.items.map(_normSubItem);
-    subSel.innerHTML = `<option value="">세부항목 선택</option>` +
-      normItems.map(it => `<option value="${it.name}" data-price="${it.price||''}">${it.name}${it.price ? ' ('+it.price+')' : ''}</option>`).join('');
-    subSel.onchange = () => onSubItemChange(subSel, normItems);
+    subSel.innerHTML = `<option value="">${t('select_sub') || '세부항목 선택'}</option>` +
+      _resSubItems.map(it => `<option value="${it.name}" data-price="${it.price||''}">${it.name}${it.price ? ' ('+it.price+')' : ''}</option>`).join('');
+    subSel.onchange = () => updateCartPreview();
     wrap.style.display = 'block';
   } else {
+    _resSubItems = [];
     wrap.style.display = 'none';
   }
 }
 
-function onSubItemChange(subSel, items) {
-  const selected = items.find(it => it.name === subSel.value);
-  if (!selected || !selected.price) return;
-  const pw = document.getElementById('res-payment-wrap');
-  const pp = document.getElementById('res-payment-price');
-  if (pw && pp) {
-    pp.textContent = selected.price;
-    pw.style.display = 'block';
+function updateCartPreview() {
+  const subSel = document.querySelector('#region-sub-wrap select');
+  const qtyEl = document.getElementById('res-cart-qty');
+  const previewEl = document.getElementById('res-sub-price-preview');
+  if (!subSel || !previewEl) return;
+  const item = _resSubItems.find(it => it.name === subSel.value);
+  const qty = parseInt(qtyEl?.value) || 1;
+  if (item && item.price) {
+    const unit = _priceNum(item.price);
+    if (unit > 0) {
+      previewEl.textContent = unit.toLocaleString() + '원 × ' + qty + ' = ' + (unit * qty).toLocaleString() + '원';
+    } else {
+      previewEl.textContent = item.price + ' × ' + qty;
+    }
+  } else {
+    previewEl.textContent = '';
   }
+}
+
+function onCountChange(input) {
+  const qtyEl = document.getElementById('res-cart-qty');
+  if (qtyEl && input.name === 'count') qtyEl.value = input.value;
+  updateCartPreview();
+}
+
+function addToResCart() {
+  const subSel = document.querySelector('#region-sub-wrap select');
+  const regionSel = document.querySelector('[name="region"]');
+  const qtyEl = document.getElementById('res-cart-qty');
+  const subName = subSel?.value;
+  if (!subName) { showToast('세부항목을 선택하세요.', 'error'); return; }
+  const region = regionSel?.value || '';
+  const item = _resSubItems.find(it => it.name === subName) || {name: subName, price: ''};
+  const qty = Math.max(1, parseInt(qtyEl?.value) || 1);
+  const unitPrice = _priceNum(item.price);
+  _resCart.push({region, name: subName, unitPrice, qty, subtotal: unitPrice * qty, priceStr: item.price || ''});
+  renderResCart();
+  showToast('추가됨', 'gold');
+}
+
+function removeFromResCart(idx) {
+  _resCart.splice(idx, 1);
+  renderResCart();
+}
+
+function renderResCart() {
+  const pw = document.getElementById('res-payment-wrap');
+  const listEl = document.getElementById('res-cart-list');
+  const totalEl = document.getElementById('res-cart-total');
+  const payBtn = document.getElementById('res-pay-btn');
+  if (!pw || !listEl || !totalEl) return;
+  if (_resCart.length === 0) {
+    // 기본 결제금액만 있으면 유지
+    const pp = document.getElementById('res-payment-price');
+    if (!pp || !pp.textContent) pw.style.display = 'none';
+    listEl.innerHTML = ''; totalEl.textContent = '';
+    if (payBtn) payBtn.style.display = 'none';
+    return;
+  }
+  pw.style.display = 'block';
+  listEl.innerHTML = _resCart.map((it, i) => `
+    <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(201,168,76,0.1);">
+      <span style="flex:1;color:var(--text);font-size:12px;">${it.region ? it.region+' - ' : ''}${it.name}</span>
+      <span style="color:var(--text-dim);font-size:11px;white-space:nowrap;">${it.unitPrice > 0 ? it.unitPrice.toLocaleString()+'원' : (it.priceStr||'-')} × ${it.qty}</span>
+      <span style="color:var(--gold);font-size:12px;white-space:nowrap;min-width:70px;text-align:right;">${it.unitPrice > 0 ? (it.subtotal).toLocaleString()+'원' : '-'}</span>
+      <button type="button" onclick="removeFromResCart(${i})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+    </div>`).join('');
+  const total = _resCart.reduce((s, it) => s + it.subtotal, 0);
+  totalEl.innerHTML = total > 0
+    ? `<span style="font-size:11px;color:var(--text-dim);">${t('cart_total')||'합계'}</span> <span style="font-size:15px;letter-spacing:1px;">${total.toLocaleString()}원</span>`
+    : '';
+  if (payBtn) payBtn.style.display = 'block';
+}
+
+function onPayBtnClick() {
+  const payUrl = currentLinkObj?.payment_url || currentCodeObj?.payment_url || DB.get('payment_url', '');
+  if (payUrl) { window.open(payUrl, '_blank'); return; }
+  document.getElementById('reservation-form')?.requestSubmit();
 }
 
 async function submitReservation(e) {
@@ -1832,6 +1943,7 @@ async function submitReservation(e) {
   // 서비스 선택 파싱 (id|name 형식)
   const [serviceMenuId, serviceName] = (obj.service || '|').split('|');
 
+  const total = _resCart.reduce((s, it) => s + it.subtotal, 0);
   const record = {
     id, org: currentOrg || '직접방문', code: currentCode || '',
     service_id: serviceMenuId || '', service_name: serviceName || '-',
@@ -1839,6 +1951,8 @@ async function submitReservation(e) {
     region: obj.region || '-', region_sub: obj.region_sub || '', count: obj.count || '-',
     phone: obj.phone || '-', email: obj.email || '-',
     reply_method: obj.reply_method || '-', memo: obj.memo || '-',
+    cart_items: _resCart.length ? [..._resCart] : [],
+    total_price: total || 0,
     timestamp: new Date().toISOString(),
     tg_status: 'pending', tg_id: null
   };
@@ -1856,6 +1970,7 @@ async function submitReservation(e) {
   reservations.unshift(record);
   DB.set('reservations', reservations);
 
+  _resCart = []; renderResCart();
   closeModal('modal-reservation');
   form.reset();
   showToast(record.tg_status === 'sent' ? '문의가 전송되었습니다. 빠르게 연락드리겠습니다.' : '문의가 접수되었습니다.', 'gold');
@@ -1877,6 +1992,14 @@ async function sendToTelegram(record, targetChannelId = null) {
 
   if (channels.length === 0) return { ok: false };
 
+  let cartSection = '';
+  if (record.cart_items && record.cart_items.length) {
+    cartSection = `\n🛒 <b>주문 목록:</b>\n` +
+      record.cart_items.map(it =>
+        `  • ${it.region ? it.region+' - ' : ''}${it.name} × ${it.qty}${it.unitPrice > 0 ? ' = ' + it.subtotal.toLocaleString() + '원' : (it.priceStr ? ' ('+it.priceStr+')' : '')}`
+      ).join('\n') +
+      (record.total_price > 0 ? `\n💰 합계: <b>${record.total_price.toLocaleString()}원</b>` : '') + '\n';
+  }
   const msg = `📋 <b>[VIP 예약문의 #${record.id}]</b>\n\n` +
     `🗂 메뉴: ${record.service_name || '-'}\n` +
     `🏢 단체명: ${record.org}\n` +
@@ -1884,6 +2007,7 @@ async function sendToTelegram(record, targetChannelId = null) {
     `📅 일자: ${record.date_start} ~ ${record.date_end}\n` +
     `📍 지역: ${record.region}${record.region_sub ? ' - ' + record.region_sub : ''}\n` +
     `👥 인원: ${record.count}명\n` +
+    cartSection +
     `📞 연락처: ${record.phone}\n` +
     `📧 이메일: ${record.email}\n` +
     `💬 답변수단: ${record.reply_method}\n` +
