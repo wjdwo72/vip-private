@@ -1702,7 +1702,7 @@ function renderReservationForm() {
       let regionOpts = _getRegionOpts();
       // 카드별 sub_categories가 있으면 그걸 지역명으로 사용 (세부항목 없음)
       if (currentLinkObj && currentLinkObj.sub_categories && currentLinkObj.sub_categories.length) {
-        regionOpts = currentLinkObj.sub_categories.map(s => ({name: s, items: []}));
+        regionOpts = currentLinkObj.sub_categories.map(c => typeof c === 'string' ? {name: c, items: []} : c);
       }
       html += `<select class="form-select" name="region" required onchange="onRegionChange(this)">
         <option value="">선택하세요</option>
@@ -1746,7 +1746,7 @@ function onRegionChange(sel) {
   const regionName = sel.value;
   let regionOpts = _getRegionOpts();
   if (currentLinkObj && currentLinkObj.sub_categories && currentLinkObj.sub_categories.length)
-    regionOpts = currentLinkObj.sub_categories.map(s => ({name: s, items: []}));
+    regionOpts = currentLinkObj.sub_categories.map(c => typeof c === 'string' ? {name: c, items: []} : c);
   const found = regionOpts.find(o => o.name === regionName);
   if (found && found.items && found.items.length) {
     const subSel = wrap.querySelector('select');
@@ -2532,20 +2532,39 @@ function renderLinksAdmin() {
         </div>
         <!-- 링크 전용 예약 지역 -->
         <div style="padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(201,168,76,0.1);border-radius:4px;margin-bottom:8px;">
-          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">링크 전용 예약 지역 <span style="font-size:9px;color:var(--text-dim);letter-spacing:0;">(비워두면 전체 지역 목록 사용)</span></div>
-          <div style="font-size:9px;color:var(--text-dim);margin-bottom:8px;letter-spacing:0.5px;">이 링크 카드로 예약 시 아래 지역만 선택 가능</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;" id="sub-cat-list-${l.id}">
-            ${(l.sub_categories||[]).map((cat,i) => `
-              <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:11px;letter-spacing:1px;">
-                ${cat}
-                <button type="button" onclick="deleteLinkSubCat(${l.id},${i})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:12px;line-height:1;padding:0 0 0 4px;">✕</button>
-              </span>`).join('')}
+          <div style="font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">링크 전용 예약 품명 <span style="font-size:9px;color:var(--text-dim);letter-spacing:0;">(비워두면 전체 목록 사용)</span></div>
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:10px;letter-spacing:0.5px;">대분류 추가 후 세부항목을 각각 입력하세요</div>
+          <div id="sub-cat-list-${l.id}">
+            ${(l.sub_categories||[]).map((cat,i) => {
+              const name = typeof cat === 'string' ? cat : cat.name;
+              const items = typeof cat === 'string' ? [] : (cat.items||[]);
+              return `
+              <div style="margin-bottom:10px;border:1px solid rgba(201,168,76,0.2);padding:8px 10px;background:rgba(0,0,0,0.2);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <span style="color:var(--gold);font-size:12px;letter-spacing:1px;font-weight:500;">▸ ${name}</span>
+                  <button type="button" onclick="deleteLinkSubCat(${l.id},${i})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;letter-spacing:1px;">✕ 삭제</button>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
+                  ${items.map((it,j) => `
+                    <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text);font-size:10px;">
+                      ${it}
+                      <button type="button" onclick="deleteLinkSubItem(${l.id},${i},${j})" style="background:none;border:none;color:#e88;cursor:pointer;font-size:11px;line-height:1;padding:0 0 0 3px;">✕</button>
+                    </span>`).join('')}
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <input id="sub-item-input-${l.id}-${i}" type="text" placeholder="세부항목 입력"
+                    style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:4px 8px;font-size:10px;"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();addLinkSubItem(${l.id},${i});}">
+                  <button type="button" onclick="addLinkSubItem(${l.id},${i})" style="padding:4px 10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.35);color:var(--gold);font-size:10px;cursor:pointer;">+추가</button>
+                </div>
+              </div>`;
+            }).join('')}
           </div>
-          <div style="display:flex;gap:8px;">
-            <input id="sub-cat-input-${l.id}" type="text" placeholder="지역명 입력 후 추가"
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <input id="sub-cat-input-${l.id}" type="text" placeholder="대분류명 입력 (예: 전통주)"
               style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:6px 10px;font-size:11px;"
               onkeydown="if(event.key==='Enter'){event.preventDefault();addLinkSubCat(${l.id});}">
-            <button type="button" onclick="addLinkSubCat(${l.id})" style="padding:6px 14px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">추가</button>
+            <button type="button" onclick="addLinkSubCat(${l.id})" style="padding:6px 14px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;">대분류 추가</button>
           </div>
         </div>
         <!-- 링크 전용 예약폼 항목 -->
@@ -2589,15 +2608,17 @@ function renderLinksAdmin() {
 function addLinkSubCat(id) {
   const input = document.getElementById('sub-cat-input-' + id);
   const val = input?.value.trim();
-  if (!val) { showToast('카테고리명을 입력하세요.', 'error'); return; }
+  if (!val) { showToast('대분류명을 입력하세요.', 'error'); return; }
   const links = DB.get('links', []);
   const l = links.find(x => x.id === id);
   if (!l) return;
-  l.sub_categories = [...(l.sub_categories || []), val];
+  const cats = (l.sub_categories || []).map(c => typeof c === 'string' ? {name: c, items: []} : c);
+  cats.push({name: val, items: []});
+  l.sub_categories = cats;
   DB.set('links', links);
   if (input) input.value = '';
   renderLinksAdmin();
-  showToast('카테고리 추가됨', 'gold');
+  showToast('대분류 추가됨', 'gold');
 }
 
 function deleteLinkSubCat(id, idx) {
@@ -2607,7 +2628,37 @@ function deleteLinkSubCat(id, idx) {
   l.sub_categories = (l.sub_categories || []).filter((_,i) => i !== idx);
   DB.set('links', links);
   renderLinksAdmin();
-  showToast('지역 삭제됨');
+  showToast('삭제됨');
+}
+
+function addLinkSubItem(id, catIdx) {
+  const input = document.getElementById('sub-item-input-' + id + '-' + catIdx);
+  const val = input?.value.trim();
+  if (!val) { showToast('세부항목을 입력하세요.', 'error'); return; }
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  const cats = (l.sub_categories || []).map(c => typeof c === 'string' ? {name: c, items: []} : c);
+  if (!cats[catIdx]) return;
+  cats[catIdx].items = [...(cats[catIdx].items || []), val];
+  l.sub_categories = cats;
+  DB.set('links', links);
+  if (input) input.value = '';
+  renderLinksAdmin();
+  showToast('세부항목 추가됨', 'gold');
+}
+
+function deleteLinkSubItem(id, catIdx, itemIdx) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  const cats = (l.sub_categories || []).map(c => typeof c === 'string' ? {name: c, items: []} : c);
+  if (!cats[catIdx]) return;
+  cats[catIdx].items = (cats[catIdx].items || []).filter((_,i) => i !== itemIdx);
+  l.sub_categories = cats;
+  DB.set('links', links);
+  renderLinksAdmin();
+  showToast('삭제됨');
 }
 
 function saveLinkFormFields(id) {
