@@ -2616,7 +2616,6 @@ function renderCodesAdmin() {
             <button class="btn-secondary" style="white-space:nowrap;padding:10px 18px;"
               onclick="saveCodeText(${c.id})">저장</button>
           </div>
-          ${c.welcome_text_langs && Object.keys(c.welcome_text_langs).length ? `
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
             ${['en','ja','zh','es'].map(l => `
               <div style="display:flex;align-items:flex-start;gap:4px;">
@@ -2624,7 +2623,7 @@ function renderCodesAdmin() {
                 <textarea class="form-textarea" rows="2" style="flex:1;font-size:10px;min-height:40px;"
                   placeholder="${l}" onchange="saveCodeTextLang(${c.id},'${l}',this.value)">${(c.welcome_text_langs&&c.welcome_text_langs[l])||''}</textarea>
               </div>`).join('')}
-          </div>` : ''}
+          </div>
           </div>
         </div>
       </div>`).join('');
