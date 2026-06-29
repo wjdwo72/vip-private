@@ -2563,6 +2563,7 @@ async function saveCodeText(id) {
     codes = DB.get('codes', []);
     c = codes.find(x => x.id === id);
     if (c) { c.welcome_text_langs = langs; DB.set('codes', codes); }
+    renderCodesAdmin();
     showToast('번역 완료', 'gold');
   }
 }
