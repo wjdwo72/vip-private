@@ -3414,37 +3414,76 @@ function renderMenusAdmin() {
 function renderReservationsAdmin(filter = {}) {
   let res = DB.get('reservations', []);
   if (filter.org) res = res.filter(r => r.org === filter.org);
+  if (filter.name) res = res.filter(r => r.name === filter.name);
+  if (filter.region) res = res.filter(r => r.region === filter.region);
+  if (filter.method) res = res.filter(r => r.reply_method === filter.method);
+  if (filter.date) res = res.filter(r => r.date_start === filter.date);
   if (filter.tg) res = res.filter(r => r.tg_status === filter.tg);
 
-  // Filter org dropdown
-  const orgs = [...new Set(DB.get('reservations', []).map(r => r.org))];
-  const orgSel = document.getElementById('filter-org');
-  if (orgSel) {
-    orgSel.innerHTML = '<option value="">전체 단체</option>' + orgs.map(o => `<option value="${o}">${o}</option>`).join('');
-  }
+  const allRes = DB.get('reservations', []);
+  const orgs = [...new Set(allRes.map(r => r.org))].sort();
+  const names = [...new Set(allRes.map(r => r.name))].sort();
+  const regions = [...new Set(allRes.map(r => r.region))].sort();
+  const methods = [...new Set(allRes.map(r => r.reply_method))].filter(m => m).sort();
+  const dates = [...new Set(allRes.map(r => r.date_start))].sort().reverse();
 
   const el = document.getElementById('reservation-table');
   if (!el) return;
+
   if (res.length === 0) { el.innerHTML = '<p style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px;">예약 데이터가 없습니다.</p>'; return; }
-  el.innerHTML = `<table class="data-table">
-    <tr><th>#ID</th><th>일시</th><th>단체명</th><th>예약자</th><th>일자</th><th>지역</th><th>인원</th><th>연락처</th><th>이메일</th><th>답변수단</th><th>전송</th></tr>
-    ${res.map(r => `<tr>
-      <td>#${r.id}</td>
-      <td>${new Date(r.timestamp).toLocaleString('ko-KR')}</td>
-      <td>${r.org}</td><td>${r.name}</td>
-      <td>${r.date_start}~${r.date_end}</td>
-      <td>${r.region}${r.region_sub ? '<br><span style="font-size:10px;color:var(--text-dim);">└ ' + r.region_sub + '</span>' : ''}</td><td>${r.count}</td>
-      <td>${r.phone}</td><td>${r.email}</td>
-      <td>${r.reply_method}</td>
-      <td><span class="badge badge-${r.tg_status==='sent'?'success':r.tg_status==='failed'?'fail':'pending'}">${r.tg_status==='sent'?'전송완료':r.tg_status==='failed'?'실패':'대기'}</span></td>
-    </tr>`).join('')}
-  </table>`;
+  el.innerHTML = `
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      <select id="filter-date" onchange="filterReservations()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 일자</option>
+        ${dates.map(d => `<option value="${d}">${d}</option>`).join('')}
+      </select>
+      <select id="filter-org" onchange="filterReservations()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 단체</option>
+        ${orgs.map(o => `<option value="${o}">${o}</option>`).join('')}
+      </select>
+      <select id="filter-name" onchange="filterReservations()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 예약자</option>
+        ${names.map(n => `<option value="${n}">${n}</option>`).join('')}
+      </select>
+      <select id="filter-region" onchange="filterReservations()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 지역</option>
+        ${regions.map(r => `<option value="${r}">${r}</option>`).join('')}
+      </select>
+      <select id="filter-method" onchange="filterReservations()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 답변수단</option>
+        ${methods.map(m => `<option value="${m}">${m}</option>`).join('')}
+      </select>
+      <select id="filter-tg" onchange="filterReservations()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 전송상태</option>
+        <option value="pending">대기</option>
+        <option value="sent">완료</option>
+        <option value="failed">실패</option>
+      </select>
+      <button onclick="exportCSV()" style="padding:6px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;">Excel</button>
+    </div>
+    <table class="data-table">
+      <tr><th>#ID</th><th>일시</th><th>단체명</th><th>예약자</th><th>일자</th><th>지역</th><th>인원</th><th>연락처</th><th>이메일</th><th>답변수단</th><th>전송</th></tr>
+      ${res.map(r => `<tr>
+        <td>#${r.id}</td>
+        <td>${new Date(r.timestamp).toLocaleString('ko-KR')}</td>
+        <td>${r.org}</td><td>${r.name}</td>
+        <td>${r.date_start}~${r.date_end}</td>
+        <td>${r.region}${r.region_sub ? '<br><span style="font-size:10px;color:var(--text-dim);">└ ' + r.region_sub + '</span>' : ''}</td><td>${r.count}</td>
+        <td>${r.phone}</td><td>${r.email}</td>
+        <td>${r.reply_method}</td>
+        <td><span class="badge badge-${r.tg_status==='sent'?'success':r.tg_status==='failed'?'fail':'pending'}">${r.tg_status==='sent'?'전송완료':r.tg_status==='failed'?'실패':'대기'}</span></td>
+      </tr>`).join('')}
+    </table>`;
 }
 
 function filterReservations() {
-  const org = document.getElementById('filter-org').value;
-  const tg = document.getElementById('filter-tg').value;
-  renderReservationsAdmin({ org, tg });
+  const date = document.getElementById('filter-date')?.value || '';
+  const org = document.getElementById('filter-org')?.value || '';
+  const name = document.getElementById('filter-name')?.value || '';
+  const region = document.getElementById('filter-region')?.value || '';
+  const method = document.getElementById('filter-method')?.value || '';
+  const tg = document.getElementById('filter-tg')?.value || '';
+  renderReservationsAdmin({ date, org, name, region, method, tg });
 }
 
 function clearEntryLogs() {
@@ -3454,29 +3493,91 @@ function clearEntryLogs() {
   showToast('입장 로그가 삭제되었습니다.');
 }
 
-function renderEntryLogs() {
+function renderEntryLogs(filter = {}) {
+  let logs = DB.get('entry_logs', []);
+  if (filter.date) logs = logs.filter(l => new Date(l.time).toLocaleDateString('ko-KR') === filter.date);
+  if (filter.code) logs = logs.filter(l => l.code === filter.code);
+  if (filter.org) logs = logs.filter(l => l.org === filter.org);
+  if (filter.device) logs = logs.filter(l => {
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(l.ua||'');
+    return (filter.device === 'mobile') ? isMobile : !isMobile;
+  });
+
   const el = document.getElementById('entry-log-list');
   if (!el) return;
-  const logs = DB.get('entry_logs', []);
+
+  const allLogs = DB.get('entry_logs', []);
+  const dates = [...new Set(allLogs.map(l => new Date(l.time).toLocaleDateString('ko-KR')))].sort().reverse();
+  const codes = [...new Set(allLogs.map(l => l.code))].sort();
+  const orgs = [...new Set(allLogs.map(l => l.org))].sort();
+
   if (!logs.length) { el.innerHTML = '<p style="color:var(--text-dim);font-size:12px;padding:12px 0;">입장 기록이 없습니다.</p>'; return; }
-  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px;">
-    <thead><tr style="border-bottom:1px solid rgba(201,168,76,0.3);">
-      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">시간</th>
-      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">입장코드</th>
-      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">단체명</th>
-      <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">기기</th>
-    </tr></thead>
-    <tbody>${logs.map(l => {
-      const t = new Date(l.time).toLocaleString('ko-KR');
-      const mobile = /Mobi|Android|iPhone|iPad/i.test(l.ua||'') ? '📱모바일' : '💻PC';
-      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-        <td style="padding:6px 8px;color:var(--text-dim);">${t}</td>
-        <td style="padding:6px 8px;color:var(--gold);font-family:'Courier New';">${l.code}</td>
-        <td style="padding:6px 8px;color:var(--text);">${l.org}</td>
-        <td style="padding:6px 8px;color:var(--text-dim);">${mobile}</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
+
+  el.innerHTML = `
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="filter-entry-date" onchange="filterEntryLogs()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 일자</option>
+        ${dates.map(d => `<option value="${d}">${d}</option>`).join('')}
+      </select>
+      <select id="filter-entry-code" onchange="filterEntryLogs()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 코드</option>
+        ${codes.map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+      <select id="filter-entry-org" onchange="filterEntryLogs()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 단체</option>
+        ${orgs.map(o => `<option value="${o}">${o}</option>`).join('')}
+      </select>
+      <select id="filter-entry-device" onchange="filterEntryLogs()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+        <option value="">전체 기기</option>
+        <option value="mobile">모바일</option>
+        <option value="pc">PC</option>
+      </select>
+      <button onclick="exportEntryLogs()" style="padding:6px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;">Excel</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead><tr style="border-bottom:1px solid rgba(201,168,76,0.3);">
+        <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">시간</th>
+        <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">입장코드</th>
+        <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">단체명</th>
+        <th style="text-align:left;padding:6px 8px;color:var(--gold);letter-spacing:1px;">기기</th>
+      </tr></thead>
+      <tbody>${logs.map(l => {
+        const t = new Date(l.time).toLocaleString('ko-KR');
+        const isMobile = /Mobi|Android|iPhone|iPad/i.test(l.ua||'');
+        const mobile = isMobile ? '모바일' : 'PC';
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:6px 8px;color:var(--text-dim);">${t}</td>
+          <td style="padding:6px 8px;color:var(--gold);font-family:'Courier New';">${l.code}</td>
+          <td style="padding:6px 8px;color:var(--text);">${l.org}</td>
+          <td style="padding:6px 8px;color:var(--text-dim);">${mobile}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+function filterEntryLogs() {
+  const date = document.getElementById('filter-entry-date')?.value || '';
+  const code = document.getElementById('filter-entry-code')?.value || '';
+  const org = document.getElementById('filter-entry-org')?.value || '';
+  const device = document.getElementById('filter-entry-device')?.value || '';
+  renderEntryLogs({ date, code, org, device });
+}
+
+function exportEntryLogs() {
+  const logs = DB.get('entry_logs', []);
+  if (logs.length === 0) { showToast('내보낼 데이터가 없습니다.', 'error'); return; }
+  const headers = ['시간','입장코드','단체명','기기'];
+  const rows = logs.map(l => {
+    const t = new Date(l.time).toLocaleString('ko-KR');
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(l.ua||'');
+    return [t, l.code, l.org, isMobile ? '모바일' : 'PC'];
+  });
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vip_entry_logs_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 
 function exportCSV() {
