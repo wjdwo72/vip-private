@@ -2810,6 +2810,19 @@ function editLinkTitle(id) {
   }
 }
 
+function editLinkUrl(id) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  const newUrl = prompt('링크 URL을 입력하세요:', l.url);
+  if (newUrl && newUrl.trim()) {
+    l.url = newUrl.trim();
+    DB.set('links', links);
+    renderLinksAdmin();
+    renderMain();
+    showToast('링크 URL이 변경되었습니다.', 'gold');
+  }
+}
+
 function moveLinkUp(id) {
   let links = DB.get('links', []);
   const idx = links.findIndex(l => l.id === id);
@@ -2842,7 +2855,7 @@ function renderLinksAdmin() {
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div class="menu-item-info">
             <div class="menu-item-name" onclick="editLinkTitle(${l.id})" style="cursor:pointer;text-decoration:underline;">${l.icon} ${l.title} ${l.badge ? `<span style="font-size:9px;color:var(--gold);border:1px solid var(--gold-dark);padding:1px 6px;">${l.badge}</span>` : ''}</div>
-            <div class="menu-item-url">${l.url}</div>
+            <div class="menu-item-url" onclick="editLinkUrl(${l.id})" style="cursor:pointer;text-decoration:underline;">${l.url}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <button class="btn-secondary" style="padding:6px 10px;font-size:10px;" onclick="moveLinkUp(${l.id})">▲ 위</button>
