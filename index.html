@@ -2798,6 +2798,40 @@ function deleteLink(id) {
   showToast('링크가 삭제되었습니다.');
 }
 
+function editLinkTitle(id) {
+  const links = DB.get('links', []);
+  const l = links.find(x => x.id === id); if (!l) return;
+  const newTitle = prompt('링크 이름을 입력하세요:', l.title);
+  if (newTitle && newTitle.trim()) {
+    l.title = newTitle.trim();
+    DB.set('links', links);
+    renderLinksAdmin();
+    showToast('링크 이름이 변경되었습니다.', 'gold');
+  }
+}
+
+function moveLinkUp(id) {
+  let links = DB.get('links', []);
+  const idx = links.findIndex(l => l.id === id);
+  if (idx > 0) {
+    [links[idx], links[idx-1]] = [links[idx-1], links[idx]];
+    DB.set('links', links);
+    renderLinksAdmin();
+    showToast('순서가 변경되었습니다.', 'gold');
+  }
+}
+
+function moveLinkDown(id) {
+  let links = DB.get('links', []);
+  const idx = links.findIndex(l => l.id === id);
+  if (idx >= 0 && idx < links.length - 1) {
+    [links[idx], links[idx+1]] = [links[idx+1], links[idx]];
+    DB.set('links', links);
+    renderLinksAdmin();
+    showToast('순서가 변경되었습니다.', 'gold');
+  }
+}
+
 function renderLinksAdmin() {
   const links = DB.get('links', []);
   const el = document.getElementById('links-admin-list');
@@ -2805,12 +2839,14 @@ function renderLinksAdmin() {
   el.innerHTML = links.length === 0 ? '<p style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px;">등록된 링크가 없습니다.</p>' :
     links.map(l => `
       <div class="menu-item" style="flex-direction:column;align-items:stretch;gap:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div class="menu-item-info">
-            <div class="menu-item-name">${l.icon} ${l.title} ${l.badge ? `<span style="font-size:9px;color:var(--gold);border:1px solid var(--gold-dark);padding:1px 6px;">${l.badge}</span>` : ''}</div>
+            <div class="menu-item-name" onclick="editLinkTitle(${l.id})" style="cursor:pointer;text-decoration:underline;">${l.icon} ${l.title} ${l.badge ? `<span style="font-size:9px;color:var(--gold);border:1px solid var(--gold-dark);padding:1px 6px;">${l.badge}</span>` : ''}</div>
             <div class="menu-item-url">${l.url}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button class="btn-secondary" style="padding:6px 10px;font-size:10px;" onclick="moveLinkUp(${l.id})">▲ 위</button>
+            <button class="btn-secondary" style="padding:6px 10px;font-size:10px;" onclick="moveLinkDown(${l.id})">▼ 아래</button>
             <label class="toggle-switch">
               <input type="checkbox" ${l.visible ? 'checked' : ''} onchange="toggleLink(${l.id})">
               <span class="toggle-slider"></span>
