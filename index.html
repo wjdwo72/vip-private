@@ -1413,24 +1413,25 @@ async function saveFbConfig() {
 
 // Defaults
 function initDefaults() {
-  if (!DB.get('admin_pw')) DB.set('admin_pw', 'admin1234');
-  if (!DB.get('welcome_text')) DB.set('welcome_text', '오직 선택된 관리자 추가분들을 위한\n선택된 정보제공');
-  if (!DB.get('logo_text')) DB.set('logo_text', 'VIP Private');
-  if (!DB.get('codes')) DB.set('codes', [
+  // setLocal 사용: Firebase push 트리거 방지 (cloudPull이 실제 데이터로 덮어씀)
+  if (!DB.get('admin_pw')) DB.setLocal('admin_pw', 'admin1234');
+  if (!DB.get('welcome_text')) DB.setLocal('welcome_text', '오직 선택된 관리자 추가분들을 위한\n선택된 정보제공');
+  if (!DB.get('logo_text')) DB.setLocal('logo_text', 'VIP Private');
+  if (!DB.get('codes')) DB.setLocal('codes', [
     { id: 1, code: 'VIP2024', org: '테스트 단체', menus: '예약문의,이벤트', created: new Date().toISOString() }
   ]);
-  if (!DB.get('tg_token')) DB.set('tg_token', '');
-  if (!DB.get('tg_channels')) DB.set('tg_channels', []);
-  if (!DB.get('reservations')) DB.set('reservations', []);
-  if (!DB.get('links')) DB.set('links', [
+  if (!DB.get('tg_token')) DB.setLocal('tg_token', '');
+  if (!DB.get('tg_channels')) DB.setLocal('tg_channels', []);
+  if (!DB.get('reservations')) DB.setLocal('reservations', []);
+  if (!DB.get('links')) DB.setLocal('links', [
     { id: 1, title: 'El Momento', url: 'https://elmomento.co.kr', icon: '🌟', badge: 'HOT', visible: true }
   ]);
-  if (!DB.get('menus')) DB.set('menus', [
+  if (!DB.get('menus')) DB.setLocal('menus', [
     { id: 1, name: '문의', url: '', payment: false, visible: true }
   ]);
-  if (!DB.get('form_fields')) DB.set('form_fields', ['service','name','dates','region','count','contact','reply_method','memo']);
-  if (!DB.get('feedbacks')) DB.set('feedbacks', []);
-  if (!DB.get('res_id_counter')) DB.set('res_id_counter', 1000);
+  if (!DB.get('form_fields')) DB.setLocal('form_fields', ['service','name','dates','region','count','contact','reply_method','memo']);
+  if (!DB.get('feedbacks')) DB.setLocal('feedbacks', []);
+  if (!DB.get('res_id_counter')) DB.setLocal('res_id_counter', 1000);
 }
 initDefaults();
 
