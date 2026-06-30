@@ -3978,6 +3978,7 @@ function openShareMenu(id) {
         <button onclick="shareInviteKakao(${id}); closeShareMenu()" style="padding:10px;background:rgba(255,223,0,0.15);border:1px solid rgba(255,223,0,0.4);color:#ffe000;cursor:pointer;border-radius:4px;font-size:11px;">💬 Kakao Talk</button>
         <button onclick="shareInviteEmail(${id}); closeShareMenu()" style="padding:10px;background:rgba(234,67,53,0.2);border:1px solid rgba(234,67,53,0.4);color:#ea4335;cursor:pointer;border-radius:4px;font-size:11px;">📧 이메일</button>
         <button onclick="shareInviteSMS(${id}); closeShareMenu()" style="padding:10px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4caf50;cursor:pointer;border-radius:4px;font-size:11px;">📲 문자 (SMS)</button>
+        <button onclick="shareInviteLine(${id}); closeShareMenu()" style="padding:10px;background:rgba(0,195,0,0.2);border:1px solid rgba(0,195,0,0.4);color:#00c300;cursor:pointer;border-radius:4px;font-size:11px;">💬 Line</button>
         <button onclick="closeShareMenu()" style="padding:10px;background:rgba(200,200,200,0.15);border:1px solid rgba(200,200,200,0.4);color:#ccc;cursor:pointer;border-radius:4px;font-size:11px;margin-top:8px;">닫기</button>
       </div>
     </div>
@@ -4052,6 +4053,15 @@ function shareInviteSMS(id) {
   if (!inv) return;
   const message = encodeURIComponent(`[${inv.org}] VIP Private 초대!\n코드: ${inv.code}\n${inv.url}`);
   window.location.href = `sms:?body=${message}`;
+}
+
+function shareInviteLine(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const text = encodeURIComponent(`🎉 ${inv.org}에서 VIP Private 초대합니다!\n\n입장코드: ${inv.code}\n${inv.messages.ko || ''}\n\n${inv.url}`);
+  const lineUrl = `https://line.me/R/msg/text/${text}`;
+  window.open(lineUrl, '_blank');
 }
 
 function downloadInviteImage(id) {
