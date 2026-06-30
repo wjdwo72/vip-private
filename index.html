@@ -4097,6 +4097,7 @@ const INVITE_STATE = {
     org:    { x: 50, y: 10 }
   },
   image2Size: { w: 30, h: 20 },
+  sizes: { input: 80, qr: 64, code: 20 }, // input=width%, qr=px, code=font-size px
   headerSize:  10,
   headerColor: '',   // '' = tpl.accent
   orgSize:     17,
@@ -4247,12 +4248,15 @@ function liveUpdateInvitePreview() {
       </div>`);
   });
 
+  const sz = INVITE_STATE.sizes;
+  const resizeHandle = key => `<div data-resize="${key}" style="position:absolute;bottom:-6px;right:-6px;width:13px;height:13px;background:rgba(201,168,76,0.9);border-radius:50%;cursor:se-resize;border:1px solid #fff;z-index:2;"></div>`;
+
   /* 입장코드 */
   elems.push(`
     <div data-drag="code" style="position:absolute;left:${pos.code.x}%;top:${pos.code.y}%;transform:translate(-50%,-50%);
          text-align:center;cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:4px 8px;">
-      ${dragHint}
-      <div style="font-size:20px;font-weight:bold;font-family:'Courier New';letter-spacing:3px;color:${tpl.accent};
+      ${dragHint}${resizeHandle('code')}
+      <div style="font-size:${sz.code||20}px;font-weight:bold;font-family:'Courier New';letter-spacing:3px;color:${tpl.accent};
            padding:8px 16px;border:1px solid ${tpl.accent};border-radius:4px;background:rgba(0,0,0,0.5);">██████</div>
       <div style="font-size:9px;color:${tpl.accent};opacity:0.7;margin-top:3px;">입장 코드 (숨김)</div>
     </div>`);
@@ -4260,8 +4264,8 @@ function liveUpdateInvitePreview() {
   /* 입력란 */
   elems.push(`
     <div data-drag="input" style="position:absolute;left:${pos.input.x}%;top:${pos.input.y}%;transform:translate(-50%,-50%);
-         width:80%;cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:6px 8px;background:rgba(0,0,0,0.35);">
-      ${dragHint}
+         width:${sz.input||80}%;cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:6px 8px;background:rgba(0,0,0,0.35);">
+      ${dragHint}${resizeHandle('input')}
       <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:5px;text-align:center;">${lbl}</div>
       <div style="height:26px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);border-radius:3px;margin-bottom:4px;"></div>
       <div style="height:26px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center;">
@@ -4270,11 +4274,12 @@ function liveUpdateInvitePreview() {
     </div>`);
 
   /* QR */
+  const qrSz = sz.qr || 64;
   elems.push(`
     <div data-drag="qr" style="position:absolute;left:${pos.qr.x}%;top:${pos.qr.y}%;transform:translate(-50%,-50%);
          cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:4px;">
-      ${dragHint}
-      <div style="width:64px;height:64px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;">
+      ${dragHint}${resizeHandle('qr')}
+      <div style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;">
         <span style="font-size:9px;color:#000;">QR</span>
       </div>
     </div>`);
@@ -4325,23 +4330,43 @@ function _initPreviewDrag() {
     });
   });
 
-  // image2 리사이즈 핸들
+  // 리사이즈 핸들 (image2, code, input, qr)
   card.querySelectorAll('[data-resize]').forEach(handle => {
     handle.addEventListener('mousedown', e => {
       e.preventDefault(); e.stopPropagation();
       resizing = handle.closest('[data-drag]');
       startX = e.clientX;
-      startW = INVITE_STATE.image2Size.w;
+      const key = handle.dataset.resize;
+      if (key === 'image2') startW = INVITE_STATE.image2Size.w;
+      else startW = INVITE_STATE.sizes[key] || (key === 'qr' ? 64 : key === 'input' ? 80 : 20);
     });
   });
 
   const onMove = e => {
     if (resizing) {
       const rect = card.getBoundingClientRect();
-      const dw = (e.clientX - startX) / rect.width * 100;
-      const nw = Math.max(8, Math.min(80, startW + dw));
-      INVITE_STATE.image2Size.w = nw;
-      resizing.style.width = nw + '%';
+      const handle = resizing.querySelector('[data-resize]');
+      const key = handle?.dataset.resize;
+      const dx = e.clientX - startX;
+      if (key === 'image2') {
+        const nw = Math.max(8, Math.min(80, startW + dx / rect.width * 100));
+        INVITE_STATE.image2Size.w = nw;
+        resizing.style.width = nw + '%';
+      } else if (key === 'input') {
+        const nw = Math.max(20, Math.min(96, startW + dx / rect.width * 100));
+        INVITE_STATE.sizes.input = nw;
+        resizing.style.width = nw + '%';
+      } else if (key === 'qr') {
+        const nw = Math.max(30, Math.min(200, startW + dx));
+        INVITE_STATE.sizes.qr = nw;
+        const inner = resizing.querySelector('div');
+        if (inner) { inner.style.width = nw + 'px'; inner.style.height = nw + 'px'; }
+      } else if (key === 'code') {
+        const nw = Math.max(10, Math.min(60, startW + dx * 0.2));
+        INVITE_STATE.sizes.code = nw;
+        const inner = resizing.querySelector('div');
+        if (inner) inner.style.fontSize = nw + 'px';
+      }
       return;
     }
     if (!dragging) return;
