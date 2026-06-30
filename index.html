@@ -1657,32 +1657,36 @@ function animateParticles() {
 animateParticles();
 setLang(_lang);
 
-// 페이지 로드시 Firebase에서 데이터 동기화
+// 페이지 로드시 Firebase에서 데이터 동기화 → 완료 후 초대 링크 체크
 (async () => {
   const ok = await cloudPull(true);
   if (ok) {
     try { renderAdmin && renderAdmin(); } catch(e){}
     try { if (typeof renderMain === 'function' && currentCode) renderMain(); } catch(e){}
   }
+  // Firebase pull 완료 후 초대 링크 체크
+  checkInviteLink();
 })();
 
 // ============================================================
 // ENTRY
 // ============================================================
 
-// 초대 링크 감지
-(function checkInviteLink() {
+// 초대 링크 감지 (cloudPull 완료 후 호출됨)
+function checkInviteLink() {
   const params = new URLSearchParams(window.location.search);
   const inviteId = params.get('invite');
-  if (inviteId) {
-    const invites = DB.get('invites', []);
-    const inv = invites.find(x => x.id == inviteId);
-    if (inv) {
-      // 초대 정보 미리 표시
-      showInviteCard(inv);
-    }
+  if (!inviteId) return;
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id == inviteId);
+  if (inv) {
+    showInviteCard(inv);
+  } else {
+    // Firebase에서도 못 찾으면 안내
+    const entryBox = document.querySelector('.entry-box');
+    if (entryBox) entryBox.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:13px;">초대 정보를 찾을 수 없습니다.<br><small>링크가 만료되었거나 올바르지 않습니다.</small></div>';
   }
-})();
+}
 
 /* 사용자용 초대장 렌더 (공통 함수 - entry페이지 & 미리보기 모달 공유) */
 function renderInviteCardForUser(inv, container) {
@@ -4102,7 +4106,7 @@ function liveUpdateInvitePreview() {
   const tplId = parseInt(document.getElementById('invite-template-selector')?.dataset?.selected || 1);
   const tpl = INVITE_TEMPLATES.find(t => t.id === tplId) || INVITE_TEMPLATES[0];
   const lang = INVITE_STATE.previewLang;
-  const url = `${window.location.origin}?invite=PREVIEW`;
+  const url = `${window.location.origin}${window.location.pathname}?invite=PREVIEW`;
   const customBg = INVITE_STATE.customImage;
 
   const bgStyle = customBg
@@ -4211,7 +4215,7 @@ function createInviteCard() {
       qrPos: INVITE_STATE.qrPos
     },
     created: new Date().toISOString(),
-    url: `${window.location.origin}?invite=${inviteId}`,
+    url: `${window.location.origin}${window.location.pathname}?invite=${inviteId}`,
     share_stats: { telegram:0, sns:0, kakao:0, email:0, sms:0, line:0, view:0 }
   };
 
