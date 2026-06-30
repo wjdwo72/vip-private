@@ -925,13 +925,13 @@
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:10px;color:var(--text-dim);letter-spacing:1px;white-space:nowrap;min-width:90px;">입장코드 전용:</span>
             <select id="new-tg-code" style="flex:1;background:var(--card-bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);padding:5px 8px;font-size:10px;cursor:pointer;"
-              onchange="if(this.value){document.getElementById('new-tg-invite').value='';}">
+              onchange="if(this.value){document.getElementById('new-tg-link').value='';}">
               <option value="">-- 미지정 --</option>
             </select>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <span style="font-size:10px;color:#6af;letter-spacing:1px;white-space:nowrap;min-width:90px;">초대카드 전용:</span>
-            <select id="new-tg-invite" style="flex:1;background:var(--card-bg);color:#6af;border:1px solid rgba(100,170,255,0.2);padding:5px 8px;font-size:10px;cursor:pointer;"
+            <span style="font-size:10px;color:#a8f;letter-spacing:1px;white-space:nowrap;min-width:90px;">링크 전용:</span>
+            <select id="new-tg-link" style="flex:1;background:var(--card-bg);color:#a8f;border:1px solid rgba(170,130,255,0.2);padding:5px 8px;font-size:10px;cursor:pointer;"
               onchange="if(this.value){document.getElementById('new-tg-code').value='';}">
               <option value="">-- 미지정 --</option>
             </select>
@@ -2436,7 +2436,8 @@ async function submitReservation(e) {
     total_price: total || 0,
     timestamp: new Date().toISOString(),
     tg_status: 'pending', tg_id: null,
-    invite_id: currentInviteId || null
+    invite_id: currentInviteId || null,
+    link_id: currentLinkObj?.id || null
   };
 
   // 메뉴에 지정된 채널 찾기
@@ -2467,15 +2468,15 @@ async function sendToTelegram(record, targetChannelId = null) {
   const adminChannels = allChannels.filter(c => c.is_admin);
   // 코드 지정 채널 — record.code 매칭
   const codeChannels = record?.code
-    ? allChannels.filter(c => !c.is_admin && c.code_id && c.code_id === record.code && !c.invite_id)
+    ? allChannels.filter(c => !c.is_admin && c.code_id && c.code_id === record.code && !c.link_id)
     : [];
-  // 초대카드 지정 채널 — record.invite_id 매칭
-  const inviteChannels = record?.invite_id
-    ? allChannels.filter(c => !c.is_admin && c.invite_id && String(c.invite_id) === String(record.invite_id))
+  // 링크 지정 채널 — record.link_id 매칭
+  const inviteChannels = record?.link_id
+    ? allChannels.filter(c => !c.is_admin && c.link_id && String(c.link_id) === String(record.link_id))
     : [];
   // 메뉴 지정 채널 — targetChannelId 매칭
   const menuChannels = targetChannelId
-    ? allChannels.filter(c => c.id === targetChannelId && !c.is_admin && !c.code_id && !c.invite_id)
+    ? allChannels.filter(c => c.id === targetChannelId && !c.is_admin && !c.code_id && !c.link_id)
     : [];
   const channels = [...adminChannels, ...codeChannels, ...inviteChannels, ...menuChannels].filter(
     (c, i, arr) => arr.findIndex(x => x.id === c.id) === i
@@ -3140,11 +3141,11 @@ function addTgChannel() {
   const name    = document.getElementById('new-tg-name').value.trim();
   const isAdmin   = document.getElementById('new-tg-is-admin')?.checked || false;
   const codeId    = isAdmin ? null : (document.getElementById('new-tg-code')?.value   || null);
-  const inviteId  = isAdmin ? null : (document.getElementById('new-tg-invite')?.value || null);
+  const linkId    = isAdmin ? null : (document.getElementById('new-tg-link')?.value || null);
   if (!id) { showToast('Chat ID를 입력하세요.', 'error'); return; }
   const channels = DB.get('tg_channels', []);
   if (channels.find(c => c.id === id)) { showToast('이미 등록된 채널입니다.', 'error'); return; }
-  channels.push({ id, name: name || id, is_admin: isAdmin, code_id: codeId || null, invite_id: inviteId || null });
+  channels.push({ id, name: name || id, is_admin: isAdmin, code_id: codeId || null, link_id: linkId || null });
   DB.set('tg_channels', channels);
   document.getElementById('new-tg-id').value  = '';
   document.getElementById('new-tg-name').value = '';
@@ -3154,28 +3155,28 @@ function addTgChannel() {
   if (codeWrap) codeWrap.style.display = 'flex';
   renderTgAdmin();
   refreshMenuTgSelects();
-  const typeLabel = isAdmin ? '전체예약 방' : inviteId ? `초대카드전용(${inviteId})` : codeId ? `코드전용(${codeId})` : '메뉴용';
+  const typeLabel = isAdmin ? '전체예약 방' : linkId ? `링크전용(${linkId})` : codeId ? `코드전용(${codeId})` : '메뉴용';
   showToast(`채널이 추가되었습니다. [${typeLabel}]`, 'gold');
 }
 
 function setTgChannelCode(chId, codeId) {
   const channels = DB.get('tg_channels', []);
   const ch = channels.find(c => c.id === chId);
-  if (ch) { ch.code_id = codeId || null; ch.invite_id = null; ch.is_admin = false; }
+  if (ch) { ch.code_id = codeId || null; ch.link_id = null; ch.is_admin = false; }
   DB.set('tg_channels', channels);
   renderTgAdmin();
   showToast(codeId ? `[${ch?.name}] 코드 "${codeId}" 연결됨` : '코드 연결 해제됨', 'gold');
 }
 
-function setTgChannelInvite(chId, inviteId) {
+function setTgChannelLink(chId, linkId) {
   const channels = DB.get('tg_channels', []);
   const ch = channels.find(c => c.id === chId);
-  if (ch) { ch.invite_id = inviteId || null; ch.code_id = null; ch.is_admin = false; }
+  if (ch) { ch.link_id = linkId || null; ch.code_id = null; ch.is_admin = false; }
   DB.set('tg_channels', channels);
   renderTgAdmin();
-  const invites = DB.get('invites', []);
-  const inv = invites.find(i => String(i.id) === String(inviteId));
-  showToast(inviteId ? `[${ch?.name}] 초대카드 "${inv?.org||inviteId}" 연결됨` : '초대카드 연결 해제됨', 'gold');
+  const links = DB.get('links', []);
+  const lnk = links.find(l => String(l.id) === String(linkId));
+  showToast(linkId ? `[${ch?.name}] 링크 "${lnk?.title||linkId}" 연결됨` : '링크 연결 해제됨', 'gold');
 }
 
 async function testTgChannel(chId) {
@@ -3257,30 +3258,30 @@ function renderTgAdmin() {
   if (channels.length === 0) {
     el.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:16px 0;letter-spacing:1px;">등록된 채널이 없습니다.</p>';
   } else {
-    const invites   = DB.get('invites', []);
+    const links     = DB.get('links', []);
     const adminChs  = channels.filter(c => c.is_admin);
-    const codeChs   = channels.filter(c => !c.is_admin && c.code_id  && !c.invite_id);
-    const inviteChs = channels.filter(c => !c.is_admin && c.invite_id);
-    const menuChs   = channels.filter(c => !c.is_admin && !c.code_id && !c.invite_id);
+    const codeChs   = channels.filter(c => !c.is_admin && c.code_id  && !c.link_id);
+    const linkChs   = channels.filter(c => !c.is_admin && c.link_id);
+    const menuChs   = channels.filter(c => !c.is_admin && !c.code_id && !c.link_id);
 
     const renderCh = (c) => {
       const safeId = c.id.replace(/'/g,"\\'");
       const selectedCodeOpts = codes.map(cd =>
         `<option value="${cd.code}" ${cd.code === c.code_id ? 'selected' : ''}>${cd.code} — ${cd.org||''}</option>`
       ).join('');
-      const selectedInviteOpts = invites.map(inv =>
-        `<option value="${inv.id}" ${String(inv.id) === String(c.invite_id) ? 'selected' : ''}>${inv.org} — ${inv.code}</option>`
+      const selectedLinkOpts = links.map(lnk =>
+        `<option value="${lnk.id}" ${String(lnk.id) === String(c.link_id) ? 'selected' : ''}>${lnk.title||lnk.id}</option>`
       ).join('');
-      // 초대카드 정보 라벨
-      const inviteInfo = c.invite_id
-        ? (() => { const inv = invites.find(i => String(i.id) === String(c.invite_id)); return inv ? `${inv.org} (${inv.code})` : c.invite_id; })()
+      // 링크 정보 라벨
+      const linkInfo = c.link_id
+        ? (() => { const lnk = links.find(l => String(l.id) === String(c.link_id)); return lnk ? lnk.title||lnk.id : c.link_id; })()
         : '';
       return `
       <div class="tg-item" style="flex-wrap:wrap;gap:10px;margin-bottom:4px;">
         <div style="flex:1;min-width:0;">
           <div class="tg-item-id" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;">
             ${c.name}
-            ${c.invite_id ? `<span style="font-size:9px;color:#6af;border:1px solid rgba(100,170,255,0.3);padding:1px 6px;">🔗 ${inviteInfo}</span>` : ''}
+            ${c.link_id ? `<span style="font-size:9px;color:#a8f;border:1px solid rgba(170,130,255,0.3);padding:1px 6px;">🔗 ${linkInfo}</span>` : ''}
           </div>
           <div class="tg-sub" style="font-size:10px;color:var(--text-dim);margin-top:3px;font-family:monospace;">${c.id}</div>
           ${!c.is_admin ? `
@@ -3293,11 +3294,11 @@ function renderTgAdmin() {
             </select>
           </div>
           <div style="margin-top:4px;display:flex;align-items:center;gap:8px;">
-            <span style="font-size:9px;color:#6af;white-space:nowrap;">초대카드 변경:</span>
-            <select onchange="setTgChannelInvite('${safeId}',this.value)"
-              style="background:var(--card-bg);color:#6af;border:1px solid rgba(100,170,255,0.2);padding:3px 8px;font-size:10px;cursor:pointer;flex:1;">
+            <span style="font-size:9px;color:#a8f;white-space:nowrap;">링크 변경:</span>
+            <select onchange="setTgChannelLink('${safeId}',this.value)"
+              style="background:var(--card-bg);color:#a8f;border:1px solid rgba(170,130,255,0.2);padding:3px 8px;font-size:10px;cursor:pointer;flex:1;">
               <option value="">-- 미지정 --</option>
-              ${selectedInviteOpts}
+              ${selectedLinkOpts}
             </select>
           </div>` : ''}
         </div>
@@ -3322,7 +3323,7 @@ function renderTgAdmin() {
     el.innerHTML =
       section('📣 전체예약 방 — 모든 예약 수신', 'var(--gold)', 'rgba(201,168,76,0.3)', adminChs) +
       section('📌 입장코드별 방 — 해당 코드 예약만 수신', '#6af', 'rgba(100,170,255,0.25)', codeChs) +
-      section('🔗 초대카드별 방 — 해당 초대링크 예약만 수신', '#a8f', 'rgba(170,130,255,0.25)', inviteChs) +
+      section('🔗 링크별 방 — 해당 콘텐츠 링크 예약만 수신', '#a8f', 'rgba(170,130,255,0.25)', linkChs) +
       section('📋 메뉴용 방 — 메뉴 지정 예약 수신', 'var(--text-dim)', 'rgba(255,255,255,0.1)', menuChs);
   }
 
@@ -3349,12 +3350,12 @@ function refreshMenuTgSelects() {
     + codes.map(c => `<option value="${c.code}">${c.code} — ${c.org||''}</option>`).join('');
   const codeSel = document.getElementById('new-tg-code');
   if (codeSel) codeSel.innerHTML = codeOpts;
-  // 신규 채널 추가 폼의 초대카드 select
-  const invites = DB.get('invites', []);
-  const inviteOpts = '<option value="">-- 미지정 --</option>'
-    + invites.map(inv => `<option value="${inv.id}">${inv.org} — ${inv.code} (${new Date(inv.created||inv.id).toLocaleDateString('ko-KR')})</option>`).join('');
-  const inviteSel = document.getElementById('new-tg-invite');
-  if (inviteSel) inviteSel.innerHTML = inviteOpts;
+  // 신규 채널 추가 폼의 링크 select
+  const links = DB.get('links', []);
+  const linkOpts = '<option value="">-- 미지정 --</option>'
+    + links.map(lnk => `<option value="${lnk.id}">${lnk.title||lnk.id}</option>`).join('');
+  const linkSel = document.getElementById('new-tg-link');
+  if (linkSel) linkSel.innerHTML = linkOpts;
 }
 
 // Links
