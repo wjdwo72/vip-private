@@ -963,115 +963,122 @@
     <div id="tab-invites" class="tab-content">
       <div class="admin-section">
         <div class="admin-section-title">초대장 생성기</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
-          <!-- 생성기 -->
-          <div>
-            <div class="form-group">
-              <label class="form-label">단체명 / 이름</label>
-              <input type="text" id="invite-org" class="form-input" placeholder="예: 광안야행">
-            </div>
-            <div class="form-group">
-              <label class="form-label">이메일</label>
-              <input type="email" id="invite-email" class="form-input" placeholder="예: info@example.com">
-            </div>
-            <div class="form-group">
-              <label class="form-label">입장 코드 선택</label>
-              <div style="display:flex;gap:8px;">
-                <select id="invite-code-select" class="form-select" style="flex:1;">
-                  <option value="">-- 새 코드 생성 --</option>
-                </select>
-                <button class="btn-secondary" onclick="generateNewInviteCode()">🔄 생성</button>
-              </div>
-              <div id="invite-code-display" style="margin-top:8px;padding:10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:4px;display:none;">
-                <span style="font-size:11px;color:var(--text-dim);">입장 코드: </span>
-                <span id="invite-code-text" style="font-size:14px;color:var(--gold);font-family:'Courier New';font-weight:bold;"></span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">초대카드 템플릿</label>
-              <div id="invite-template-selector" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">커스텀 이미지 (선택)</label>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input type="file" id="invite-custom-image" accept="image/*" style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;">
-                <button type="button" onclick="uploadInviteImage()" class="btn-secondary" style="white-space:nowrap;">업로드</button>
-              </div>
-              <div id="invite-image-preview" style="margin-top:8px;width:100%;height:120px;border:1px solid rgba(201,168,76,0.2);border-radius:4px;display:none;background-size:cover;background-position:center;"></div>
-              <div id="invite-image-info" style="margin-top:8px;font-size:10px;color:var(--text-dim);display:none;">
-                <div id="invite-image-size" style="margin-bottom:4px;"></div>
-                <div style="color:var(--text-dim);font-size:9px;">💡 추천 크기: 600x800px</div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">메시지 (한국어)</label>
-              <textarea id="invite-msg-ko" class="form-textarea" rows="2" placeholder="초대 메시지를 입력하세요"></textarea>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-              <div>
-                <label class="form-label" style="font-size:10px;">EN</label>
-                <textarea id="invite-msg-en" class="form-textarea" rows="2" style="font-size:11px;" placeholder="English"></textarea>
-              </div>
-              <div>
-                <label class="form-label" style="font-size:10px;">日本語</label>
-                <textarea id="invite-msg-ja" class="form-textarea" rows="2" style="font-size:11px;" placeholder="日本語"></textarea>
-              </div>
-              <div>
-                <label class="form-label" style="font-size:10px;">中文</label>
-                <textarea id="invite-msg-zh" class="form-textarea" rows="2" style="font-size:11px;" placeholder="中文"></textarea>
-              </div>
-              <div>
-                <label class="form-label" style="font-size:10px;">Español</label>
-                <textarea id="invite-msg-es" class="form-textarea" rows="2" style="font-size:11px;" placeholder="Español"></textarea>
-              </div>
-            </div>
-            <button class="btn-secondary" onclick="autoTranslateInviteMsg()" style="width:100%;margin-bottom:10px;">🌐 자동 번역</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
 
-            <div style="margin-bottom:10px;padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:4px;">
-              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">⚙️ 라벨 텍스트 (선택)</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <!-- 왼쪽: 설정 -->
+          <div style="display:flex;flex-direction:column;gap:10px;">
+
+            <!-- 1. 기본정보 -->
+            <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">① 기본 정보</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                 <div>
-                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">코드 라벨</label>
-                  <input type="text" id="invite-code-label" class="form-input" placeholder="입장 코드" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">단체명 / 이름</label>
+                  <input type="text" id="invite-org" class="form-input" placeholder="예: 광안야행" oninput="liveUpdateInvitePreview()">
                 </div>
                 <div>
-                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">단체명 라벨</label>
-                  <input type="text" id="invite-org-label" class="form-input" placeholder="단체명" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">이메일 (검증용)</label>
+                  <input type="email" id="invite-email" class="form-input" placeholder="예: info@example.com">
                 </div>
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                <div>
-                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">이메일 라벨</label>
-                  <input type="text" id="invite-email-label" class="form-input" placeholder="이메일" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+              <div style="margin-top:8px;">
+                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">입장 코드</label>
+                <div style="display:flex;gap:6px;">
+                  <select id="invite-code-select" class="form-select" style="flex:1;" onchange="liveUpdateInvitePreview()">
+                    <option value="">-- 코드 선택 --</option>
+                  </select>
+                  <button class="btn-secondary" onclick="generateNewInviteCode()" style="white-space:nowrap;padding:6px 10px;font-size:11px;">🔄 생성</button>
                 </div>
-                <div>
-                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">코드 공개 메시지</label>
-                  <input type="text" id="invite-code-message" class="form-input" placeholder="입장코드가 공개되었습니다" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                <div id="invite-code-display" style="margin-top:6px;padding:8px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:4px;display:none;font-size:12px;color:var(--gold);font-family:'Courier New';">
+                  코드: <span id="invite-code-text"></span>
                 </div>
               </div>
             </div>
 
-            <div style="margin-bottom:10px;padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:4px;">
-              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">📝 추가 텍스트 (선택)</div>
-              <div>
-                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">메모 또는 추가 안내</label>
-                <textarea id="invite-extra-text" placeholder="사용자에게 보여줄 추가 텍스트 (예: 유의사항, 주의사항 등)" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);border-radius:3px;resize:vertical;min-height:60px;"></textarea>
+            <!-- 2. 템플릿 -->
+            <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">② 템플릿 / 배경</div>
+              <div id="invite-template-selector" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px;"></div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <input type="file" id="invite-custom-image" accept="image/*" style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px;font-size:10px;border-radius:3px;">
+                <button type="button" onclick="uploadInviteImage()" class="btn-secondary" style="white-space:nowrap;padding:6px 10px;font-size:11px;">업로드</button>
+              </div>
+              <div id="invite-image-info" style="margin-top:6px;font-size:9px;color:var(--text-dim);display:none;">
+                <span id="invite-image-size"></span> &nbsp;·&nbsp; 💡 권장: 600×800px
               </div>
             </div>
 
-            <button class="btn-primary" onclick="createInviteCard()" style="width:100%;">초대장 생성</button>
+            <!-- 3. 텍스트 블록 -->
+            <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-size:10px;color:var(--gold);letter-spacing:1px;">③ 텍스트 블록</div>
+                <button onclick="addInviteTextBlock()" style="padding:4px 10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">+ 추가</button>
+              </div>
+              <div id="invite-text-blocks" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+
+            <!-- 4. 레이아웃 위치 -->
+            <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">④ 레이아웃 위치</div>
+
+              <div style="margin-bottom:8px;">
+                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:4px;">입장코드 위치</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+                  <button type="button" class="pos-btn" id="pos-code-top" onclick="setInvitePos('code','top')" style="padding:5px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▲ 위</button>
+                  <button type="button" class="pos-btn" id="pos-code-middle" onclick="setInvitePos('code','middle')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">● 중간</button>
+                  <button type="button" class="pos-btn" id="pos-code-bottom" onclick="setInvitePos('code','bottom')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▼ 아래</button>
+                </div>
+              </div>
+
+              <div style="margin-bottom:8px;">
+                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:4px;">입력란 위치 (이메일/단체명)</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+                  <button type="button" class="pos-btn" id="pos-input-top" onclick="setInvitePos('input','top')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▲ 위</button>
+                  <button type="button" class="pos-btn" id="pos-input-middle" onclick="setInvitePos('input','middle')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">● 중간</button>
+                  <button type="button" class="pos-btn" id="pos-input-bottom" onclick="setInvitePos('input','bottom')" style="padding:5px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▼ 아래</button>
+                </div>
+              </div>
+
+              <div>
+                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:4px;">QR코드 위치</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+                  <button type="button" class="pos-btn" id="pos-qr-top" onclick="setInvitePos('qr','top')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▲ 위</button>
+                  <button type="button" class="pos-btn" id="pos-qr-middle" onclick="setInvitePos('qr','middle')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">● 중간</button>
+                  <button type="button" class="pos-btn" id="pos-qr-bottom" onclick="setInvitePos('qr','bottom')" style="padding:5px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▼ 아래</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. 언어 미리보기 탭 -->
+            <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">⑤ 미리보기 언어</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button onclick="setPreviewLang('ko')" id="pvlang-ko" style="padding:5px 10px;background:rgba(201,168,76,0.3);border:1px solid rgba(201,168,76,0.5);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">🇰🇷 한국어</button>
+                <button onclick="setPreviewLang('en')" id="pvlang-en" style="padding:5px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">🇺🇸 EN</button>
+                <button onclick="setPreviewLang('ja')" id="pvlang-ja" style="padding:5px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">🇯🇵 JA</button>
+                <button onclick="setPreviewLang('zh')" id="pvlang-zh" style="padding:5px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">🇨🇳 ZH</button>
+                <button onclick="setPreviewLang('es')" id="pvlang-es" style="padding:5px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">🇪🇸 ES</button>
+              </div>
+            </div>
+
+            <button class="btn-primary" onclick="createInviteCard()" style="width:100%;padding:12px;font-size:13px;">✉️ 초대장 생성</button>
           </div>
-          <!-- 미리보기 -->
-          <div>
-            <div style="font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">미리보기</div>
-            <div id="invite-preview" style="border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:12px;aspect-ratio:1/1.2;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);min-height:300px;">
-              <div style="color:var(--text-dim);font-size:12px;text-align:center;">이미지 선택 후<br>미리보기가 나타납니다</div>
+
+          <!-- 오른쪽: 미리보기 -->
+          <div style="position:sticky;top:10px;">
+            <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">실시간 미리보기</div>
+            <div id="invite-preview-wrap" style="border:1px solid rgba(201,168,76,0.3);border-radius:6px;overflow:hidden;background:#0a0a0a;min-height:480px;position:relative;display:flex;flex-direction:column;">
+              <!-- 미리보기 렌더링 영역 -->
+              <div id="invite-preview-inner" style="flex:1;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:480px;">
+                <div style="text-align:center;color:var(--text-dim);font-size:11px;margin-top:60px;">① 기본 정보를 입력하면<br>미리보기가 업데이트됩니다</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="admin-section">
+      <!-- 생성된 초대장 목록 -->
+      <div class="admin-section" style="margin-top:16px;">
         <div class="admin-section-title">생성된 초대장</div>
         <div id="invite-list"></div>
       </div>
@@ -1676,89 +1683,125 @@ setLang(_lang);
   }
 })();
 
-function showInviteCard(inv) {
-  const entryBox = document.querySelector('.entry-box');
-  const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
-  const labels = inv.labels || {
-    code_label: '입장 코드',
-    org_label: '단체명',
-    email_label: '이메일',
-    code_message: '입장코드가 공개되었습니다'
-  };
+/* 사용자용 초대장 렌더 (공통 함수 - entry페이지 & 미리보기 모달 공유) */
+function renderInviteCardForUser(inv, container) {
+  const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template) || INVITE_TEMPLATES[0];
+  const layout = inv.layout || { codePos:'top', inputPos:'bottom', qrPos:'bottom' };
+  const lang = _lang || 'ko';
+  const url = inv.url || window.location.href;
 
-  entryBox.innerHTML = `
-    <div style="padding:20px;border:1px solid rgba(201,168,76,0.3);border-radius:4px;background:rgba(0,0,0,0.3);">
-      <div style="font-size:14px;color:var(--gold);margin-bottom:16px;font-weight:bold;text-align:center;">🏢 ${inv.org}</div>
+  /* 텍스트 블록 */
+  const textHtml = (inv.textBlocks || []).map(b =>
+    `<div style="font-size:13px;color:${tpl.accent};text-align:center;padding:6px 0;line-height:1.6;white-space:pre-wrap;">${b[lang] || b.ko || ''}</div>`
+  ).join('');
 
-      <div id="invite-message" style="font-size:11px;color:var(--text-dim);padding:12px;background:rgba(201,168,76,0.05);border-radius:3px;display:none;margin-bottom:12px;"></div>
+  const bgStyle = inv.customImage
+    ? `background-image:url(${inv.customImage});background-size:cover;background-position:center;`
+    : `background:${tpl.bg};`;
 
-      <div style="display:flex;justify-content:center;margin-bottom:16px;">
-        <div style="width:100px;height:130px;background:${tpl.bg};border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:14px;">
-          <div style="font-size:28px;letter-spacing:2px;margin-bottom:8px;">${inv.code}</div>
-          <div style="font-size:9px;letter-spacing:0.5px;">${labels.code_label}</div>
+  /* 입장코드 블록 (숨김 상태) */
+  const codeBlock = `
+    <div id="inv-code-block" style="text-align:center;padding:12px 0;">
+      <div id="inv-code-hidden" style="display:inline-block;font-size:26px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:${tpl.accent};padding:10px 24px;border:1px solid ${tpl.accent};border-radius:6px;background:rgba(0,0,0,0.5);">
+        ██████
+      </div>
+      <div id="inv-code-revealed" style="display:none;">
+        <div style="font-size:11px;color:${tpl.accent};margin-bottom:6px;opacity:0.8;">✓ 입장 코드가 공개되었습니다</div>
+        <div style="display:inline-block;font-size:26px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:var(--gold);padding:10px 24px;border:1px solid var(--gold);border-radius:6px;background:rgba(201,168,76,0.1);">${inv.code}</div>
+        <div style="margin-top:12px;">
+          <button onclick="verifyCodeWithInvite('${inv.code}')" style="width:100%;padding:12px;background:rgba(201,168,76,0.25);border:1px solid rgba(201,168,76,0.5);color:var(--gold);font-size:13px;cursor:pointer;border-radius:6px;font-weight:bold;letter-spacing:1px;">🚪 입장하기</button>
         </div>
       </div>
-
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:10px;color:var(--gold);margin-bottom:4px;font-weight:bold;">📋 ${labels.org_label}</label>
-        <input type="text" id="invite-org-input" placeholder="${labels.org_label}" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;">
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:10px;color:var(--gold);margin-bottom:4px;font-weight:bold;">📧 ${labels.email_label}</label>
-        <input type="text" id="invite-email-input" placeholder="${labels.email_label}" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;">
-      </div>
-
-      <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;border-radius:3px;font-weight:bold;margin-bottom:12px;">확인</button>
-
-      <div id="invite-code-reveal" style="display:none;">
-        <div style="font-size:10px;color:var(--text-dim);margin-bottom:6px;text-align:center;">✓ ${labels.code_message}</div>
-        <div style="font-size:16px;color:var(--gold);font-family:'Courier New';font-weight:bold;letter-spacing:2px;padding:10px;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.1);border-radius:3px;margin-bottom:10px;">${inv.code}</div>
-        <button onclick="verifyCodeWithInvite('${inv.code}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:3px;font-weight:bold;">입장하기</button>
-      </div>
-
-      ${inv.extra_text ? `<div style="font-size:10px;color:var(--text-dim);padding:10px;background:rgba(201,168,76,0.03);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-top:12px;white-space:pre-wrap;line-height:1.5;">${inv.extra_text}</div>` : ''}
     </div>`;
 
+  /* 입력란 블록 */
+  const inputBlock = `
+    <div id="inv-input-block" style="padding:12px;background:rgba(0,0,0,0.45);border:1px solid rgba(201,168,76,0.2);border-radius:6px;">
+      <div style="font-size:10px;color:${tpl.accent};margin-bottom:8px;text-align:center;letter-spacing:0.5px;">이메일 또는 단체명을 입력하면 입장코드가 공개됩니다</div>
+      <input type="text" id="inv-org-inp" placeholder="단체명" style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:9px 12px;font-size:12px;border-radius:4px;margin-bottom:8px;box-sizing:border-box;">
+      <input type="text" id="inv-email-inp" placeholder="이메일" style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:9px 12px;font-size:12px;border-radius:4px;margin-bottom:10px;box-sizing:border-box;">
+      <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:4px;font-weight:bold;">확인</button>
+    </div>`;
+
+  /* QR 블록 */
+  const qrBlock = `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:10px 0;">
+      <div id="inv-qr-box" style="width:100px;height:100px;background:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;" onclick="window.location.href='${url}'" title="클릭하면 입장 페이지로 이동"></div>
+      <div style="font-size:9px;color:${tpl.accent};margin-top:4px;opacity:0.7;">QR 클릭 → 입장 페이지</div>
+    </div>`;
+
+  /* 위치별 정렬 */
+  const sections = { top:[], middle:[], bottom:[] };
+  sections[layout.codePos || 'top'].push(codeBlock);
+  sections[layout.inputPos || 'bottom'].push(inputBlock);
+  sections[layout.qrPos || 'bottom'].push(qrBlock);
+
+  container.innerHTML = `
+    <div style="width:100%;min-height:460px;${bgStyle}border-radius:8px;padding:18px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;">
+      <div style="text-align:center;margin-bottom:6px;">
+        <div style="font-size:10px;letter-spacing:3px;color:${tpl.accent};opacity:0.8;">V I P &nbsp; P R I V A T E</div>
+        <div style="font-size:18px;font-weight:bold;color:${tpl.accent};margin-top:4px;">${inv.org}</div>
+      </div>
+      ${textHtml ? `<div>${textHtml}</div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:10px;flex:1;justify-content:space-between;">
+        <div>${sections.top.join('')}</div>
+        <div>${sections.middle.join('')}</div>
+        <div>${sections.bottom.join('')}</div>
+      </div>
+    </div>`;
+
+  /* QR 생성 */
   setTimeout(() => {
-    if (inv.messages.ko) {
-      const msgEl = document.getElementById('invite-message');
-      if (msgEl) {
-        msgEl.textContent = inv.messages.ko;
-        msgEl.style.display = 'block';
-      }
+    const qrEl = document.getElementById('inv-qr-box');
+    if (qrEl && typeof QRCode !== 'undefined') {
+      qrEl.innerHTML = '';
+      new QRCode(qrEl, { text: url, width:100, height:100, colorLight:'#fff', colorDark:'#1a1a1a' });
     }
-  }, 0);
+  }, 100);
+}
+
+function showInviteCard(inv) {
+  const entryBox = document.querySelector('.entry-box');
+  if (!entryBox) return;
+  renderInviteCardForUser(inv, entryBox);
 }
 
 function verifyInvite(inviteId) {
-  const orgInput = document.getElementById('invite-org-input').value.trim().toLowerCase();
-  const emailInput = document.getElementById('invite-email-input').value.trim().toLowerCase();
+  const orgInput = (document.getElementById('inv-org-inp') || {}).value?.trim().toLowerCase() || '';
+  const emailInput = (document.getElementById('inv-email-inp') || {}).value?.trim().toLowerCase() || '';
+
+  if (!orgInput && !emailInput) { showToast('단체명 또는 이메일을 입력하세요.', 'error'); return; }
+
   const invites = DB.get('invites', []);
   const inv = invites.find(x => x.id == inviteId);
-
   if (!inv) return;
 
   const orgMatch = inv.org.toLowerCase() === orgInput;
   const emailMatch = inv.email.toLowerCase() === emailInput;
 
-  if (orgMatch && emailMatch) {
-    saveInviteTracking(inv);
-    document.getElementById('invite-code-reveal').style.display = 'block';
-    document.getElementById('invite-org-input').disabled = true;
-    document.getElementById('invite-email-input').disabled = true;
-    document.querySelector('button[onclick*="verifyInvite"]').disabled = true;
-    showToast('인증되었습니다!', 'gold');
+  if (orgMatch || emailMatch) {
+    /* 인증 성공 */
+    const userInfo = { org: orgInput, email: emailInput };
+    saveInviteTracking(inv, userInfo);
+
+    /* 입력란 숨기기 */
+    const inputBlock = document.getElementById('inv-input-block');
+    if (inputBlock) inputBlock.style.display = 'none';
+
+    /* 코드 공개 */
+    document.getElementById('inv-code-hidden')?.style && (document.getElementById('inv-code-hidden').style.display = 'none');
+    document.getElementById('inv-code-revealed')?.style && (document.getElementById('inv-code-revealed').style.display = 'block');
+
+    showToast('✓ 인증되었습니다! 입장코드가 공개되었습니다.', 'gold');
   } else {
-    if (!orgMatch) {
-      document.getElementById('invite-org-input').style.borderColor = '#c0392b';
-      setTimeout(() => document.getElementById('invite-org-input').style.borderColor = '', 1500);
-    }
-    if (!emailMatch) {
-      document.getElementById('invite-email-input').style.borderColor = '#c0392b';
-      setTimeout(() => document.getElementById('invite-email-input').style.borderColor = '', 1500);
-    }
-    showToast('단체명과 이메일이 일치하지 않습니다.', 'error');
+    const orgEl = document.getElementById('inv-org-inp');
+    const emailEl = document.getElementById('inv-email-inp');
+    [orgEl, emailEl].forEach(el => {
+      if (!el) return;
+      el.style.borderColor = '#c0392b';
+      setTimeout(() => { el.style.borderColor = ''; }, 1800);
+    });
+    showToast('일치하는 정보가 없습니다.', 'error');
   }
 }
 
@@ -1830,10 +1873,9 @@ function verifyCode() {
   }
 }
 
-async function saveInviteTracking(inv) {
+async function saveInviteTracking(inv, userInfo = {}) {
   const tracking = DB.get('invite_tracking', []);
 
-  // IP 및 위치 정보 가져오기 (공개 API 사용)
   let location = { country: 'Unknown', city: 'Unknown' };
   try {
     const response = await fetch('https://ipapi.co/json/');
@@ -1847,10 +1889,12 @@ async function saveInviteTracking(inv) {
     org: inv.org,
     email: inv.email,
     code: inv.code,
+    user_org: userInfo.org || '',    /* 유저가 입력한 단체명 */
+    user_email: userInfo.email || '', /* 유저가 입력한 이메일 */
     timestamp: new Date().toISOString(),
     country: location.country,
     city: location.city,
-    ua: navigator.userAgent.slice(0,100),
+    ua: navigator.userAgent.slice(0, 100),
     device: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'pc'
   });
 
@@ -3976,13 +4020,494 @@ function updateInvitePreview() {
     </div>`;
 }
 
-const INVITE_LAYOUT_OPT = {
-  text_position: 'top',
-  text_align: 'center',
-  code_position: 'middle',
-  input_position: 'bottom',
-  extra_text: ''
+/* ========== 초대장 상태 ========== */
+const INVITE_STATE = {
+  textBlocks: [],      // [{id, ko, en, ja, zh, es}]
+  codePos: 'top',      // top/middle/bottom
+  inputPos: 'bottom',  // top/middle/bottom
+  qrPos: 'bottom',     // top/middle/bottom
+  previewLang: 'ko',
+  customImage: null
 };
+
+/* ---- 텍스트 블록 ---- */
+function addInviteTextBlock() {
+  const id = Date.now();
+  INVITE_STATE.textBlocks.push({ id, ko: '', en: '', ja: '', zh: '', es: '' });
+  renderInviteTextBlocks();
+  liveUpdateInvitePreview();
+}
+
+function removeInviteTextBlock(id) {
+  INVITE_STATE.textBlocks = INVITE_STATE.textBlocks.filter(b => b.id !== id);
+  renderInviteTextBlocks();
+  liveUpdateInvitePreview();
+}
+
+function renderInviteTextBlocks() {
+  const wrap = document.getElementById('invite-text-blocks');
+  if (!wrap) return;
+  if (!INVITE_STATE.textBlocks.length) {
+    wrap.innerHTML = '<div style="font-size:10px;color:var(--text-dim);padding:8px;text-align:center;">+ 추가 버튼으로 텍스트를 넣으세요</div>';
+    return;
+  }
+  wrap.innerHTML = INVITE_STATE.textBlocks.map((b, i) => `
+    <div style="padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(201,168,76,0.2);border-radius:4px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:9px;color:var(--gold);">텍스트 ${i+1}</span>
+        <div style="display:flex;gap:4px;">
+          <button onclick="autoTranslateBlock(${b.id})" style="padding:2px 8px;background:rgba(0,150,255,0.2);border:1px solid rgba(0,150,255,0.4);color:#4af;font-size:9px;cursor:pointer;border-radius:3px;">🌐 번역</button>
+          <button onclick="removeInviteTextBlock(${b.id})" style="padding:2px 8px;background:rgba(200,50,50,0.2);border:1px solid rgba(200,50,50,0.4);color:#e74c3c;font-size:9px;cursor:pointer;border-radius:3px;">✕</button>
+        </div>
+      </div>
+      <textarea onchange="updateBlockText(${b.id},'ko',this.value)" oninput="updateBlockText(${b.id},'ko',this.value)" placeholder="한국어" style="width:100%;padding:5px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);border-radius:3px;resize:none;height:40px;margin-bottom:4px;">${b.ko}</textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <textarea onchange="updateBlockText(${b.id},'en',this.value)" placeholder="EN" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.en}</textarea>
+        <textarea onchange="updateBlockText(${b.id},'ja',this.value)" placeholder="JA" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.ja}</textarea>
+        <textarea onchange="updateBlockText(${b.id},'zh',this.value)" placeholder="ZH" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.zh}</textarea>
+        <textarea onchange="updateBlockText(${b.id},'es',this.value)" placeholder="ES" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.es}</textarea>
+      </div>
+    </div>`).join('');
+}
+
+function updateBlockText(id, lang, val) {
+  const b = INVITE_STATE.textBlocks.find(x => x.id === id);
+  if (b) { b[lang] = val; liveUpdateInvitePreview(); }
+}
+
+async function autoTranslateBlock(id) {
+  const b = INVITE_STATE.textBlocks.find(x => x.id === id);
+  if (!b || !b.ko) { showToast('한국어를 먼저 입력하세요.', 'error'); return; }
+  showToast('번역 중...', 'gold');
+  const res = await _translateItem(b.ko, TRANS_TARGETS).catch(() => ({}));
+  if (res.en) b.en = res.en;
+  if (res.ja) b.ja = res.ja;
+  if (res.zh) b.zh = res.zh;
+  if (res.es) b.es = res.es;
+  renderInviteTextBlocks();
+  liveUpdateInvitePreview();
+  showToast('번역 완료!', 'gold');
+}
+
+/* ---- 위치 설정 ---- */
+function setInvitePos(type, pos) {
+  if (type === 'code') INVITE_STATE.codePos = pos;
+  if (type === 'input') INVITE_STATE.inputPos = pos;
+  if (type === 'qr') INVITE_STATE.qrPos = pos;
+
+  ['top','middle','bottom'].forEach(p => {
+    const btn = document.getElementById(`pos-${type}-${p}`);
+    if (btn) btn.style.background = (p === pos) ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.1)';
+  });
+  liveUpdateInvitePreview();
+}
+
+/* ---- 미리보기 언어 ---- */
+function setPreviewLang(lang) {
+  INVITE_STATE.previewLang = lang;
+  ['ko','en','ja','zh','es'].forEach(l => {
+    const btn = document.getElementById(`pvlang-${l}`);
+    if (btn) btn.style.background = (l === lang) ? 'rgba(201,168,76,0.3)' : 'rgba(201,168,76,0.1)';
+  });
+  liveUpdateInvitePreview();
+}
+
+/* ---- 실시간 미리보기 ---- */
+function liveUpdateInvitePreview() {
+  const wrap = document.getElementById('invite-preview-inner');
+  if (!wrap) return;
+
+  const org = (document.getElementById('invite-org') || {}).value || '단체명';
+  const codeEl = document.getElementById('invite-code-select');
+  const code = codeEl ? (codeEl.value || codeEl.dataset.newCode || '****') : '****';
+  const tplId = parseInt(document.getElementById('invite-template-selector')?.dataset?.selected || 1);
+  const tpl = INVITE_TEMPLATES.find(t => t.id === tplId) || INVITE_TEMPLATES[0];
+  const lang = INVITE_STATE.previewLang;
+  const url = `${window.location.origin}?invite=PREVIEW`;
+  const customBg = INVITE_STATE.customImage;
+
+  const bgStyle = customBg
+    ? `background-image:url(${customBg});background-size:cover;background-position:center;`
+    : `background:${tpl.bg};`;
+
+  /* 텍스트 블록 */
+  const textHtml = INVITE_STATE.textBlocks.map(b =>
+    `<div style="font-size:12px;color:${tpl.accent};text-align:center;padding:4px 0;line-height:1.5;">${b[lang] || b.ko || ''}</div>`
+  ).join('');
+
+  /* 섹션 순서 결정 */
+  const sections = { top: [], middle: [], bottom: [] };
+
+  /* 입장코드 섹션 */
+  const codeSection = `
+    <div style="text-align:center;padding:10px 0;">
+      <div style="font-size:22px;font-weight:bold;font-family:'Courier New';letter-spacing:3px;color:${tpl.accent};border:1px solid ${tpl.accent};display:inline-block;padding:8px 20px;border-radius:4px;background:rgba(0,0,0,0.4);">
+        ██████
+      </div>
+      <div style="font-size:9px;color:${tpl.accent};opacity:0.7;margin-top:4px;letter-spacing:1px;">입장 코드 (숨김)</div>
+    </div>`;
+
+  /* 입력란 섹션 */
+  const inputSection = `
+    <div style="padding:8px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radius:4px;">
+      <div style="font-size:9px;color:${tpl.accent};margin-bottom:4px;">이메일 또는 단체명을 입력하세요</div>
+      <div style="height:28px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-bottom:4px;"></div>
+      <div style="height:28px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-bottom:6px;"></div>
+      <div style="height:28px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:10px;color:${tpl.accent};">확인</span>
+      </div>
+    </div>`;
+
+  /* QR 섹션 */
+  const qrSection = `
+    <div style="display:flex;justify-content:center;padding:6px 0;">
+      <div style="width:64px;height:64px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;opacity:0.8;">
+        <span style="font-size:9px;color:#000;">QR</span>
+      </div>
+    </div>`;
+
+  sections[INVITE_STATE.codePos].push(codeSection);
+  sections[INVITE_STATE.inputPos].push(inputSection);
+  sections[INVITE_STATE.qrPos].push(qrSection);
+
+  wrap.innerHTML = `
+    <div style="width:100%;min-height:480px;${bgStyle}border-radius:6px;padding:16px;display:flex;flex-direction:column;box-sizing:border-box;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-size:11px;letter-spacing:2px;color:${tpl.accent};opacity:0.8;">VIP PRIVATE</div>
+        <div style="font-size:16px;font-weight:bold;color:${tpl.accent};margin-top:4px;">${org}</div>
+      </div>
+      ${textHtml ? `<div style="margin-bottom:8px;">${textHtml}</div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:8px;flex:1;justify-content:space-between;">
+        <div>${sections.top.join('')}</div>
+        <div>${sections.middle.join('')}</div>
+        <div>${sections.bottom.join('')}</div>
+      </div>
+    </div>`;
+}
+
+/* ---- 업로드 ---- */
+function uploadInviteImage() {
+  const fileInput = document.getElementById('invite-custom-image');
+  const file = fileInput.files[0];
+  if (!file) { showToast('이미지를 선택하세요.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const imageData = e.target.result;
+    const img = new Image();
+    img.onload = () => {
+      INVITE_STATE.customImage = imageData;
+      const info = document.getElementById('invite-image-info');
+      const size = document.getElementById('invite-image-size');
+      if (info) info.style.display = 'block';
+      if (size) size.textContent = `📸 ${img.width}×${img.height}px (${(file.size/1024).toFixed(1)}KB)`;
+      liveUpdateInvitePreview();
+      showToast('이미지 업로드 완료', 'gold');
+    };
+    img.src = imageData;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ---- 초대장 생성 ---- */
+function createInviteCard() {
+  const org = (document.getElementById('invite-org') || {}).value?.trim();
+  const email = (document.getElementById('invite-email') || {}).value?.trim();
+  const codeEl = document.getElementById('invite-code-select');
+  const code = codeEl ? (codeEl.value || codeEl.dataset.newCode || '') : '';
+
+  if (!org) { showToast('단체명을 입력하세요.', 'error'); return; }
+  if (!email) { showToast('이메일을 입력하세요.', 'error'); return; }
+  if (!code) { showToast('입장 코드를 선택하거나 생성하세요.', 'error'); return; }
+
+  const tplId = parseInt(document.getElementById('invite-template-selector')?.dataset?.selected || 1);
+  const inviteId = Date.now();
+
+  const inv = {
+    id: inviteId,
+    org, email, code,
+    template: tplId,
+    customImage: INVITE_STATE.customImage || null,
+    textBlocks: JSON.parse(JSON.stringify(INVITE_STATE.textBlocks)),
+    layout: {
+      codePos: INVITE_STATE.codePos,
+      inputPos: INVITE_STATE.inputPos,
+      qrPos: INVITE_STATE.qrPos
+    },
+    created: new Date().toISOString(),
+    url: `${window.location.origin}?invite=${inviteId}`,
+    share_stats: { telegram:0, sns:0, kakao:0, email:0, sms:0, line:0, view:0 }
+  };
+
+  const invites = DB.get('invites', []);
+  invites.push(inv);
+  DB.set('invites', invites);
+
+  /* 초기화 */
+  document.getElementById('invite-org').value = '';
+  document.getElementById('invite-email').value = '';
+  codeEl.value = '';
+  codeEl.dataset.newCode = '';
+  document.getElementById('invite-code-display').style.display = 'none';
+  INVITE_STATE.textBlocks = [];
+  INVITE_STATE.customImage = null;
+  renderInviteTextBlocks();
+  liveUpdateInvitePreview();
+  renderInviteList();
+  showToast('초대장이 생성되었습니다! 📤 보내기로 공유하세요.', 'gold');
+}
+
+/* ---- 목록 렌더링 ---- */
+function renderInviteList() {
+  const el = document.getElementById('invite-list');
+  if (!el) return;
+  const invites = DB.get('invites', []);
+  if (!invites.length) { el.innerHTML = '<p style="color:var(--text-dim);padding:20px;text-align:center;">생성된 초대장이 없습니다.</p>'; return; }
+  el.innerHTML = invites.slice().reverse().map(inv => {
+    const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template) || INVITE_TEMPLATES[0];
+    const stats = inv.share_stats || {};
+    const total = Object.values(stats).reduce((a,b) => a+b, 0);
+    const bgThumb = inv.customImage
+      ? `background-image:url(${inv.customImage});background-size:cover;background-position:center;`
+      : `background:${tpl.bg};`;
+    return `
+      <div style="padding:14px;border:1px solid rgba(201,168,76,0.2);border-radius:6px;margin-bottom:10px;">
+        <div style="display:flex;gap:12px;margin-bottom:10px;">
+          <div style="width:70px;height:90px;flex-shrink:0;${bgThumb}border-radius:4px;display:flex;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:11px;cursor:pointer;border:1px solid rgba(201,168,76,0.2);" onclick="window.open('${inv.url}','_blank')">
+            ${inv.customImage ? '' : inv.code}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;color:var(--gold);font-weight:bold;margin-bottom:2px;">${inv.org}</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;">${inv.email}</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;">${new Date(inv.created).toLocaleString('ko-KR')}</div>
+            <div style="font-size:9px;color:var(--gold);opacity:0.6;">📊 총 공유 ${total}회 &nbsp;·&nbsp; 코드: ${inv.code}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button onclick="previewInvite(${inv.id})" style="padding:5px 10px;background:rgba(255,200,50,0.15);border:1px solid rgba(255,200,50,0.3);color:#ffc832;font-size:10px;cursor:pointer;border-radius:3px;">👁 미리보기</button>
+          <button onclick="openShareMenu(${inv.id})" style="padding:5px 10px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4caf50;font-size:10px;cursor:pointer;border-radius:3px;">📤 공유</button>
+          <button onclick="downloadInviteImage(${inv.id})" style="padding:5px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">⬇ 다운</button>
+          <button onclick="copyInviteUrl(${inv.id})" style="padding:5px 10px;background:rgba(100,180,255,0.15);border:1px solid rgba(100,180,255,0.3);color:#64b4ff;font-size:10px;cursor:pointer;border-radius:3px;">🔗 URL복사</button>
+          <button onclick="deleteInvite(${inv.id})" style="padding:5px 10px;background:rgba(200,50,50,0.15);border:1px solid rgba(200,50,50,0.3);color:#e74c3c;font-size:10px;cursor:pointer;border-radius:3px;">🗑 삭제</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function copyInviteUrl(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  navigator.clipboard.writeText(inv.url).then(() => showToast('URL이 복사되었습니다!', 'gold'));
+}
+
+/* ---- 공유 메뉴 ---- */
+function openShareMenu(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const shareUrl = inv.url;
+  const msg = (inv.textBlocks && inv.textBlocks[0]) ? (inv.textBlocks[0][_lang] || inv.textBlocks[0].ko || '') : '';
+
+  const menu = `
+    <div id="share-menu-box" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,10,0.97);border:1px solid rgba(201,168,76,0.4);border-radius:10px;padding:20px;z-index:9999;width:300px;box-shadow:0 8px 40px rgba(0,0,0,0.9);max-height:90vh;overflow-y:auto;">
+      <div style="color:var(--gold);font-size:13px;font-weight:bold;margin-bottom:14px;text-align:center;">📤 초대장 공유</div>
+      <div style="display:flex;justify-content:center;margin-bottom:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:6px;">
+        <div id="share-qr-box" style="width:130px;height:130px;"></div>
+      </div>
+      <div style="font-size:8px;color:var(--text-dim);text-align:center;margin-bottom:14px;word-break:break-all;">${shareUrl}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <button onclick="shareInviteTelegram(${id}); closeShareMenu()" style="padding:9px;background:rgba(0,136,204,0.2);border:1px solid rgba(0,136,204,0.4);color:#0af;cursor:pointer;border-radius:4px;font-size:10px;">📱 Telegram</button>
+        <button onclick="shareInviteSNS(${id})" style="padding:9px;background:rgba(59,89,152,0.2);border:1px solid rgba(59,89,152,0.4);color:#79f;cursor:pointer;border-radius:4px;font-size:10px;">👥 SNS</button>
+        <button onclick="shareInviteKakao(${id}); closeShareMenu()" style="padding:9px;background:rgba(255,220,0,0.15);border:1px solid rgba(255,220,0,0.4);color:#fd0;cursor:pointer;border-radius:4px;font-size:10px;">💬 카카오</button>
+        <button onclick="shareInviteEmail(${id}); closeShareMenu()" style="padding:9px;background:rgba(234,67,53,0.2);border:1px solid rgba(234,67,53,0.4);color:#f64;cursor:pointer;border-radius:4px;font-size:10px;">📧 이메일</button>
+        <button onclick="shareInviteSMS(${id}); closeShareMenu()" style="padding:9px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4d4;cursor:pointer;border-radius:4px;font-size:10px;">📲 문자</button>
+        <button onclick="shareInviteLine(${id}); closeShareMenu()" style="padding:9px;background:rgba(0,195,0,0.2);border:1px solid rgba(0,195,0,0.4);color:#0d0;cursor:pointer;border-radius:4px;font-size:10px;">💬 Line</button>
+      </div>
+      <button onclick="downloadQRCode()" style="width:100%;margin-top:8px;padding:8px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);cursor:pointer;border-radius:4px;font-size:10px;">⬇ QR코드 다운</button>
+      <button onclick="closeShareMenu()" style="width:100%;margin-top:6px;padding:8px;background:rgba(120,120,120,0.2);border:1px solid rgba(120,120,120,0.3);color:#aaa;cursor:pointer;border-radius:4px;font-size:10px;">닫기</button>
+    </div>
+    <div id="share-menu-overlay" onclick="closeShareMenu()" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;"></div>`;
+
+  document.body.insertAdjacentHTML('beforeend', menu);
+  setTimeout(() => {
+    const qrEl = document.getElementById('share-qr-box');
+    if (qrEl && typeof QRCode !== 'undefined') {
+      new QRCode(qrEl, { text: shareUrl, width: 130, height: 130, colorLight:'#111', colorDark:'#c9a84c' });
+    }
+  }, 100);
+  recordShareAttempt(id, 'view');
+}
+
+function closeShareMenu() {
+  document.getElementById('share-menu-box')?.remove();
+  document.getElementById('share-menu-overlay')?.remove();
+}
+
+function shareInviteTelegram(id) {
+  const inv = DB.get('invites',[]).find(x=>x.id===id); if(!inv) return;
+  const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
+  const text = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n\n${msg}\n\n${inv.url}`;
+  recordShareAttempt(id,'telegram');
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function shareInviteSNS(id) {
+  const inv = DB.get('invites',[]).find(x=>x.id===id); if(!inv) return;
+  const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
+  const text = encodeURIComponent(`🎉 ${inv.org} VIP 초대\n${msg}`);
+  const url = encodeURIComponent(inv.url);
+  const snsMenu = `
+    <div id="sns-menu-box" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,10,0.97);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:16px;z-index:10001;width:260px;">
+      <div style="color:var(--gold);font-size:11px;font-weight:bold;margin-bottom:10px;text-align:center;">SNS 선택</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button onclick="recordShareAttempt(${id},'facebook');window.open('https://www.facebook.com/sharer/sharer.php?u=${url}','_blank');closeShareMenu()" style="padding:8px;background:rgba(59,89,152,0.3);border:1px solid rgba(59,89,152,0.5);color:#79f;cursor:pointer;border-radius:3px;font-size:10px;">👍 Facebook</button>
+        <button onclick="recordShareAttempt(${id},'twitter');window.open('https://twitter.com/intent/tweet?text=${text}&url=${url}','_blank');closeShareMenu()" style="padding:8px;background:rgba(29,161,242,0.3);border:1px solid rgba(29,161,242,0.5);color:#1da1f2;cursor:pointer;border-radius:3px;font-size:10px;">🐦 Twitter/X</button>
+        <button onclick="recordShareAttempt(${id},'whatsapp');window.open('https://wa.me/?text=${text}%20${url}','_blank');closeShareMenu()" style="padding:8px;background:rgba(37,211,102,0.3);border:1px solid rgba(37,211,102,0.5);color:#25d366;cursor:pointer;border-radius:3px;font-size:10px;">💬 WhatsApp</button>
+        <button onclick="document.getElementById('sns-menu-box').remove()" style="padding:8px;background:rgba(120,120,120,0.2);border:1px solid rgba(120,120,120,0.3);color:#aaa;cursor:pointer;border-radius:3px;font-size:10px;">닫기</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', snsMenu);
+}
+
+function shareInviteKakao(id) {
+  const inv = DB.get('invites',[]).find(x=>x.id===id); if(!inv) return;
+  const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
+  recordShareAttempt(id,'kakao');
+  window.open(`https://story.kakao.com/s/write?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function shareInviteEmail(id) {
+  const inv = DB.get('invites',[]).find(x=>x.id===id); if(!inv) return;
+  const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
+  const subject = encodeURIComponent(`[${inv.org}] VIP Private 초대장`);
+  const body = encodeURIComponent(`안녕하세요,\n\n${inv.org}에서 VIP Private에 초대합니다.\n\n${msg}\n\n아래 링크에서 이메일 또는 단체명을 입력하시면 입장코드가 공개됩니다:\n${inv.url}\n\n감사합니다.`);
+  recordShareAttempt(id,'email');
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+function shareInviteSMS(id) {
+  const inv = DB.get('invites',[]).find(x=>x.id===id); if(!inv) return;
+  recordShareAttempt(id,'sms');
+  window.location.href = `sms:?body=${encodeURIComponent(`[${inv.org}] VIP Private 초대\n이메일 또는 단체명 입력 후 코드 확인:\n${inv.url}`)}`;
+}
+
+function shareInviteLine(id) {
+  const inv = DB.get('invites',[]).find(x=>x.id===id); if(!inv) return;
+  const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
+  recordShareAttempt(id,'line');
+  window.open(`https://line.me/R/msg/text/${encodeURIComponent(`[${inv.org}] VIP 초대\n${msg}\n${inv.url}`)}`, '_blank');
+}
+
+function recordShareAttempt(id, channel) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  if (!inv.share_stats) inv.share_stats = {};
+  inv.share_stats[channel] = (inv.share_stats[channel] || 0) + 1;
+  DB.set('invites', invites);
+}
+
+function downloadQRCode() {
+  const canvas = document.querySelector('#share-qr-box canvas');
+  if (!canvas) { showToast('QR 코드가 없습니다.', 'error'); return; }
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'invite_qr.png';
+  a.click();
+}
+
+function downloadInviteImage(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template) || INVITE_TEMPLATES[0];
+  const canvas = document.createElement('canvas');
+  canvas.width = 600; canvas.height = 800;
+  const ctx = canvas.getContext('2d');
+
+  const drawContent = () => {
+    ctx.fillStyle = tpl.accent;
+    ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('VIP PRIVATE', 300, 80);
+    ctx.font = '24px Arial';
+    ctx.fillText(inv.org, 300, 130);
+    if (inv.textBlocks?.length) {
+      ctx.font = '16px Arial';
+      inv.textBlocks.forEach((b, i) => {
+        ctx.fillText(b.ko || '', 300, 200 + i * 30);
+      });
+    }
+    ctx.font = 'bold 48px Courier New';
+    ctx.fillText('██████', 300, 450);
+    ctx.font = '14px Arial';
+    ctx.fillText('입장 코드 (인증 후 공개)', 300, 490);
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `invite_${inv.org}.png`;
+      a.click();
+    });
+  };
+
+  if (inv.customImage) {
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0, 600, 800); drawContent(); };
+    img.src = inv.customImage;
+  } else {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, 600, 800);
+    ctx.strokeStyle = tpl.accent;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, 580, 780);
+    drawContent();
+  }
+}
+
+/* ---- 미리보기 모달 ---- */
+function previewInvite(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+
+  const modal = `
+    <div id="preview-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;">
+      <div style="background:#0a0a0a;border:1px solid rgba(201,168,76,0.4);border-radius:10px;padding:20px;width:360px;max-height:90vh;overflow-y:auto;">
+        <div style="color:var(--gold);font-size:13px;font-weight:bold;margin-bottom:14px;text-align:center;">🎫 초대장 미리보기</div>
+        <div id="preview-card-area"></div>
+        <button onclick="document.getElementById('preview-modal').remove()" style="width:100%;margin-top:14px;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);cursor:pointer;border-radius:4px;font-size:12px;">닫기</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modal);
+
+  setTimeout(() => {
+    const area = document.getElementById('preview-card-area');
+    if (area) renderInviteCardForUser(inv, area);
+  }, 0);
+}
+
+/* ---- 삭제/수정 ---- */
+function editInvite(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const newOrg = prompt('단체명 수정:', inv.org);
+  if (newOrg === null) return;
+  const newEmail = prompt('이메일 수정:', inv.email);
+  if (newEmail === null) return;
+  if (newOrg.trim()) { inv.org = newOrg.trim(); inv.email = newEmail.trim(); }
+  DB.set('invites', invites);
+  renderInviteList();
+  showToast('수정되었습니다.', 'gold');
+}
+
+function deleteInvite(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  DB.set('invites', DB.get('invites',[]).filter(x => x.id !== id));
+  renderInviteList();
+  showToast('삭제되었습니다.');
+}
+
+function autoTranslateInviteMsg() { /* 구형 호환 유지 */ }
 
 function setLayoutOpt(key, value) {
   INVITE_LAYOUT_OPT[key] = value;
@@ -4057,369 +4582,63 @@ function createInviteCard() {
   showToast('초대장이 생성되었습니다.', 'gold');
 }
 
-function renderInviteList() {
-  const el = document.getElementById('invite-list');
-  if (!el) return;
-  const invites = DB.get('invites', []);
-  if (!invites.length) { el.innerHTML = '<p style="color:var(--text-dim);padding:20px;text-align:center;">생성된 초대장이 없습니다.</p>'; return; }
-  el.innerHTML = invites.map(inv => {
-    const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
-    const stats = inv.share_stats || {};
-    const shareInfo = [];
-    if (stats.telegram) shareInfo.push(`Telegram ${stats.telegram}회`);
-    if (stats.sns) shareInfo.push(`SNS ${stats.sns}회`);
-    if (stats.kakao) shareInfo.push(`카카오 ${stats.kakao}회`);
-    if (stats.email) shareInfo.push(`이메일 ${stats.email}회`);
-    if (stats.sms) shareInfo.push(`문자 ${stats.sms}회`);
-    if (stats.line) shareInfo.push(`Line ${stats.line}회`);
-    const shareDisplay = shareInfo.length > 0 ? `📊 공유: ${shareInfo.join(' · ')}` : '📊 아직 공유 없음';
-
-    return `
-      <div style="padding:16px;border:1px solid rgba(201,168,76,0.2);border-radius:4px;margin-bottom:12px;">
-        <div style="display:flex;gap:16px;cursor:pointer;margin-bottom:12px;" onclick="window.location.href='${inv.url}'">
-          <div style="width:80px;height:100px;flex-shrink:0;background:${tpl.bg};border-radius:4px;display:flex;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;transition:transform 0.2s;">${inv.code}</div>
-          <div style="flex:1;">
-            <div style="font-size:12px;color:var(--gold);margin-bottom:4px;">${inv.org}</div>
-            <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">${inv.email} · ${new Date(inv.created).toLocaleString('ko-KR')}</div>
-            <div style="font-size:9px;color:var(--gold);opacity:0.7;">👆 카드 클릭하면 초대장 방문</div>
-          </div>
-        </div>
-        <div style="font-size:9px;color:var(--text-dim);margin-bottom:12px;padding:8px;background:rgba(201,168,76,0.03);border-radius:3px;">${shareDisplay}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button onclick="previewInvite(${inv.id})" style="padding:4px 10px;background:rgba(255,200,100,0.2);border:1px solid rgba(255,200,100,0.4);color:#ffc864;font-size:10px;cursor:pointer;border-radius:3px;">👁️ 미리보기</button>
-          <button onclick="editInvite(${inv.id})" style="padding:4px 10px;background:rgba(100,150,255,0.2);border:1px solid rgba(100,150,255,0.4);color:#6496ff;font-size:10px;cursor:pointer;border-radius:3px;">✎ 수정</button>
-          <button onclick="openShareMenu(${inv.id})" style="padding:4px 10px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4caf50;font-size:10px;cursor:pointer;border-radius:3px;">📤 보내기</button>
-          <button onclick="downloadInviteImage(${inv.id})" style="padding:4px 10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">⬇️ 다운</button>
-          <button onclick="deleteInvite(${inv.id})" style="padding:4px 10px;background:rgba(200,50,50,0.2);border:1px solid rgba(200,50,50,0.4);color:#e74c3c;font-size:10px;cursor:pointer;border-radius:3px;">🗑️ 삭제</button>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function openShareMenu(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-
-  const langMsgs = {
-    ko: inv.messages.ko || '초대 코드: ' + inv.code,
-    en: inv.messages.en || 'Entry Code: ' + inv.code,
-    ja: inv.messages.ja || '入場コード: ' + inv.code,
-    zh: inv.messages.zh || '入场码: ' + inv.code,
-    es: inv.messages.es || 'Código de entrada: ' + inv.code
-  };
-
-  const currentMsg = langMsgs[_lang] || langMsgs.ko;
-  const shareUrl = inv.url;
-
-  const menu = `
-    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,10,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:20px;z-index:9999;min-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.8);max-height:90vh;overflow-y:auto;">
-      <div style="color:var(--gold);font-size:12px;font-weight:bold;margin-bottom:16px;text-align:center;">초대장 공유</div>
-
-      <div id="qr-code-container" style="display:flex;justify-content:center;margin-bottom:16px;padding:12px;background:rgba(201,168,76,0.05);border-radius:4px;">
-        <div id="qr-code" style="width:150px;height:150px;"></div>
-      </div>
-      <div style="font-size:9px;color:var(--text-dim);text-align:center;margin-bottom:12px;word-break:break-all;">${shareUrl}</div>
-
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button onclick="shareInviteTelegram(${id}); closeShareMenu()" style="padding:10px;background:rgba(0,136,204,0.2);border:1px solid rgba(0,136,204,0.4);color:#0088cc;cursor:pointer;border-radius:4px;font-size:11px;">📱 Telegram</button>
-        <button onclick="shareInviteSNS(${id}); closeShareMenu()" style="padding:10px;background:rgba(59,89,152,0.2);border:1px solid rgba(59,89,152,0.4);color:#3b5998;cursor:pointer;border-radius:4px;font-size:11px;">👥 SNS (Facebook, Instagram, Twitter)</button>
-        <button onclick="shareInviteKakao(${id}); closeShareMenu()" style="padding:10px;background:rgba(255,223,0,0.15);border:1px solid rgba(255,223,0,0.4);color:#ffe000;cursor:pointer;border-radius:4px;font-size:11px;">💬 Kakao Talk</button>
-        <button onclick="shareInviteEmail(${id}); closeShareMenu()" style="padding:10px;background:rgba(234,67,53,0.2);border:1px solid rgba(234,67,53,0.4);color:#ea4335;cursor:pointer;border-radius:4px;font-size:11px;">📧 이메일</button>
-        <button onclick="shareInviteSMS(${id}); closeShareMenu()" style="padding:10px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4caf50;cursor:pointer;border-radius:4px;font-size:11px;">📲 문자 (SMS)</button>
-        <button onclick="shareInviteLine(${id}); closeShareMenu()" style="padding:10px;background:rgba(0,195,0,0.2);border:1px solid rgba(0,195,0,0.4);color:#00c300;cursor:pointer;border-radius:4px;font-size:11px;">💬 Line</button>
-        <button onclick="downloadQRCode(${id})" style="padding:10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);cursor:pointer;border-radius:4px;font-size:11px;">⬇️ QR 코드 다운</button>
-        <button onclick="closeShareMenu()" style="padding:10px;background:rgba(200,200,200,0.15);border:1px solid rgba(200,200,200,0.4);color:#ccc;cursor:pointer;border-radius:4px;font-size:11px;margin-top:8px;">닫기</button>
-      </div>
-    </div>
-    <div onclick="closeShareMenu()" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;"></div>`;
-
-  document.body.insertAdjacentHTML('beforeend', menu);
-  document.querySelector('[style*="z-index:9998"]').id = 'share-menu-overlay';
-
-  setTimeout(() => {
-    const qrContainer = document.getElementById('qr-code');
-    if (qrContainer) {
-      new QRCode(qrContainer, { text: shareUrl, width: 150, height: 150 });
-    }
-  }, 0);
-
-  recordShareAttempt(id, 'view');
-}
-
-function closeShareMenu() {
-  const menu = document.querySelector('[style*="z-index:9999"]');
-  const overlay = document.getElementById('share-menu-overlay');
-  if (menu) menu.remove();
-  if (overlay) overlay.remove();
-}
-
-function shareInviteTelegram(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const msg = inv.messages[_lang] || inv.messages.ko || '';
-  const text = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n\n입장코드: ${inv.code}\n\n${msg}\n\n${inv.url}`;
-  const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`;
-  recordShareAttempt(id, 'telegram');
-  window.open(tgUrl, '_blank');
-}
-
-function shareInviteSNS(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const msg = inv.messages[_lang] || inv.messages.ko || '';
-  const text = encodeURIComponent(`🎉 ${inv.org}에서 VIP Private 초대합니다!\n\n입장코드: ${inv.code}\n${msg}`);
-  const url = encodeURIComponent(inv.url);
-
-  const snsMenu = `
-    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,10,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:16px;z-index:10000;min-width:280px;">
-      <div style="color:var(--gold);font-size:11px;font-weight:bold;margin-bottom:12px;text-align:center;">SNS 선택</div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <button onclick="recordShareAttempt(${id}, 'facebook'); window.open('https://www.facebook.com/sharer/sharer.php?u=${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(59,89,152,0.3);border:1px solid rgba(59,89,152,0.5);color:#3b5998;cursor:pointer;border-radius:3px;font-size:10px;">👍 Facebook</button>
-        <button onclick="recordShareAttempt(${id}, 'twitter'); window.open('https://twitter.com/intent/tweet?text=${text}&url=${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(29,161,242,0.3);border:1px solid rgba(29,161,242,0.5);color:#1da1f2;cursor:pointer;border-radius:3px;font-size:10px;">🐦 Twitter/X</button>
-        <button onclick="recordShareAttempt(${id}, 'linkedin'); window.open('https://www.linkedin.com/sharing/share-offsite/?url=${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(0,119,181,0.3);border:1px solid rgba(0,119,181,0.5);color:#0077b5;cursor:pointer;border-radius:3px;font-size:10px;">💼 LinkedIn</button>
-        <button onclick="recordShareAttempt(${id}, 'whatsapp'); window.open('https://wa.me/?text=${text}%20${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(37,211,102,0.3);border:1px solid rgba(37,211,102,0.5);color:#25d366;cursor:pointer;border-radius:3px;font-size:10px;">💬 WhatsApp</button>
-        <button onclick="closeShareMenu()" style="padding:8px;background:rgba(200,200,200,0.15);border:1px solid rgba(200,200,200,0.4);color:#ccc;cursor:pointer;border-radius:3px;font-size:10px;margin-top:6px;">닫기</button>
-      </div>
-    </div>
-    <div onclick="closeShareMenu()" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;"></div>`;
-
-  document.body.insertAdjacentHTML('beforeend', snsMenu);
-}
-
-function shareInviteKakao(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const msg = inv.messages[_lang] || inv.messages.ko || '';
-  const text = `${inv.org} - ${msg || '초대 코드: ' + inv.code}`;
-  const kakaoUrl = `kakaolink://send?appid=YOUR_KAKAO_APP_ID&validation=&metainfo=&link=web|${encodeURIComponent(inv.url)}|app|${encodeURIComponent(inv.url)}`;
-  const fallbackUrl = `https://story.kakao.com/s/write?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`;
-  recordShareAttempt(id, 'kakao');
-  window.open(fallbackUrl, '_blank');
-}
-
-function shareInviteEmail(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const msg = inv.messages[_lang] || inv.messages.ko || '';
-  const subject = encodeURIComponent(`${inv.org}에서 보낸 초대장`);
-  const body = encodeURIComponent(`안녕하세요,\n\n${inv.org}에서 VIP Private 초대합니다.\n\n입장코드: ${inv.code}\n\n${msg}\n\n${inv.url}\n\n감사합니다.`);
-  recordShareAttempt(id, 'email');
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
-}
-
-function shareInviteSMS(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const message = encodeURIComponent(`[${inv.org}] VIP Private 초대!\n코드: ${inv.code}\n${inv.url}`);
-  recordShareAttempt(id, 'sms');
-  window.location.href = `sms:?body=${message}`;
-}
-
-function shareInviteLine(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const msg = inv.messages[_lang] || inv.messages.ko || '';
-  const text = encodeURIComponent(`🎉 ${inv.org}에서 VIP Private 초대합니다!\n\n입장코드: ${inv.code}\n${msg}\n\n${inv.url}`);
-  const lineUrl = `https://line.me/R/msg/text/${text}`;
-  recordShareAttempt(id, 'line');
-  window.open(lineUrl, '_blank');
-}
-
-function downloadInviteImage(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
-  const canvas = document.createElement('canvas');
-  canvas.width = 600;
-  canvas.height = 800;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = tpl.bg.includes('gradient') ? '#2a2a2a' : tpl.bg;
-  ctx.fillRect(0, 0, 600, 800);
-  ctx.fillStyle = tpl.accent;
-  ctx.font = '40px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText('VIP PRIVATE', 300, 100);
-  ctx.font = '30px Arial';
-  ctx.fillText(inv.org, 300, 200);
-  ctx.font = 'bold 50px Courier New';
-  ctx.fillText(inv.code, 300, 450);
-  ctx.font = '16px Arial';
-  ctx.fillText('입장 코드', 300, 520);
-  canvas.toBlob(blob => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `invite_${inv.code}.png`;
-    a.click();
-  });
-}
-
-function recordShareAttempt(id, channel) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  if (!inv.share_stats) inv.share_stats = { telegram: 0, sns: 0, kakao: 0, email: 0, sms: 0, line: 0, facebook: 0, twitter: 0, linkedin: 0, whatsapp: 0, view: 0 };
-  if (!inv.share_stats[channel]) inv.share_stats[channel] = 0;
-  inv.share_stats[channel]++;
-  DB.set('invites', invites);
-  renderInviteList();
-}
-
-function downloadQRCode(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-  const canvas = document.querySelector('#qr-code canvas');
-  if (!canvas) { showToast('QR 코드를 먼저 생성해주세요.', 'error'); return; }
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = `qr_${inv.code}.png`;
-  link.click();
-}
-
-function previewInvite(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-
-  const modal = `
-    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;">
-      <div style="background:rgba(10,10,10,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:20px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;">
-        <div style="color:var(--gold);font-size:14px;font-weight:bold;margin-bottom:16px;text-align:center;">🎫 초대장 미리보기</div>
-        <div id="preview-content" style="background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:4px;padding:16px;margin-bottom:16px;"></div>
-        <button onclick="closePreview()" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);cursor:pointer;border-radius:4px;font-size:12px;">닫기</button>
-      </div>
-    </div>`;
-
-  document.body.insertAdjacentHTML('beforeend', modal);
-  const contentDiv = document.getElementById('preview-content');
-
-  setTimeout(() => {
-    const tempDiv = document.createElement('div');
-    tempDiv.style.display = 'none';
-    document.body.appendChild(tempDiv);
-    tempDiv.innerHTML = `<div id="temp-entry"></div>`;
-    const entryBackup = document.querySelector('.entry-box').innerHTML;
-    document.querySelector('.entry-box').innerHTML = '';
-    showInviteCard(inv);
-    contentDiv.innerHTML = document.querySelector('.entry-box').innerHTML;
-    document.querySelector('.entry-box').innerHTML = entryBackup;
-    tempDiv.remove();
-  }, 0);
-}
-
-function closePreview() {
-  const modal = document.querySelector('[style*="z-index:10000"]');
-  if (modal) modal.remove();
-}
-
-function editInvite(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-
-  const newOrg = prompt('단체명을 수정하세요:', inv.org);
-  if (newOrg === null) return;
-
-  const newEmail = prompt('이메일을 수정하세요:', inv.email);
-  if (newEmail === null) return;
-
-  if (newOrg.trim() && newEmail.trim()) {
-    inv.org = newOrg.trim();
-    inv.email = newEmail.trim();
-    DB.set('invites', invites);
-    renderInviteList();
-    showToast('초대장이 수정되었습니다.', 'gold');
-  }
-}
-
-function deleteInvite(id) {
-  if (!confirm('초대장을 삭제하시겠습니까?')) return;
-  let invites = DB.get('invites', []);
-  invites = invites.filter(x => x.id !== id);
-  DB.set('invites', invites);
-  renderInviteList();
-  showToast('초대장이 삭제되었습니다.');
-}
-
-function uploadInviteImage() {
-  const fileInput = document.getElementById('invite-custom-image');
-  const file = fileInput.files[0];
-  if (!file) { showToast('이미지를 선택하세요.', 'error'); return; }
-
-  const reader = new FileReader();
-  reader.onload = e => {
-    const imageData = e.target.result;
-    const img = new Image();
-    img.onload = () => {
-      document.getElementById('invite-image-preview').style.backgroundImage = `url(${imageData})`;
-      document.getElementById('invite-image-preview').style.display = 'block';
-      document.getElementById('invite-image-info').style.display = 'block';
-      document.getElementById('invite-image-size').textContent = `📸 크기: ${img.width} x ${img.height}px (${(file.size/1024).toFixed(1)}KB)`;
-      document.getElementById('invite-template-selector').dataset.customImage = imageData;
-      showToast('이미지가 업로드되었습니다.', 'gold');
-    };
-    img.src = imageData;
-  };
-  reader.readAsDataURL(file);
-}
-
-function renderInviteTracking(filter = {}) {
-  let tracking = DB.get('invite_tracking', []);
-  if (filter.org) tracking = tracking.filter(t => t.org === filter.org);
-  if (filter.country) tracking = tracking.filter(t => t.country === filter.country);
+function renderInviteTracking() {
+  const orgVal = (document.getElementById('filter-invite-org') || {}).value || '';
+  const countryVal = (document.getElementById('filter-invite-country') || {}).value || '';
 
   const allTracking = DB.get('invite_tracking', []);
+  let tracking = allTracking.slice().reverse(); // 최신순
+  if (orgVal) tracking = tracking.filter(t => t.org === orgVal);
+  if (countryVal) tracking = tracking.filter(t => t.country === countryVal);
+
   const orgs = [...new Set(allTracking.map(t => t.org))].sort();
-  const countries = [...new Set(allTracking.map(t => t.country))].filter(c => c !== 'Unknown').sort();
+  const countries = [...new Set(allTracking.map(t => t.country))].filter(c => c && c !== 'Unknown').sort();
 
   const orgSel = document.getElementById('filter-invite-org');
-  if (orgSel) orgSel.innerHTML = '<option value="">전체 초대장</option>' + orgs.map(o => `<option value="${o}">${o}</option>`).join('');
-
+  if (orgSel) orgSel.innerHTML = '<option value="">전체 초대장</option>' + orgs.map(o => `<option value="${o}" ${o===orgVal?'selected':''}>${o}</option>`).join('');
   const countrySel = document.getElementById('filter-invite-country');
-  if (countrySel) countrySel.innerHTML = '<option value="">전체 국가</option>' + countries.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (countrySel) countrySel.innerHTML = '<option value="">전체 국가</option>' + countries.map(c => `<option value="${c}" ${c===countryVal?'selected':''}>${c}</option>`).join('');
 
   const el = document.getElementById('invite-tracking-list');
   if (!el) return;
-
   if (!tracking.length) { el.innerHTML = '<p style="color:var(--text-dim);padding:20px;text-align:center;">추적 데이터가 없습니다.</p>'; return; }
 
-  el.innerHTML = `<table class="data-table" style="font-size:11px;">
-    <tr><th>일시</th><th>단체명</th><th>이메일</th><th>입장코드</th><th>국가</th><th>도시</th><th>기기</th></tr>
-    ${tracking.map(t => `<tr>
-      <td>${new Date(t.timestamp).toLocaleString('ko-KR')}</td>
-      <td>${t.org}</td>
-      <td>${t.email}</td>
-      <td style="font-family:'Courier New';color:var(--gold);">${t.code}</td>
-      <td>${t.country}</td>
-      <td>${t.city}</td>
-      <td>${t.device === 'mobile' ? '📱' : '💻'}</td>
-    </tr>`).join('')}
-  </table>`;
+  el.innerHTML = `
+    <div style="overflow-x:auto;">
+    <table class="data-table" style="font-size:10px;width:100%;min-width:700px;">
+      <tr>
+        <th>일시</th><th>초대 단체</th><th>유저 입력 단체명</th><th>유저 입력 이메일</th>
+        <th>코드</th><th>국가</th><th>도시</th><th>기기</th>
+      </tr>
+      ${tracking.map(t => `<tr>
+        <td style="white-space:nowrap;">${new Date(t.timestamp).toLocaleString('ko-KR')}</td>
+        <td style="color:var(--gold);">${t.org || ''}</td>
+        <td>${t.user_org || '-'}</td>
+        <td>${t.user_email || '-'}</td>
+        <td style="font-family:'Courier New';color:var(--gold);letter-spacing:1px;">${t.code || ''}</td>
+        <td>${t.country || '-'}</td>
+        <td>${t.city || '-'}</td>
+        <td>${t.device === 'mobile' ? '📱 모바일' : '💻 PC'}</td>
+      </tr>`).join('')}
+    </table>
+    </div>`;
 }
 
 function exportInviteTracking() {
   const tracking = DB.get('invite_tracking', []);
   if (!tracking.length) { showToast('내보낼 데이터가 없습니다.', 'error'); return; }
-  const headers = ['일시','단체명','이메일','입장코드','국가','도시','기기','User-Agent'];
+  const headers = ['일시','초대단체','유저단체명','유저이메일','입장코드','국가','도시','기기','UA'];
   const rows = tracking.map(t => [
     new Date(t.timestamp).toLocaleString('ko-KR'),
-    t.org, t.email, t.code, t.country, t.city,
-    t.device === 'mobile' ? 'mobile' : 'pc',
-    t.ua
+    t.org, t.user_org || '', t.user_email || '',
+    t.code, t.country, t.city,
+    t.device === 'mobile' ? 'mobile' : 'pc', t.ua
   ]);
-  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `vip_invite_tracking_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `invite_tracking_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
