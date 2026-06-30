@@ -4484,26 +4484,6 @@ function deleteInvite(id) {
   showToast('삭제되었습니다.');
 }
 
-function autoTranslateInviteMsg() { /* 구형 호환 유지 */ }
-
-function setLayoutOpt(key, value) {
-  INVITE_LAYOUT_OPT[key] = value;
-  const btnMap = {
-    text_position: ['btn-text-top', 'btn-text-middle', 'btn-text-bottom'],
-    text_align: ['btn-text-left', 'btn-text-center', 'btn-text-right'],
-    code_position: ['btn-code-top', 'btn-code-middle', 'btn-code-bottom'],
-    input_position: ['btn-input-top', 'btn-input-middle', 'btn-input-bottom']
-  };
-
-  if (btnMap[key]) {
-    btnMap[key].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) btn.style.background = 'rgba(201,168,76,0.1)';
-    });
-    const activeBtn = document.getElementById('btn-' + key.replace('_', '-') + '-' + value);
-    if (activeBtn) activeBtn.style.background = 'rgba(201,168,76,0.3)';
-  }
-}
 
 function renderInviteTracking() {
   const orgVal = (document.getElementById('filter-invite-org') || {}).value || '';
