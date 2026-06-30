@@ -634,9 +634,9 @@
   <div class="entry-box">
     <div class="entry-label" data-i18n="entry_label">입장 코드를 입력하세요</div>
     <div class="entry-input-wrap">
-      <input type="text" id="entry-code-input" class="entry-input"
-             placeholder="● ● ● ● ● ●"
-             maxlength="20" autocomplete="off" spellcheck="false">
+      <select id="entry-code-input" class="entry-input" style="padding:12px;font-size:13px;cursor:pointer;">
+        <option value="">-- 입장 코드 선택 --</option>
+      </select>
     </div>
     <!-- 개인정보 동의 -->
     <div style="margin:18px 0 6px;text-align:left;">
@@ -1712,9 +1712,26 @@ function verifyCodeWithInvite(code) {
   }
 }
 
-document.getElementById('entry-code-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); verifyCode(); }
+// 입장 코드 드롭다운 초기화
+function initEntryCodeDropdown() {
+  const select = document.getElementById('entry-code-input');
+  if (!select) return;
+
+  const codes = DB.get('codes', []);
+  if (codes.length > 0) {
+    select.innerHTML = '<option value="">-- 입장 코드 선택 --</option>' +
+      codes.map(c => `<option value="${c.code}">${c.code} (${c.org})</option>`).join('');
+  }
+}
+
+// 페이지 로드 시 드롭다운 초기화
+initEntryCodeDropdown();
+
+document.getElementById('entry-code-input').addEventListener('change', e => {
+  if (e.target.value) { verifyCode(); }
 });
+
+// 기존 keydown 이벤트는 더 이상 필요 없음 (select는 keydown 처리 안 함)
 
 function togglePrivacy() {
   const box = document.getElementById('privacy-text');
@@ -2806,6 +2823,7 @@ function deleteCodeFromContent(id) {
 }
 
 function renderCodesAdmin() {
+  initEntryCodeDropdown();
   const codes = DB.get('codes', []);
   const el = document.getElementById('codes-list');
   if (!el) return;
