@@ -1015,6 +1015,14 @@
                 <label class="form-label" style="font-size:10px;">日本語</label>
                 <textarea id="invite-msg-ja" class="form-textarea" rows="2" style="font-size:11px;" placeholder="日本語"></textarea>
               </div>
+              <div>
+                <label class="form-label" style="font-size:10px;">中文</label>
+                <textarea id="invite-msg-zh" class="form-textarea" rows="2" style="font-size:11px;" placeholder="中文"></textarea>
+              </div>
+              <div>
+                <label class="form-label" style="font-size:10px;">Español</label>
+                <textarea id="invite-msg-es" class="form-textarea" rows="2" style="font-size:11px;" placeholder="Español"></textarea>
+              </div>
             </div>
             <button class="btn-secondary" onclick="autoTranslateInviteMsg()" style="width:100%;margin-bottom:10px;">🌐 자동 번역</button>
             <button class="btn-primary" onclick="createInviteCard()" style="width:100%;">초대장 생성</button>
@@ -3916,7 +3924,9 @@ function createInviteCard() {
   const msgs = {
     ko: msgKo,
     en: document.getElementById('invite-msg-en').value.trim(),
-    ja: document.getElementById('invite-msg-ja').value.trim()
+    ja: document.getElementById('invite-msg-ja').value.trim(),
+    zh: document.getElementById('invite-msg-zh').value.trim(),
+    es: document.getElementById('invite-msg-es').value.trim()
   };
 
   const inviteId = Date.now();
