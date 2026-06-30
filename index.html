@@ -4270,13 +4270,21 @@ function liveUpdateInvitePreview() {
   const sz = INVITE_STATE.sizes;
   const resizeHandle = key => `<div data-resize="${key}" style="position:absolute;bottom:-6px;right:-6px;width:13px;height:13px;background:rgba(201,168,76,0.9);border-radius:50%;cursor:se-resize;border:1px solid #fff;z-index:2;"></div>`;
 
-  /* 입장코드 */
+  /* 입장코드 — 선택기 포함 */
+  const codeSelectOpts = DB.get('codes',[]).map(c =>
+    `<option value="${c.code}" ${c.code===code?'selected':''}>${c.code} (${c.org||''})</option>`
+  ).join('');
   elems.push(`
     <div data-drag="code" style="position:absolute;left:${pos.code.x}%;top:${pos.code.y}%;transform:translate(-50%,-50%);
-         text-align:center;cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:4px 8px;">
+         text-align:center;cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:6px 10px;">
       ${dragHint}${resizeHandle('code')}
+      <select onmousedown="event.stopPropagation()" onchange="document.getElementById('invite-code-select').value=this.value;liveUpdateInvitePreview()"
+        style="width:100%;background:rgba(0,0,0,0.7);color:${tpl.accent};border:1px solid ${tpl.accent};font-size:9px;padding:3px 4px;margin-bottom:5px;cursor:pointer;border-radius:3px;">
+        <option value="">-- 입장코드 선택 --</option>
+        ${codeSelectOpts}
+      </select>
       <div style="font-size:${sz.code||20}px;font-weight:bold;font-family:'Courier New';letter-spacing:3px;color:${tpl.accent};
-           padding:8px 16px;border:1px solid ${tpl.accent};border-radius:4px;background:rgba(0,0,0,0.5);">██████</div>
+           padding:6px 14px;border:1px solid ${tpl.accent};border-radius:4px;background:rgba(0,0,0,0.5);">██████</div>
       <div style="font-size:9px;color:${tpl.accent};opacity:0.7;margin-top:3px;">입장 코드 (숨김)</div>
     </div>`);
 
@@ -4293,15 +4301,15 @@ function liveUpdateInvitePreview() {
     </div>`);
 
   /* QR */
-  const qrSz = sz.qr || 64;
+  const qrSz = sz.qr || 80;
   elems.push(`
     <div data-drag="qr" style="position:absolute;left:${pos.qr.x}%;top:${pos.qr.y}%;transform:translate(-50%,-50%);
          cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:4px;">
       ${dragHint}${resizeHandle('qr')}
-      <div style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:9px;color:#000;">QR</span>
-      </div>
+      <div id="invite-preview-qr" style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:4px;overflow:hidden;"></div>
     </div>`);
+
+  /* 입장코드 선택기 → 코드 블록 안에 포함 */
 
   const hPos = pos.header || { x:50, y:5 };
   const oPos = pos.org    || { x:50, y:10 };
@@ -4333,6 +4341,21 @@ function liveUpdateInvitePreview() {
     </div>`;
 
   _initPreviewDrag();
+  _generatePreviewQR();
+}
+
+function _generatePreviewQR() {
+  const el = document.getElementById('invite-preview-qr');
+  if (!el || typeof QRCode === 'undefined') return;
+  const sz = INVITE_STATE.sizes.qr || 80;
+  el.innerHTML = '';
+  el.style.width  = sz + 'px';
+  el.style.height = sz + 'px';
+  new QRCode(el, {
+    text: 'https://wjdwo72.github.io/vip-private/',
+    width: sz, height: sz,
+    colorLight: '#ffffff', colorDark: '#111111'
+  });
 }
 
 /* ---- 드래그 로직 ---- */
@@ -4382,10 +4405,17 @@ function _initPreviewDrag() {
         INVITE_STATE.sizes.input = nw;
         resizing.style.width = nw + '%';
       } else if (key === 'qr') {
-        const nw = Math.max(30, Math.min(200, startW + dx));
+        const nw = Math.max(40, Math.min(220, startW + dx));
         INVITE_STATE.sizes.qr = nw;
-        const inner = resizing.querySelector('div');
-        if (inner) { inner.style.width = nw + 'px'; inner.style.height = nw + 'px'; }
+        const inner = document.getElementById('invite-preview-qr');
+        if (inner) {
+          inner.style.width = nw + 'px'; inner.style.height = nw + 'px';
+          inner.innerHTML = '';
+          if (typeof QRCode !== 'undefined') new QRCode(inner, {
+            text: 'https://wjdwo72.github.io/vip-private/',
+            width: nw, height: nw, colorLight: '#ffffff', colorDark: '#111111'
+          });
+        }
       } else if (key === 'code') {
         const nw = Math.max(10, Math.min(60, startW + dx * 0.2));
         INVITE_STATE.sizes.code = nw;
