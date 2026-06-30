@@ -1788,7 +1788,7 @@ function renderInviteCardForUser(inv, container) {
   // 텍스트 블록
   const textElems = (inv.textBlocks || []).map(b => `
     <div style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
-         font-size:${b.fontSize||14}px;color:${b.color||tpl.accent};text-align:center;white-space:pre-wrap;padding:2px 6px;">
+         width:${b.width||60}%;font-size:${b.fontSize||14}px;color:${b.color||tpl.accent};text-align:center;white-space:pre-wrap;padding:2px 6px;">
       ${b[lang] || b.ko || ''}
     </div>`).join('');
 
@@ -4419,12 +4419,15 @@ function liveUpdateInvitePreview() {
   /* 텍스트 블록 */
   INVITE_STATE.textBlocks.forEach(b => {
     const txt = b[lang] || b.ko || '';
+    const bw = b.width || 60;
     elems.push(`
       <div data-drag="text_${b.id}" style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
-           font-size:${b.fontSize||14}px;color:${b.color||'#fff'};text-align:center;white-space:pre-wrap;
-           cursor:move;padding:6px 10px;border:1px dashed rgba(255,255,255,0.25);border-radius:3px;min-width:60px;
+           width:${bw}%;font-size:${b.fontSize||14}px;color:${b.color||'#fff'};text-align:center;white-space:pre-wrap;
+           cursor:move;padding:6px 10px;border:1px dashed rgba(255,255,255,0.25);border-radius:3px;
            display:flex;align-items:center;justify-content:center;">
-        ${dragHint}${txt || '<span style="opacity:0.3;font-size:10px;">텍스트</span>'}
+        ${dragHint}
+        <div data-resize="text_${b.id}" style="position:absolute;bottom:-6px;right:-6px;width:13px;height:13px;background:rgba(201,168,76,0.9);border-radius:50%;cursor:se-resize;border:1px solid #fff;z-index:2;"></div>
+        ${txt || '<span style="opacity:0.3;font-size:10px;">텍스트</span>'}
       </div>`);
   });
 
@@ -4506,6 +4509,8 @@ function liveUpdateInvitePreview() {
         <div style="font-size:${oSize}px;font-weight:bold;color:${oColor};">${org}</div>
       </div>` : ''}
       ${elems.join('')}
+      <div id="invite-guide-h" style="position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(100,200,255,0.35);pointer-events:none;border-top:1px dashed rgba(100,200,255,0.5);"></div>
+      <div id="invite-guide-v" style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(100,200,255,0.35);pointer-events:none;border-left:1px dashed rgba(100,200,255,0.5);"></div>
       <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:8px;color:rgba(255,255,255,0.3);pointer-events:none;">요소를 드래그하여 위치 조정</div>
     </div>`;
 
@@ -4552,7 +4557,7 @@ function _initPreviewDrag() {
     });
   });
 
-  // 리사이즈 핸들 (image2, code, input, qr)
+  // 리사이즈 핸들 (image2, code, input, qr, text_*)
   card.querySelectorAll('[data-resize]').forEach(handle => {
     handle.addEventListener('mousedown', e => {
       e.preventDefault(); e.stopPropagation();
@@ -4560,7 +4565,11 @@ function _initPreviewDrag() {
       startX = e.clientX;
       const key = handle.dataset.resize;
       if (key === 'image2') startW = INVITE_STATE.image2Size.w;
-      else startW = INVITE_STATE.sizes[key] || (key === 'qr' ? 80 : key === 'input' ? 80 : key === 'visitBtn' ? 140 : 20);
+      else if (key.startsWith('text_')) {
+        const bid = parseInt(key.split('_')[1]);
+        const b = INVITE_STATE.textBlocks.find(x => x.id === bid);
+        startW = b ? (b.width || 60) : 60;
+      } else startW = INVITE_STATE.sizes[key] || (key === 'qr' ? 80 : key === 'input' ? 80 : key === 'visitBtn' ? 140 : 20);
     });
   });
 
@@ -4600,6 +4609,14 @@ function _initPreviewDrag() {
         INVITE_STATE.sizes.visitBtn = nw;
         const inner = resizing.querySelector('div');
         if (inner) inner.style.width = nw + 'px';
+      } else if (key && key.startsWith('text_')) {
+        const bid = parseInt(key.split('_')[1]);
+        const b = INVITE_STATE.textBlocks.find(x => x.id === bid);
+        if (b) {
+          const nw = Math.max(10, Math.min(96, startW + dx / rect.width * 100));
+          b.width = nw;
+          resizing.style.width = nw + '%';
+        }
       }
       return;
     }
