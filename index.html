@@ -1812,26 +1812,24 @@ function verifyInvite(inviteId) {
 
 function verifyCodeWithInvite(code) {
   const codes = DB.get('codes', []);
-  const found = codes.find(c => c.code === code);
-  if (found) {
-    currentCode = found.code;
-    currentOrg = found.org;
-    currentCodeObj = found;
+  // codes DB에 없어도 초대코드 자체를 직접 인증
+  const found = codes.find(c => c.code === code) || { code, org: '초대 입장', menus: '' };
+  currentCode = found.code;
+  currentOrg = found.org;
+  currentCodeObj = found;
 
-    // 입장 로그 기록
-    const logs = DB.get('entry_logs', []);
-    logs.unshift({
-      code: found.code,
-      org: found.org,
-      time: new Date().toISOString(),
-      ua: navigator.userAgent.slice(0,80),
-      source: 'invite'
-    });
-    if (logs.length > 500) logs.length = 500;
-    DB.set('entry_logs', logs);
+  const logs = DB.get('entry_logs', []);
+  logs.unshift({
+    code: found.code,
+    org: found.org,
+    time: new Date().toISOString(),
+    ua: navigator.userAgent.slice(0,80),
+    source: 'invite'
+  });
+  if (logs.length > 500) logs.length = 500;
+  DB.set('entry_logs', logs);
 
-    enterMain();
-  }
+  enterMain();
 }
 
 document.getElementById('entry-code-input').addEventListener('keydown', e => {
