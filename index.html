@@ -1003,8 +1003,9 @@
                 <input type="file" id="invite-custom-image" accept="image/*" style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px;font-size:10px;border-radius:3px;">
                 <button type="button" onclick="uploadInviteImage()" class="btn-secondary" style="white-space:nowrap;padding:6px 10px;font-size:11px;">업로드</button>
               </div>
-              <div id="invite-image-info" style="margin-top:6px;font-size:9px;color:var(--text-dim);display:none;">
-                <span id="invite-image-size"></span> &nbsp;·&nbsp; 💡 권장: 600×800px
+              <div style="margin-top:6px;font-size:9px;color:var(--text-dim);line-height:1.8;">
+                <div id="invite-image-size" style="display:none;"></div>
+                <div>💡 추천 크기: 600x800px</div>
               </div>
             </div>
 
@@ -3971,14 +3972,19 @@ function initInviteTab() {
       <div onclick="selectInviteTemplate(${t.id})" style="cursor:pointer;padding:8px;border:2px solid transparent;border-radius:4px;background:${t.bg};text-align:center;font-size:9px;color:${t.accent};transition:all 0.3s;" id="tpl-${t.id}">
         ${t.name}
       </div>`).join('');
+    // 첫 번째 템플릿 기본 선택
+    selectInviteTemplate(INVITE_TEMPLATES[0].id);
   }
+  renderInviteTextBlocks();
+  liveUpdateInvitePreview();
 }
 
 function selectInviteTemplate(id) {
   document.querySelectorAll('#invite-template-selector > div').forEach(el => el.style.borderColor = 'transparent');
   document.getElementById(`tpl-${id}`).style.borderColor = '#d4af37';
   document.getElementById('invite-template-selector').dataset.selected = id;
-  updateInvitePreview();
+  INVITE_STATE.customImage = null;
+  liveUpdateInvitePreview();
 }
 
 function generateNewInviteCode() {
@@ -3992,33 +3998,6 @@ function generateNewInviteCode() {
   document.getElementById('invite-code-select').dataset.newCode = code;
 }
 
-async function autoTranslateInviteMsg() {
-  const ko = document.getElementById('invite-msg-ko').value.trim();
-  if (!ko) { showToast('메시지를 입력하세요.', 'error'); return; }
-  showToast('번역 중...', 'gold');
-  const langs = await _translateItem(ko, TRANS_TARGETS).catch(() => ({}));
-  if (langs.en) document.getElementById('invite-msg-en').value = langs.en;
-  if (langs.ja) document.getElementById('invite-msg-ja').value = langs.ja;
-  if (langs.zh) document.getElementById('invite-msg-zh').value = langs.zh;
-  if (langs.es) document.getElementById('invite-msg-es').value = langs.es;
-  showToast('번역 완료', 'gold');
-}
-
-function updateInvitePreview() {
-  const tplId = document.getElementById('invite-template-selector').dataset.selected || 1;
-  const tpl = INVITE_TEMPLATES.find(t => t.id == tplId);
-  const org = document.getElementById('invite-org').value || '초대장';
-  const code = document.getElementById('invite-code-text').textContent || '****';
-  const preview = document.getElementById('invite-preview');
-  if (!tpl) return;
-  preview.innerHTML = `
-    <div style="background:${tpl.bg};border:1px solid ${tpl.accent};border-radius:8px;padding:20px;width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;align-items:center;color:${tpl.accent};text-align:center;">
-      <div style="font-size:24px;font-weight:bold;letter-spacing:2px;">VIP</div>
-      <div style="font-size:14px;letter-spacing:1px;">${org}</div>
-      <div style="font-size:28px;font-weight:bold;font-family:'Courier New';letter-spacing:2px;border-bottom:2px solid ${tpl.accent};padding-bottom:8px;width:100%;">${code}</div>
-      <div style="font-size:10px;letter-spacing:0.5px;">입장 코드</div>
-    </div>`;
-}
 
 /* ========== 초대장 상태 ========== */
 const INVITE_STATE = {
@@ -4196,10 +4175,8 @@ function uploadInviteImage() {
     const img = new Image();
     img.onload = () => {
       INVITE_STATE.customImage = imageData;
-      const info = document.getElementById('invite-image-info');
       const size = document.getElementById('invite-image-size');
-      if (info) info.style.display = 'block';
-      if (size) size.textContent = `📸 ${img.width}×${img.height}px (${(file.size/1024).toFixed(1)}KB)`;
+      if (size) { size.textContent = `📸 크기: ${img.width} x ${img.height}px (${(file.size/1024).toFixed(1)}KB)`; size.style.display = 'block'; }
       liveUpdateInvitePreview();
       showToast('이미지 업로드 완료', 'gold');
     };
@@ -4526,60 +4503,6 @@ function setLayoutOpt(key, value) {
     const activeBtn = document.getElementById('btn-' + key.replace('_', '-') + '-' + value);
     if (activeBtn) activeBtn.style.background = 'rgba(201,168,76,0.3)';
   }
-}
-
-function createInviteCard() {
-  const org = document.getElementById('invite-org').value.trim();
-  const email = document.getElementById('invite-email').value.trim();
-  const code = document.getElementById('invite-code-select').value || document.getElementById('invite-code-select').dataset.newCode;
-  const tplId = document.getElementById('invite-template-selector').dataset.selected || 1;
-  const msgKo = document.getElementById('invite-msg-ko').value.trim();
-
-  if (!org || !email || !code) { showToast('단체명, 이메일, 코드를 모두 입력하세요.', 'error'); return; }
-
-  const invites = DB.get('invites', []);
-  const msgs = {
-    ko: msgKo,
-    en: document.getElementById('invite-msg-en').value.trim(),
-    ja: document.getElementById('invite-msg-ja').value.trim(),
-    zh: document.getElementById('invite-msg-zh').value.trim(),
-    es: document.getElementById('invite-msg-es').value.trim()
-  };
-
-  const inviteId = Date.now();
-  invites.push({
-    id: inviteId,
-    org, email, code, template: tplId, messages: msgs,
-    created: new Date().toISOString(),
-    url: `${window.location.origin}?invite=${inviteId}`,
-    labels: {
-      code_label: document.getElementById('invite-code-label').value.trim() || '입장 코드',
-      org_label: document.getElementById('invite-org-label').value.trim() || '단체명',
-      email_label: document.getElementById('invite-email-label').value.trim() || '이메일',
-      code_message: document.getElementById('invite-code-message').value.trim() || '입장코드가 공개되었습니다'
-    },
-    extra_text: document.getElementById('invite-extra-text').value.trim() || '',
-    share_stats: { telegram: 0, sns: 0, kakao: 0, email: 0, sms: 0, line: 0, facebook: 0, twitter: 0, linkedin: 0, whatsapp: 0, view: 0 }
-  });
-
-  DB.set('invites', invites);
-  document.getElementById('invite-org').value = '';
-  document.getElementById('invite-email').value = '';
-  document.getElementById('invite-code-select').value = '';
-  document.getElementById('invite-code-select').dataset.newCode = '';
-  document.getElementById('invite-code-display').style.display = 'none';
-  document.getElementById('invite-msg-ko').value = '';
-  document.getElementById('invite-msg-en').value = '';
-  document.getElementById('invite-msg-ja').value = '';
-  document.getElementById('invite-msg-zh').value = '';
-  document.getElementById('invite-msg-es').value = '';
-  document.getElementById('invite-code-label').value = '';
-  document.getElementById('invite-org-label').value = '';
-  document.getElementById('invite-email-label').value = '';
-  document.getElementById('invite-code-message').value = '';
-  document.getElementById('invite-extra-text').value = '';
-  renderInviteList();
-  showToast('초대장이 생성되었습니다.', 'gold');
 }
 
 function renderInviteTracking() {
