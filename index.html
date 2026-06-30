@@ -753,6 +753,7 @@
       <button class="tab-btn" onclick="switchTab('tab-content')">콘텐츠</button>
       <button class="tab-btn" onclick="switchTab('tab-codes')">입장코드</button>
       <button class="tab-btn" onclick="switchTab('tab-invites')">초대장</button>
+      <button class="tab-btn" onclick="switchTab('tab-invite-tracking')">초대 추적</button>
       <button class="tab-btn" onclick="switchTab('tab-telegram')">텔레그램</button>
       <button class="tab-btn" onclick="switchTab('tab-reservations')">예약 DB</button>
       <button class="tab-btn" onclick="switchTab('tab-links')">링크관리</button>
@@ -1005,8 +1006,16 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">초대카드 이미지</label>
+              <label class="form-label">초대카드 템플릿</label>
               <div id="invite-template-selector" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">커스텀 이미지 (선택)</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="file" id="invite-custom-image" accept="image/*" style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;">
+                <button type="button" onclick="uploadInviteImage()" class="btn-secondary" style="white-space:nowrap;">업로드</button>
+              </div>
+              <div id="invite-image-preview" style="margin-top:8px;width:100%;height:120px;border:1px solid rgba(201,168,76,0.2);border-radius:4px;display:none;background-size:cover;background-position:center;"></div>
             </div>
             <div class="form-group">
               <label class="form-label">메시지 (한국어)</label>
@@ -1038,6 +1047,23 @@
       <div class="admin-section">
         <div class="admin-section-title">생성된 초대장</div>
         <div id="invite-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Invite Tracking -->
+    <div id="tab-invite-tracking" class="tab-content">
+      <div class="admin-section">
+        <div class="admin-section-title">초대 추적 데이터</div>
+        <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <select id="filter-invite-org" onchange="renderInviteTracking()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+            <option value="">전체 초대장</option>
+          </select>
+          <select id="filter-invite-country" onchange="renderInviteTracking()" style="background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px 10px;font-size:11px;">
+            <option value="">전체 국가</option>
+          </select>
+          <button onclick="exportInviteTracking()" style="padding:6px 12px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;">Excel</button>
+        </div>
+        <div id="invite-tracking-list"></div>
       </div>
     </div>
 
@@ -2341,6 +2367,7 @@ function renderAdmin() {
   renderRegionOptions();
   initInviteTab();
   renderInviteList();
+  renderInviteTracking();
   document.getElementById('admin-welcome-text').value = DB.get('welcome_text', '');
   const wtl = DB.get('welcome_text_langs', {});
   ['en','ja','zh','es'].forEach(l => { const el = document.getElementById('admin-welcome-text-'+l); if(el) el.value = wtl[l]||''; });
@@ -3927,6 +3954,7 @@ function renderInviteList() {
           <div style="font-size:12px;color:var(--gold);margin-bottom:4px;">${inv.org}</div>
           <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">${inv.email} · ${new Date(inv.created).toLocaleString('ko-KR')}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="editInvite(${inv.id})" style="padding:4px 10px;background:rgba(100,150,255,0.2);border:1px solid rgba(100,150,255,0.4);color:#6496ff;font-size:10px;cursor:pointer;border-radius:3px;">✎ 수정</button>
             <button onclick="shareInviteTelegram(${inv.id})" style="padding:4px 10px;background:rgba(0,136,204,0.2);border:1px solid rgba(0,136,204,0.4);color:#0088cc;font-size:10px;cursor:pointer;border-radius:3px;">Telegram</button>
             <button onclick="shareInviteKakao(${inv.id})" style="padding:4px 10px;background:rgba(255,223,0,0.15);border:1px solid rgba(255,223,0,0.4);color:#ffe000;font-size:10px;cursor:pointer;border-radius:3px;">Kakao</button>
             <button onclick="downloadInviteImage(${inv.id})" style="padding:4px 10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">Download</button>
@@ -3979,6 +4007,26 @@ function downloadInviteImage(id) {
   });
 }
 
+function editInvite(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+
+  const newOrg = prompt('단체명을 수정하세요:', inv.org);
+  if (newOrg === null) return;
+
+  const newEmail = prompt('이메일을 수정하세요:', inv.email);
+  if (newEmail === null) return;
+
+  if (newOrg.trim() && newEmail.trim()) {
+    inv.org = newOrg.trim();
+    inv.email = newEmail.trim();
+    DB.set('invites', invites);
+    renderInviteList();
+    showToast('초대장이 수정되었습니다.', 'gold');
+  }
+}
+
 function deleteInvite(id) {
   if (!confirm('초대장을 삭제하시겠습니까?')) return;
   let invites = DB.get('invites', []);
@@ -3986,6 +4034,74 @@ function deleteInvite(id) {
   DB.set('invites', invites);
   renderInviteList();
   showToast('초대장이 삭제되었습니다.');
+}
+
+function uploadInviteImage() {
+  const fileInput = document.getElementById('invite-custom-image');
+  const file = fileInput.files[0];
+  if (!file) { showToast('이미지를 선택하세요.', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const imageData = e.target.result;
+    document.getElementById('invite-image-preview').style.backgroundImage = `url(${imageData})`;
+    document.getElementById('invite-image-preview').style.display = 'block';
+    document.getElementById('invite-template-selector').dataset.customImage = imageData;
+    showToast('이미지가 업로드되었습니다.', 'gold');
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderInviteTracking(filter = {}) {
+  let tracking = DB.get('invite_tracking', []);
+  if (filter.org) tracking = tracking.filter(t => t.org === filter.org);
+  if (filter.country) tracking = tracking.filter(t => t.country === filter.country);
+
+  const allTracking = DB.get('invite_tracking', []);
+  const orgs = [...new Set(allTracking.map(t => t.org))].sort();
+  const countries = [...new Set(allTracking.map(t => t.country))].filter(c => c !== 'Unknown').sort();
+
+  const orgSel = document.getElementById('filter-invite-org');
+  if (orgSel) orgSel.innerHTML = '<option value="">전체 초대장</option>' + orgs.map(o => `<option value="${o}">${o}</option>`).join('');
+
+  const countrySel = document.getElementById('filter-invite-country');
+  if (countrySel) countrySel.innerHTML = '<option value="">전체 국가</option>' + countries.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const el = document.getElementById('invite-tracking-list');
+  if (!el) return;
+
+  if (!tracking.length) { el.innerHTML = '<p style="color:var(--text-dim);padding:20px;text-align:center;">추적 데이터가 없습니다.</p>'; return; }
+
+  el.innerHTML = `<table class="data-table" style="font-size:11px;">
+    <tr><th>일시</th><th>단체명</th><th>이메일</th><th>입장코드</th><th>국가</th><th>도시</th><th>기기</th></tr>
+    ${tracking.map(t => `<tr>
+      <td>${new Date(t.timestamp).toLocaleString('ko-KR')}</td>
+      <td>${t.org}</td>
+      <td>${t.email}</td>
+      <td style="font-family:'Courier New';color:var(--gold);">${t.code}</td>
+      <td>${t.country}</td>
+      <td>${t.city}</td>
+      <td>${t.device === 'mobile' ? '📱' : '💻'}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+function exportInviteTracking() {
+  const tracking = DB.get('invite_tracking', []);
+  if (!tracking.length) { showToast('내보낼 데이터가 없습니다.', 'error'); return; }
+  const headers = ['일시','단체명','이메일','입장코드','국가','도시','기기','User-Agent'];
+  const rows = tracking.map(t => [
+    new Date(t.timestamp).toLocaleString('ko-KR'),
+    t.org, t.email, t.code, t.country, t.city,
+    t.device === 'mobile' ? 'mobile' : 'pc',
+    t.ua
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vip_invite_tracking_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 
 // Form fields settings
