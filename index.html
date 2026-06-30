@@ -914,11 +914,18 @@
           <input type="text" class="form-input" id="new-tg-id" placeholder="Chat ID (예: -1001234567890)" style="flex:1;min-width:180px;">
           <input type="text" class="form-input" id="new-tg-name" placeholder="채널명" style="flex:1;min-width:120px;">
         </div>
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;">
-            <input type="checkbox" id="new-tg-is-admin" style="accent-color:var(--gold);width:14px;height:14px;">
-            <span style="font-size:11px;color:var(--gold);letter-spacing:1px;">관리자 채널 — 모든 문의 수신</span>
+            <input type="checkbox" id="new-tg-is-admin" style="accent-color:var(--gold);width:14px;height:14px;"
+              onchange="document.getElementById('new-tg-code-wrap').style.display=this.checked?'none':'flex'">
+            <span style="font-size:11px;color:var(--gold);letter-spacing:1px;">전체예약 방 (모든 예약 수신)</span>
           </label>
+        </div>
+        <div id="new-tg-code-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:var(--text-dim);letter-spacing:1px;white-space:nowrap;">입장코드 전용 방:</span>
+          <select id="new-tg-code" style="flex:1;background:var(--card-bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);padding:5px 8px;font-size:10px;cursor:pointer;">
+            <option value="">-- 코드 미지정 (메뉴용) --</option>
+          </select>
           <button class="btn-secondary" onclick="addTgChannel()">추가</button>
         </div>
         <div id="tg-list"></div>
@@ -3110,20 +3117,25 @@ function saveTgToken() {
 }
 
 function addTgChannel() {
-  const id = document.getElementById('new-tg-id').value.trim();
-  const name = document.getElementById('new-tg-name').value.trim();
+  const id      = document.getElementById('new-tg-id').value.trim();
+  const name    = document.getElementById('new-tg-name').value.trim();
   const isAdmin = document.getElementById('new-tg-is-admin')?.checked || false;
+  const codeId  = isAdmin ? null : (document.getElementById('new-tg-code')?.value || null);
   if (!id) { showToast('Chat ID를 입력하세요.', 'error'); return; }
   const channels = DB.get('tg_channels', []);
   if (channels.find(c => c.id === id)) { showToast('이미 등록된 채널입니다.', 'error'); return; }
-  channels.push({ id, name: name || id, is_admin: isAdmin, code_id: null });
+  channels.push({ id, name: name || id, is_admin: isAdmin, code_id: codeId || null });
   DB.set('tg_channels', channels);
-  document.getElementById('new-tg-id').value = '';
-  document.getElementById('new-tg-name').value = '';
-  if (document.getElementById('new-tg-is-admin')) document.getElementById('new-tg-is-admin').checked = false;
+  document.getElementById('new-tg-id').value   = '';
+  document.getElementById('new-tg-name').value  = '';
+  const adminCb = document.getElementById('new-tg-is-admin');
+  if (adminCb) adminCb.checked = false;
+  const codeWrap = document.getElementById('new-tg-code-wrap');
+  if (codeWrap) codeWrap.style.display = 'flex';
   renderTgAdmin();
   refreshMenuTgSelects();
-  showToast('채널이 추가되었습니다.', 'gold');
+  const typeLabel = isAdmin ? '전체예약 방' : codeId ? `코드전용(${codeId})` : '메뉴용';
+  showToast(`채널이 추가되었습니다. [${typeLabel}]`, 'gold');
 }
 
 function setTgChannelCode(chId, codeId) {
@@ -3211,43 +3223,57 @@ function renderTgAdmin() {
   const codeOpts = '<option value="">-- 코드 미지정 (메뉴용) --</option>'
     + codes.map(c => `<option value="${c.code}">${c.code} (${c.org||''})</option>`).join('');
 
-  el.innerHTML = channels.length === 0
-    ? '<p style="color:var(--text-dim);font-size:13px;padding:16px 0;letter-spacing:1px;">등록된 채널이 없습니다.</p>'
-    : channels.map(c => {
+  if (channels.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-dim);font-size:13px;padding:16px 0;letter-spacing:1px;">등록된 채널이 없습니다.</p>';
+  } else {
+    const adminChs = channels.filter(c => c.is_admin);
+    const codeChs  = channels.filter(c => !c.is_admin && c.code_id);
+    const menuChs  = channels.filter(c => !c.is_admin && !c.code_id);
+
+    const renderCh = (c) => {
       const safeId = c.id.replace(/'/g,"\\'");
-      const badge = c.is_admin
-        ? '<span style="font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid var(--gold-dark);padding:2px 7px;">전체예약</span>'
-        : c.code_id
-          ? `<span style="font-size:9px;letter-spacing:2px;color:#6af;border:1px solid rgba(100,170,255,0.4);padding:2px 7px;">코드:${c.code_id}</span>`
-          : '<span style="font-size:9px;letter-spacing:2px;color:var(--text-dim);border:1px solid rgba(255,255,255,0.15);padding:2px 7px;">메뉴용</span>';
+      const selectedOpts = codes.map(cd =>
+        `<option value="${cd.code}" ${cd.code === c.code_id ? 'selected' : ''}>${cd.code} — ${cd.org||''}</option>`
+      ).join('');
       return `
-      <div class="tg-item" style="flex-wrap:wrap;gap:10px;">
+      <div class="tg-item" style="flex-wrap:wrap;gap:10px;margin-bottom:4px;">
         <div style="flex:1;min-width:0;">
-          <div class="tg-item-id" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            ${c.name} ${badge}
+          <div class="tg-item-id" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;">
+            ${c.name}
           </div>
-          <div class="tg-sub" style="font-size:11px;color:var(--text);margin-top:4px;font-family:monospace;">${c.id}</div>
-          ${!c.is_admin ? `<div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-            <span style="font-size:10px;color:var(--text-dim);letter-spacing:1px;">입장코드 지정:</span>
+          <div class="tg-sub" style="font-size:10px;color:var(--text-dim);margin-top:3px;font-family:monospace;">${c.id}</div>
+          ${!c.is_admin ? `<div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:9px;color:var(--text-dim);white-space:nowrap;">코드 변경:</span>
             <select onchange="setTgChannelCode('${safeId}',this.value)"
-              style="background:var(--card-bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);padding:3px 8px;font-size:10px;cursor:pointer;">
-              ${codeOpts.replace(`value="${c.code_id||''}"`,`value="${c.code_id||''}" selected`)}
+              style="background:var(--card-bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);padding:3px 8px;font-size:10px;cursor:pointer;flex:1;">
+              <option value="">-- 미지정 (메뉴용) --</option>
+              ${selectedOpts}
             </select>
           </div>` : ''}
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
           <button onclick="toggleTgAdmin('${safeId}')"
-            style="padding:5px 12px;font-size:10px;letter-spacing:1px;border:1px solid ${c.is_admin ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.15)'};background:${c.is_admin ? 'rgba(201,168,76,0.15)' : 'transparent'};color:${c.is_admin ? 'var(--gold)' : 'var(--text-dim)'};cursor:pointer;">
+            style="padding:4px 10px;font-size:9px;letter-spacing:1px;border:1px solid ${c.is_admin?'rgba(201,168,76,0.5)':'rgba(255,255,255,0.15)'};background:${c.is_admin?'rgba(201,168,76,0.15)':'transparent'};color:${c.is_admin?'var(--gold)':'var(--text-dim)'};cursor:pointer;">
             ${c.is_admin ? '전체예약 해제' : '전체예약 지정'}
           </button>
           <button onclick="testTgChannel('${safeId}')"
-            style="padding:5px 12px;font-size:10px;letter-spacing:1px;border:1px solid rgba(201,168,76,0.3);background:transparent;color:var(--gold);cursor:pointer;">
-            테스트
-          </button>
-          <button class="btn-danger" onclick="deleteTgChannel('${safeId}')">삭제</button>
+            style="padding:4px 10px;font-size:9px;letter-spacing:1px;border:1px solid rgba(201,168,76,0.3);background:transparent;color:var(--gold);cursor:pointer;">테스트</button>
+          <button class="btn-danger" style="padding:4px 10px;font-size:9px;" onclick="deleteTgChannel('${safeId}')">삭제</button>
         </div>
       </div>`;
-    }).join('');
+    };
+
+    const section = (title, color, border, list) => list.length === 0 ? '' : `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:9px;letter-spacing:2px;color:${color};border-bottom:1px solid ${border};padding-bottom:6px;margin-bottom:8px;text-transform:uppercase;">${title}</div>
+        ${list.map(renderCh).join('')}
+      </div>`;
+
+    el.innerHTML =
+      section('📣 전체예약 방 — 모든 예약 수신', 'var(--gold)', 'rgba(201,168,76,0.3)', adminChs) +
+      section('📌 입장코드별 방 — 해당 코드 예약만 수신', '#6af', 'rgba(100,170,255,0.25)', codeChs) +
+      section('📋 메뉴용 방 — 메뉴 지정 예약 수신', 'var(--text-dim)', 'rgba(255,255,255,0.1)', menuChs);
+  }
 
   const feedbacks = DB.get('feedbacks', []);
   const fb = document.getElementById('feedback-list');
@@ -3261,10 +3287,17 @@ function renderTgAdmin() {
 // 메뉴 추가 폼의 채널 드롭다운 갱신
 function refreshMenuTgSelects() {
   const channels = DB.get('tg_channels', []);
-  const opts = '<option value="">전체 채널로 전송 (기본)</option>'
-    + channels.map(c => `<option value="${c.id}">${c.name} (${c.id})</option>`).join('');
-  const sel = document.getElementById('new-menu-tg');
-  if (sel) sel.innerHTML = opts;
+  const codes    = DB.get('codes', []);
+  // 메뉴 채널 select
+  const menuOpts = '<option value="">전체 채널로 전송 (기본)</option>'
+    + channels.map(c => `<option value="${c.id}">${c.name}${c.is_admin?' [전체]':c.code_id?' ['+c.code_id+']':''}</option>`).join('');
+  const menuSel = document.getElementById('new-menu-tg');
+  if (menuSel) menuSel.innerHTML = menuOpts;
+  // 신규 채널 추가 폼의 코드 select
+  const codeOpts = '<option value="">-- 코드 미지정 (메뉴용) --</option>'
+    + codes.map(c => `<option value="${c.code}">${c.code} — ${c.org||''}</option>`).join('');
+  const codeSel = document.getElementById('new-tg-code');
+  if (codeSel) codeSel.innerHTML = codeOpts;
 }
 
 // Links
