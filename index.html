@@ -3955,27 +3955,106 @@ function renderInviteList() {
           <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">${inv.email} · ${new Date(inv.created).toLocaleString('ko-KR')}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button onclick="editInvite(${inv.id})" style="padding:4px 10px;background:rgba(100,150,255,0.2);border:1px solid rgba(100,150,255,0.4);color:#6496ff;font-size:10px;cursor:pointer;border-radius:3px;">✎ 수정</button>
-            <button onclick="shareInviteTelegram(${inv.id})" style="padding:4px 10px;background:rgba(0,136,204,0.2);border:1px solid rgba(0,136,204,0.4);color:#0088cc;font-size:10px;cursor:pointer;border-radius:3px;">Telegram</button>
-            <button onclick="shareInviteKakao(${inv.id})" style="padding:4px 10px;background:rgba(255,223,0,0.15);border:1px solid rgba(255,223,0,0.4);color:#ffe000;font-size:10px;cursor:pointer;border-radius:3px;">Kakao</button>
-            <button onclick="downloadInviteImage(${inv.id})" style="padding:4px 10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">Download</button>
-            <button onclick="deleteInvite(${inv.id})" style="padding:4px 10px;background:rgba(200,50,50,0.2);border:1px solid rgba(200,50,50,0.4);color:#e74c3c;font-size:10px;cursor:pointer;border-radius:3px;">삭제</button>
+            <button onclick="openShareMenu(${inv.id})" style="padding:4px 10px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4caf50;font-size:10px;cursor:pointer;border-radius:3px;">📤 보내기</button>
+            <button onclick="downloadInviteImage(${inv.id})" style="padding:4px 10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">⬇️ 다운</button>
+            <button onclick="deleteInvite(${inv.id})" style="padding:4px 10px;background:rgba(200,50,50,0.2);border:1px solid rgba(200,50,50,0.4);color:#e74c3c;font-size:10px;cursor:pointer;border-radius:3px;">🗑️ 삭제</button>
           </div>
         </div>
       </div>`;
   }).join('');
 }
 
+function openShareMenu(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+
+  const shareText = `${inv.org} - ${inv.messages.ko || '초대 코드: ' + inv.code}`;
+  const shareUrl = inv.url;
+
+  const menu = `
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,10,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:20px;z-index:9999;min-width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.8);">
+      <div style="color:var(--gold);font-size:12px;font-weight:bold;margin-bottom:16px;text-align:center;">초대장 공유</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="shareInviteTelegram(${id}); closeShareMenu()" style="padding:10px;background:rgba(0,136,204,0.2);border:1px solid rgba(0,136,204,0.4);color:#0088cc;cursor:pointer;border-radius:4px;font-size:11px;">📱 Telegram</button>
+        <button onclick="shareInviteSNS(${id}); closeShareMenu()" style="padding:10px;background:rgba(59,89,152,0.2);border:1px solid rgba(59,89,152,0.4);color:#3b5998;cursor:pointer;border-radius:4px;font-size:11px;">👥 SNS (Facebook, Instagram, Twitter)</button>
+        <button onclick="shareInviteKakao(${id}); closeShareMenu()" style="padding:10px;background:rgba(255,223,0,0.15);border:1px solid rgba(255,223,0,0.4);color:#ffe000;cursor:pointer;border-radius:4px;font-size:11px;">💬 Kakao Talk</button>
+        <button onclick="shareInviteEmail(${id}); closeShareMenu()" style="padding:10px;background:rgba(234,67,53,0.2);border:1px solid rgba(234,67,53,0.4);color:#ea4335;cursor:pointer;border-radius:4px;font-size:11px;">📧 이메일</button>
+        <button onclick="shareInviteSMS(${id}); closeShareMenu()" style="padding:10px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4caf50;cursor:pointer;border-radius:4px;font-size:11px;">📲 문자 (SMS)</button>
+        <button onclick="closeShareMenu()" style="padding:10px;background:rgba(200,200,200,0.15);border:1px solid rgba(200,200,200,0.4);color:#ccc;cursor:pointer;border-radius:4px;font-size:11px;margin-top:8px;">닫기</button>
+      </div>
+    </div>
+    <div onclick="closeShareMenu()" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;"></div>`;
+
+  document.body.insertAdjacentHTML('beforeend', menu);
+  document.querySelector('[style*="z-index:9998"]').id = 'share-menu-overlay';
+}
+
+function closeShareMenu() {
+  const menu = document.querySelector('[style*="z-index:9999"]');
+  const overlay = document.getElementById('share-menu-overlay');
+  if (menu) menu.remove();
+  if (overlay) overlay.remove();
+}
+
 function shareInviteTelegram(id) {
   const invites = DB.get('invites', []);
   const inv = invites.find(x => x.id === id);
   if (!inv) return;
-  const text = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n\n입장코드: ${inv.code}\n\n${inv.messages.ko}\n\n${inv.url}`;
+  const text = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n\n입장코드: ${inv.code}\n\n${inv.messages.ko || ''}\n\n${inv.url}`;
   const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`;
   window.open(tgUrl, '_blank');
 }
 
+function shareInviteSNS(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const text = encodeURIComponent(`🎉 ${inv.org}에서 VIP Private 초대합니다!\n\n입장코드: ${inv.code}\n${inv.messages.ko || ''}`);
+  const url = encodeURIComponent(inv.url);
+
+  const snsMenu = `
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,10,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:16px;z-index:10000;min-width:280px;">
+      <div style="color:var(--gold);font-size:11px;font-weight:bold;margin-bottom:12px;text-align:center;">SNS 선택</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(59,89,152,0.3);border:1px solid rgba(59,89,152,0.5);color:#3b5998;cursor:pointer;border-radius:3px;font-size:10px;">👍 Facebook</button>
+        <button onclick="window.open('https://twitter.com/intent/tweet?text=${text}&url=${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(29,161,242,0.3);border:1px solid rgba(29,161,242,0.5);color:#1da1f2;cursor:pointer;border-radius:3px;font-size:10px;">🐦 Twitter/X</button>
+        <button onclick="window.open('https://www.linkedin.com/sharing/share-offsite/?url=${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(0,119,181,0.3);border:1px solid rgba(0,119,181,0.5);color:#0077b5;cursor:pointer;border-radius:3px;font-size:10px;">💼 LinkedIn</button>
+        <button onclick="window.open('https://wa.me/?text=${text}%20${url}', '_blank'); closeShareMenu()" style="padding:8px;background:rgba(37,211,102,0.3);border:1px solid rgba(37,211,102,0.5);color:#25d366;cursor:pointer;border-radius:3px;font-size:10px;">💬 WhatsApp</button>
+        <button onclick="closeShareMenu()" style="padding:8px;background:rgba(200,200,200,0.15);border:1px solid rgba(200,200,200,0.4);color:#ccc;cursor:pointer;border-radius:3px;font-size:10px;margin-top:6px;">닫기</button>
+      </div>
+    </div>
+    <div onclick="closeShareMenu()" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;"></div>`;
+
+  document.body.insertAdjacentHTML('beforeend', snsMenu);
+}
+
 function shareInviteKakao(id) {
-  showToast('Kakao 공유 기능은 Kakao SDK 설정 후 가능합니다.', 'info');
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const text = `${inv.org} - ${inv.messages.ko || '초대 코드: ' + inv.code}`;
+  const kakaoUrl = `kakaolink://send?appid=YOUR_KAKAO_APP_ID&validation=&metainfo=&link=web|${encodeURIComponent(inv.url)}|app|${encodeURIComponent(inv.url)}`;
+  // Fallback: KakaoStory 앱이 없으면 외부 공유
+  const fallbackUrl = `https://story.kakao.com/s/write?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`;
+  window.open(fallbackUrl, '_blank');
+}
+
+function shareInviteEmail(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const subject = encodeURIComponent(`${inv.org}에서 보낸 초대장`);
+  const body = encodeURIComponent(`안녕하세요,\n\n${inv.org}에서 VIP Private 초대합니다.\n\n입장코드: ${inv.code}\n\n${inv.messages.ko || ''}\n\n${inv.url}\n\n감사합니다.`);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+function shareInviteSMS(id) {
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === id);
+  if (!inv) return;
+  const message = encodeURIComponent(`[${inv.org}] VIP Private 초대!\n코드: ${inv.code}\n${inv.url}`);
+  window.location.href = `sms:?body=${message}`;
 }
 
 function downloadInviteImage(id) {
