@@ -997,6 +997,10 @@
                 <button type="button" onclick="uploadInviteImage()" class="btn-secondary" style="white-space:nowrap;">업로드</button>
               </div>
               <div id="invite-image-preview" style="margin-top:8px;width:100%;height:120px;border:1px solid rgba(201,168,76,0.2);border-radius:4px;display:none;background-size:cover;background-position:center;"></div>
+              <div id="invite-image-info" style="margin-top:8px;font-size:10px;color:var(--text-dim);display:none;">
+                <div id="invite-image-size" style="margin-bottom:4px;"></div>
+                <div style="color:var(--text-dim);font-size:9px;">💡 추천 크기: 600x800px</div>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">메시지 (한국어)</label>
@@ -4129,10 +4133,16 @@ function uploadInviteImage() {
   const reader = new FileReader();
   reader.onload = e => {
     const imageData = e.target.result;
-    document.getElementById('invite-image-preview').style.backgroundImage = `url(${imageData})`;
-    document.getElementById('invite-image-preview').style.display = 'block';
-    document.getElementById('invite-template-selector').dataset.customImage = imageData;
-    showToast('이미지가 업로드되었습니다.', 'gold');
+    const img = new Image();
+    img.onload = () => {
+      document.getElementById('invite-image-preview').style.backgroundImage = `url(${imageData})`;
+      document.getElementById('invite-image-preview').style.display = 'block';
+      document.getElementById('invite-image-info').style.display = 'block';
+      document.getElementById('invite-image-size').textContent = `📸 크기: ${img.width} x ${img.height}px (${(file.size/1024).toFixed(1)}KB)`;
+      document.getElementById('invite-template-selector').dataset.customImage = imageData;
+      showToast('이미지가 업로드되었습니다.', 'gold');
+    };
+    img.src = imageData;
   };
   reader.readAsDataURL(file);
 }
