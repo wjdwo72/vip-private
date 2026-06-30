@@ -631,13 +631,7 @@
     <button type="button" onclick="setLang('zh')" class="lang-btn" data-lang="zh">中</button>
     <button type="button" onclick="setLang('es')" class="lang-btn" data-lang="es">ES</button>
   </div>
-  <!-- 입장/초대 탭 -->
-  <div style="display:flex;justify-content:center;gap:6px;margin-bottom:20px;">
-    <button type="button" onclick="switchEntryTab('code')" class="entry-tab-btn active" id="entry-tab-code" style="padding:8px 16px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;border-radius:3px;letter-spacing:1px;">입장 코드</button>
-    <button type="button" onclick="switchEntryTab('invite')" class="entry-tab-btn" id="entry-tab-invite" style="padding:8px 16px;background:transparent;border:1px solid rgba(201,168,76,0.2);color:var(--text);font-size:11px;cursor:pointer;border-radius:3px;letter-spacing:1px;">초대 조회</button>
-  </div>
-  <!-- 입장 코드 탭 -->
-  <div id="entry-code-tab" class="entry-box">
+  <div class="entry-box">
     <div class="entry-label" data-i18n="entry_label">입장 코드를 입력하세요</div>
     <div class="entry-input-wrap">
       <input type="text" id="entry-code-input" class="entry-input"
@@ -672,18 +666,6 @@
     </div>
     <button type="button" class="entry-btn" id="entry-btn-enter" onclick="verifyCode()">ENTER</button>
     <div class="entry-error" id="entry-error"></div>
-  </div>
-
-  <!-- 초대 조회 탭 -->
-  <div id="entry-invite-tab" class="entry-box" style="display:none;">
-    <div class="entry-label">초대 조회</div>
-    <div style="margin-bottom:12px;">
-      <label style="display:block;font-size:10px;color:var(--text-dim);margin-bottom:6px;">단체명 또는 이메일</label>
-      <input type="text" id="invite-search-input" class="entry-input" placeholder="단체명 또는 이메일 입력" style="margin-bottom:8px;">
-    </div>
-    <button type="button" class="entry-btn" onclick="searchInviteCard()">조회</button>
-    <div id="invite-search-result" style="margin-top:16px;"></div>
-    <div class="entry-error" id="invite-search-error"></div>
   </div>
 </div>
 
@@ -1643,8 +1625,6 @@ setLang(_lang);
     const invites = DB.get('invites', []);
     const inv = invites.find(x => x.id == inviteId);
     if (inv) {
-      // 초대 조회 탭으로 자동 전환
-      switchEntryTab('invite');
       // 초대 정보 미리 표시
       showInviteCard(inv);
     }
@@ -1652,10 +1632,10 @@ setLang(_lang);
 })();
 
 function showInviteCard(inv) {
-  const resultEl = document.getElementById('invite-search-result');
+  const entryBox = document.querySelector('.entry-box');
   const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
 
-  resultEl.innerHTML = `
+  entryBox.innerHTML = `
     <div style="padding:20px;border:1px solid rgba(201,168,76,0.3);border-radius:4px;background:rgba(0,0,0,0.3);text-align:center;">
       <div style="display:flex;gap:16px;margin-bottom:16px;justify-content:center;align-items:center;">
         <div style="width:100px;height:130px;background:${tpl.bg};border-radius:4px;display:flex;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:14px;flex-shrink:0;">
@@ -1676,10 +1656,15 @@ function showInviteCard(inv) {
       </div>
     </div>`;
 
-  if (inv.messages.ko) {
-    document.getElementById('invite-message').textContent = inv.messages.ko;
-    document.getElementById('invite-message').style.display = 'block';
-  }
+  setTimeout(() => {
+    if (inv.messages.ko) {
+      const msgEl = document.getElementById('invite-message');
+      if (msgEl) {
+        msgEl.textContent = inv.messages.ko;
+        msgEl.style.display = 'block';
+      }
+    }
+  }, 0);
 }
 
 function verifyInvite(inviteId) {
@@ -1769,88 +1754,6 @@ function verifyCode() {
     document.getElementById('entry-code-input').style.borderColor = '#c0392b';
     setTimeout(() => document.getElementById('entry-code-input').style.borderColor = '', 1500);
   }
-}
-
-function switchEntryTab(tab) {
-  const codeTabs = document.querySelectorAll('.entry-tab-btn');
-  codeTabs.forEach(b => b.classList.toggle('active', b.id === `entry-tab-${tab}`));
-  const codeTab = document.getElementById('entry-code-tab');
-  const inviteTab = document.getElementById('entry-invite-tab');
-  if (tab === 'code') {
-    codeTab.style.display = 'block';
-    inviteTab.style.display = 'none';
-  } else {
-    codeTab.style.display = 'none';
-    inviteTab.style.display = 'block';
-    document.getElementById('invite-search-input').focus();
-  }
-}
-
-function searchInviteCard() {
-  const search = document.getElementById('invite-search-input').value.trim().toLowerCase();
-  if (!search) {
-    document.getElementById('invite-search-error').textContent = '단체명 또는 이메일을 입력하세요';
-    return;
-  }
-
-  const invites = DB.get('invites', []);
-  const found = invites.filter(i =>
-    i.org.toLowerCase().includes(search) || i.email.toLowerCase().includes(search)
-  );
-
-  const resultEl = document.getElementById('invite-search-result');
-  const errorEl = document.getElementById('invite-search-error');
-
-  if (found.length === 0) {
-    errorEl.textContent = '해당하는 초대장이 없습니다';
-    resultEl.innerHTML = '';
-    return;
-  }
-
-  errorEl.textContent = '';
-  resultEl.innerHTML = found.map(inv => {
-    const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
-    return `
-      <div onclick="openInviteCard(${inv.id})" style="cursor:pointer;padding:16px;border:1px solid rgba(201,168,76,0.3);border-radius:4px;margin-bottom:12px;background:rgba(0,0,0,0.3);transition:all 0.3s;">
-        <div style="display:flex;gap:12px;align-items:center;">
-          <div style="width:60px;height:80px;flex-shrink:0;background:${tpl.bg};border-radius:4px;display:flex;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:12px;">${inv.code}</div>
-          <div style="flex:1;">
-            <div style="font-size:12px;color:var(--gold);margin-bottom:4px;">🏢 ${inv.org}</div>
-            <div style="font-size:11px;color:var(--text-dim);">📧 ${inv.email}</div>
-            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;opacity:0.7;">클릭하여 확인</div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function openInviteCard(id) {
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id === id);
-  if (!inv) return;
-
-  // 추적 저장
-  saveInviteTracking(inv);
-
-  // 입장코드 설정 후 입장
-  currentCode = inv.code;
-  currentOrg = inv.org;
-  const codes = DB.get('codes', []);
-  currentCodeObj = codes.find(c => c.code === inv.code);
-
-  // 입장 로그 기록
-  const logs = DB.get('entry_logs', []);
-  logs.unshift({
-    code: inv.code,
-    org: inv.org,
-    time: new Date().toISOString(),
-    ua: navigator.userAgent.slice(0,80),
-    source: 'invite'
-  });
-  if (logs.length > 500) logs.length = 500;
-  DB.set('entry_logs', logs);
-
-  enterMain();
 }
 
 async function saveInviteTracking(inv) {
