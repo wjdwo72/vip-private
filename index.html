@@ -995,6 +995,47 @@
               </div>
             </div>
 
+            <!-- 1-b. 헤더 텍스트 설정 -->
+            <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">① 상단 텍스트 설정 <span style="font-size:9px;color:var(--text-dim);font-weight:normal;">(미리보기에서 드래그로 위치 이동)</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                  <div style="font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px;">VIP PRIVATE 텍스트</div>
+                  <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+                    <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">크기</label>
+                    <input type="number" id="inv-header-size" value="10" min="6" max="40"
+                      class="form-input" style="width:60px;padding:4px 6px;font-size:11px;"
+                      oninput="INVITE_STATE.headerSize=parseInt(this.value)||10;liveUpdateInvitePreview()">
+                  </div>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">색상</label>
+                    <input type="color" id="inv-header-color" value="#c9a84c"
+                      style="width:50px;height:28px;border:none;background:transparent;cursor:pointer;"
+                      oninput="INVITE_STATE.headerColor=this.value;liveUpdateInvitePreview()">
+                    <button onclick="INVITE_STATE.headerColor='';liveUpdateInvitePreview();"
+                      style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--text-dim);cursor:pointer;">템플릿색</button>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px;">단체명 텍스트</div>
+                  <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+                    <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">크기</label>
+                    <input type="number" id="inv-org-size" value="17" min="8" max="60"
+                      class="form-input" style="width:60px;padding:4px 6px;font-size:11px;"
+                      oninput="INVITE_STATE.orgSize=parseInt(this.value)||17;liveUpdateInvitePreview()">
+                  </div>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">색상</label>
+                    <input type="color" id="inv-org-color" value="#c9a84c"
+                      style="width:50px;height:28px;border:none;background:transparent;cursor:pointer;"
+                      oninput="INVITE_STATE.orgColor=this.value;liveUpdateInvitePreview()">
+                    <button onclick="INVITE_STATE.orgColor='';liveUpdateInvitePreview();"
+                      style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--text-dim);cursor:pointer;">템플릿색</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 2. 템플릿 -->
             <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
               <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">② 템플릿 / 배경</div>
@@ -4051,9 +4092,15 @@ const INVITE_STATE = {
     code:   { x: 50, y: 12 },
     input:  { x: 50, y: 68 },
     qr:     { x: 50, y: 85 },
-    image2: { x: 50, y: 50 }
+    image2: { x: 50, y: 50 },
+    header: { x: 50, y: 5 },
+    org:    { x: 50, y: 10 }
   },
-  image2Size: { w: 30, h: 20 }, // % of card width/height
+  image2Size: { w: 30, h: 20 },
+  headerSize:  10,
+  headerColor: '',   // '' = tpl.accent
+  orgSize:     17,
+  orgColor:    '',   // '' = tpl.accent
   inputLabel: '이메일 또는 단체명을 입력하세요',
   inputLabelSize: 11,
   inputLabelColor: '#c9a84c',
@@ -4232,11 +4279,24 @@ function liveUpdateInvitePreview() {
       </div>
     </div>`);
 
+  const hPos = pos.header || { x:50, y:5 };
+  const oPos = pos.org    || { x:50, y:10 };
+  const hColor = INVITE_STATE.headerColor || tpl.accent;
+  const oColor = INVITE_STATE.orgColor    || tpl.accent;
+  const hSize  = INVITE_STATE.headerSize  || 10;
+  const oSize  = INVITE_STATE.orgSize     || 17;
+
   wrap.innerHTML = `
     <div id="invite-preview-card" style="position:relative;width:100%;height:500px;${bgStyle}border-radius:6px;box-sizing:border-box;overflow:hidden;user-select:none;">
-      <div style="position:absolute;top:10px;left:0;right:0;text-align:center;pointer-events:none;">
-        <div style="font-size:10px;letter-spacing:3px;color:${tpl.accent};opacity:0.7;">V I P &nbsp; P R I V A T E</div>
-        <div style="font-size:17px;font-weight:bold;color:${tpl.accent};margin-top:3px;">${org}</div>
+      <div data-drag="header" style="position:absolute;left:${hPos.x}%;top:${hPos.y}%;transform:translate(-50%,-50%);
+           cursor:move;border:1px dashed rgba(255,255,255,0.2);border-radius:3px;padding:3px 8px;text-align:center;">
+        ${dragHint}
+        <div style="font-size:${hSize}px;letter-spacing:3px;color:${hColor};opacity:0.85;white-space:nowrap;">V I P &nbsp; P R I V A T E</div>
+      </div>
+      <div data-drag="org" style="position:absolute;left:${oPos.x}%;top:${oPos.y}%;transform:translate(-50%,-50%);
+           cursor:move;border:1px dashed rgba(255,255,255,0.2);border-radius:3px;padding:3px 10px;text-align:center;">
+        ${dragHint}
+        <div style="font-size:${oSize}px;font-weight:bold;color:${oColor};">${org}</div>
       </div>
       ${elems.join('')}
       <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:8px;color:rgba(255,255,255,0.3);pointer-events:none;">요소를 드래그하여 위치 조정</div>
@@ -4293,7 +4353,7 @@ function _initPreviewDrag() {
     dragging.style.left = nx + '%';
     dragging.style.top  = ny + '%';
     const key = dragging.dataset.drag;
-    if (key === 'code' || key === 'input' || key === 'qr' || key === 'image2') {
+    if (['code','input','qr','image2','header','org'].includes(key)) {
       INVITE_STATE.positions[key] = { x: nx, y: ny };
     } else if (key.startsWith('text_')) {
       const id = parseInt(key.split('_')[1]);
