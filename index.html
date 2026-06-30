@@ -1018,34 +1018,21 @@
               <div id="invite-text-blocks" style="display:flex;flex-direction:column;gap:8px;"></div>
             </div>
 
-            <!-- 4. 레이아웃 위치 -->
+            <!-- 4. 입력란 설정 -->
             <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
-              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">④ 레이아웃 위치</div>
-
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">④ 입력란 설정 <span style="font-size:9px;color:var(--text-dim);font-weight:normal;">(미리보기에서 요소 드래그로 위치 이동)</span></div>
               <div style="margin-bottom:8px;">
-                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:4px;">입장코드 위치</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
-                  <button type="button" class="pos-btn" id="pos-code-top" onclick="setInvitePos('code','top')" style="padding:5px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▲ 위</button>
-                  <button type="button" class="pos-btn" id="pos-code-middle" onclick="setInvitePos('code','middle')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">● 중간</button>
-                  <button type="button" class="pos-btn" id="pos-code-bottom" onclick="setInvitePos('code','bottom')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▼ 아래</button>
-                </div>
+                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">안내 문구</label>
+                <input type="text" id="invite-input-label" value="이메일 또는 단체명을 입력하세요" class="form-input" style="font-size:11px;padding:6px 8px;" oninput="INVITE_STATE.inputLabel=this.value;liveUpdateInvitePreview()">
               </div>
-
-              <div style="margin-bottom:8px;">
-                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:4px;">입력란 위치 (이메일/단체명)</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
-                  <button type="button" class="pos-btn" id="pos-input-top" onclick="setInvitePos('input','top')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▲ 위</button>
-                  <button type="button" class="pos-btn" id="pos-input-middle" onclick="setInvitePos('input','middle')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">● 중간</button>
-                  <button type="button" class="pos-btn" id="pos-input-bottom" onclick="setInvitePos('input','bottom')" style="padding:5px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▼ 아래</button>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">문구 크기 (px)</label>
+                  <input type="number" id="invite-input-label-size" value="11" min="8" max="24" class="form-input" style="font-size:11px;padding:6px 8px;" oninput="INVITE_STATE.inputLabelSize=parseInt(this.value)||11;liveUpdateInvitePreview()">
                 </div>
-              </div>
-
-              <div>
-                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:4px;">QR코드 위치</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
-                  <button type="button" class="pos-btn" id="pos-qr-top" onclick="setInvitePos('qr','top')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▲ 위</button>
-                  <button type="button" class="pos-btn" id="pos-qr-middle" onclick="setInvitePos('qr','middle')" style="padding:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">● 중간</button>
-                  <button type="button" class="pos-btn" id="pos-qr-bottom" onclick="setInvitePos('qr','bottom')" style="padding:5px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▼ 아래</button>
+                <div>
+                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">문구 색상</label>
+                  <input type="color" id="invite-input-label-color" value="#c9a84c" style="width:100%;height:32px;border:1px solid rgba(201,168,76,0.3);border-radius:3px;background:none;cursor:pointer;" oninput="INVITE_STATE.inputLabelColor=this.value;liveUpdateInvitePreview()">
                 </div>
               </div>
             </div>
@@ -1691,76 +1678,60 @@ function checkInviteLink() {
 /* 사용자용 초대장 렌더 (공통 함수 - entry페이지 & 미리보기 모달 공유) */
 function renderInviteCardForUser(inv, container) {
   const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template) || INVITE_TEMPLATES[0];
-  const layout = inv.layout || { codePos:'top', inputPos:'bottom', qrPos:'bottom' };
+  const pos = inv.positions || { code:{x:50,y:12}, input:{x:50,y:68}, qr:{x:50,y:85} };
   const lang = _lang || 'ko';
   const url = inv.url || window.location.href;
-
-  /* 텍스트 블록 */
-  const textHtml = (inv.textBlocks || []).map(b =>
-    `<div style="font-size:13px;color:${tpl.accent};text-align:center;padding:6px 0;line-height:1.6;white-space:pre-wrap;">${b[lang] || b.ko || ''}</div>`
-  ).join('');
+  const lbl = inv.inputLabel || '이메일 또는 단체명을 입력하세요';
+  const lblSz = inv.inputLabelSize || 11;
+  const lblColor = inv.inputLabelColor || tpl.accent;
 
   const bgStyle = inv.customImage
     ? `background-image:url(${inv.customImage});background-size:cover;background-position:center;`
     : `background:${tpl.bg};`;
 
-  /* 입장코드 블록 (숨김 상태) */
-  const codeBlock = `
-    <div id="inv-code-block" style="text-align:center;padding:12px 0;">
-      <div id="inv-code-hidden" style="display:inline-block;font-size:26px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:${tpl.accent};padding:10px 24px;border:1px solid ${tpl.accent};border-radius:6px;background:rgba(0,0,0,0.5);">
-        ██████
-      </div>
+  const textElems = (inv.textBlocks || []).map(b => `
+    <div style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
+         font-size:${b.fontSize||14}px;color:${b.color||tpl.accent};text-align:center;white-space:pre-wrap;padding:2px 6px;">
+      ${b[lang] || b.ko || ''}
+    </div>`).join('');
+
+  const codeElem = `
+    <div id="inv-code-block" style="position:absolute;left:${pos.code.x}%;top:${pos.code.y}%;transform:translate(-50%,-50%);text-align:center;">
+      <div id="inv-code-hidden" style="display:inline-block;font-size:24px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:${tpl.accent};padding:10px 20px;border:1px solid ${tpl.accent};border-radius:6px;background:rgba(0,0,0,0.5);">██████</div>
       <div id="inv-code-revealed" style="display:none;">
-        <div style="font-size:11px;color:${tpl.accent};margin-bottom:6px;opacity:0.8;">✓ 입장 코드가 공개되었습니다</div>
-        <div style="display:inline-block;font-size:26px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:var(--gold);padding:10px 24px;border:1px solid var(--gold);border-radius:6px;background:rgba(201,168,76,0.1);">${inv.code}</div>
-        <div style="margin-top:12px;">
-          <button onclick="verifyCodeWithInvite('${inv.code}')" style="width:100%;padding:12px;background:rgba(201,168,76,0.25);border:1px solid rgba(201,168,76,0.5);color:var(--gold);font-size:13px;cursor:pointer;border-radius:6px;font-weight:bold;letter-spacing:1px;">🚪 입장하기</button>
-        </div>
+        <div style="font-size:10px;color:${tpl.accent};margin-bottom:6px;opacity:0.8;">✓ 입장 코드가 공개되었습니다</div>
+        <div style="display:inline-block;font-size:24px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:var(--gold);padding:10px 20px;border:1px solid var(--gold);border-radius:6px;background:rgba(201,168,76,0.1);">${inv.code}</div>
+        <div style="margin-top:10px;"><button onclick="verifyCodeWithInvite('${inv.code}')" style="padding:10px 24px;background:rgba(201,168,76,0.25);border:1px solid rgba(201,168,76,0.5);color:var(--gold);font-size:13px;cursor:pointer;border-radius:6px;font-weight:bold;">🚪 입장하기</button></div>
       </div>
     </div>`;
 
-  /* 입력란 블록 */
-  const inputBlock = `
-    <div id="inv-input-block" style="padding:12px;background:rgba(0,0,0,0.45);border:1px solid rgba(201,168,76,0.2);border-radius:6px;">
-      <div style="font-size:10px;color:${tpl.accent};margin-bottom:8px;text-align:center;letter-spacing:0.5px;">이메일 또는 단체명을 입력하면 입장코드가 공개됩니다</div>
-      <input type="text" id="inv-org-inp" placeholder="단체명" style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:9px 12px;font-size:12px;border-radius:4px;margin-bottom:8px;box-sizing:border-box;">
-      <input type="text" id="inv-email-inp" placeholder="이메일" style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:var(--text);padding:9px 12px;font-size:12px;border-radius:4px;margin-bottom:10px;box-sizing:border-box;">
-      <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:4px;font-weight:bold;">확인</button>
+  const inputElem = `
+    <div id="inv-input-block" style="position:absolute;left:${pos.input.x}%;top:${pos.input.y}%;transform:translate(-50%,-50%);width:78%;padding:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);border-radius:6px;">
+      <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:8px;text-align:center;">${lbl}</div>
+      <input type="text" id="inv-inp" placeholder="이메일 또는 단체명" style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:#fff;padding:9px 12px;font-size:12px;border-radius:4px;margin-bottom:8px;box-sizing:border-box;">
+      <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:9px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:4px;font-weight:bold;">확인</button>
     </div>`;
 
-  /* QR 블록 */
-  const qrBlock = `
-    <div style="display:flex;flex-direction:column;align-items:center;padding:10px 0;">
-      <div id="inv-qr-box" style="width:100px;height:100px;background:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;" onclick="window.location.href='${url}'" title="클릭하면 입장 페이지로 이동"></div>
-      <div style="font-size:9px;color:${tpl.accent};margin-top:4px;opacity:0.7;">QR 클릭 → 입장 페이지</div>
+  const qrElem = `
+    <div style="position:absolute;left:${pos.qr.x}%;top:${pos.qr.y}%;transform:translate(-50%,-50%);text-align:center;">
+      <div id="inv-qr-box" style="width:90px;height:90px;background:#fff;border-radius:6px;cursor:pointer;margin:0 auto;" onclick="window.open('${url}','_self')" title="클릭 → 입장 페이지"></div>
+      <div style="font-size:8px;color:${tpl.accent};margin-top:3px;opacity:0.7;">QR 클릭 → 입장</div>
     </div>`;
-
-  /* 위치별 정렬 */
-  const sections = { top:[], middle:[], bottom:[] };
-  sections[layout.codePos || 'top'].push(codeBlock);
-  sections[layout.inputPos || 'bottom'].push(inputBlock);
-  sections[layout.qrPos || 'bottom'].push(qrBlock);
 
   container.innerHTML = `
-    <div style="width:100%;min-height:460px;${bgStyle}border-radius:8px;padding:18px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;">
-      <div style="text-align:center;margin-bottom:6px;">
-        <div style="font-size:10px;letter-spacing:3px;color:${tpl.accent};opacity:0.8;">V I P &nbsp; P R I V A T E</div>
-        <div style="font-size:18px;font-weight:bold;color:${tpl.accent};margin-top:4px;">${inv.org}</div>
+    <div style="position:relative;width:100%;height:540px;${bgStyle}border-radius:8px;overflow:hidden;box-sizing:border-box;">
+      <div style="position:absolute;top:10px;left:0;right:0;text-align:center;">
+        <div style="font-size:9px;letter-spacing:3px;color:${tpl.accent};opacity:0.7;">V I P &nbsp; P R I V A T E</div>
+        <div style="font-size:17px;font-weight:bold;color:${tpl.accent};margin-top:3px;">${inv.org}</div>
       </div>
-      ${textHtml ? `<div>${textHtml}</div>` : ''}
-      <div style="display:flex;flex-direction:column;gap:10px;flex:1;justify-content:space-between;">
-        <div>${sections.top.join('')}</div>
-        <div>${sections.middle.join('')}</div>
-        <div>${sections.bottom.join('')}</div>
-      </div>
+      ${textElems}${codeElem}${inputElem}${qrElem}
     </div>`;
 
-  /* QR 생성 */
   setTimeout(() => {
     const qrEl = document.getElementById('inv-qr-box');
     if (qrEl && typeof QRCode !== 'undefined') {
       qrEl.innerHTML = '';
-      new QRCode(qrEl, { text: url, width:100, height:100, colorLight:'#fff', colorDark:'#1a1a1a' });
+      new QRCode(qrEl, { text: url, width:90, height:90, colorLight:'#fff', colorDark:'#1a1a1a' });
     }
   }, 100);
 }
@@ -1772,40 +1743,26 @@ function showInviteCard(inv) {
 }
 
 function verifyInvite(inviteId) {
-  const orgInput = (document.getElementById('inv-org-inp') || {}).value?.trim().toLowerCase() || '';
-  const emailInput = (document.getElementById('inv-email-inp') || {}).value?.trim().toLowerCase() || '';
+  const inpEl = document.getElementById('inv-inp');
+  const val = (inpEl?.value || '').trim().toLowerCase();
+  if (!val) { showToast('이메일 또는 단체명을 입력하세요.', 'error'); return; }
 
-  if (!orgInput && !emailInput) { showToast('단체명 또는 이메일을 입력하세요.', 'error'); return; }
-
-  const invites = DB.get('invites', []);
-  const inv = invites.find(x => x.id == inviteId);
+  const inv = DB.get('invites', []).find(x => x.id == inviteId);
   if (!inv) return;
 
-  const orgMatch = inv.org.toLowerCase() === orgInput;
-  const emailMatch = inv.email.toLowerCase() === emailInput;
+  const orgMatch   = inv.org.toLowerCase()   === val;
+  const emailMatch = inv.email.toLowerCase() === val;
 
   if (orgMatch || emailMatch) {
-    /* 인증 성공 */
-    const userInfo = { org: orgInput, email: emailInput };
-    saveInviteTracking(inv, userInfo);
-
-    /* 입력란 숨기기 */
-    const inputBlock = document.getElementById('inv-input-block');
-    if (inputBlock) inputBlock.style.display = 'none';
-
-    /* 코드 공개 */
-    document.getElementById('inv-code-hidden')?.style && (document.getElementById('inv-code-hidden').style.display = 'none');
-    document.getElementById('inv-code-revealed')?.style && (document.getElementById('inv-code-revealed').style.display = 'block');
-
-    showToast('✓ 인증되었습니다! 입장코드가 공개되었습니다.', 'gold');
+    saveInviteTracking(inv, { org: orgMatch ? val : '', email: emailMatch ? val : '' });
+    document.getElementById('inv-input-block')?.remove();
+    const hidden   = document.getElementById('inv-code-hidden');
+    const revealed = document.getElementById('inv-code-revealed');
+    if (hidden)   hidden.style.display   = 'none';
+    if (revealed) revealed.style.display = 'block';
+    showToast('✓ 인증 완료! 입장코드가 공개되었습니다.', 'gold');
   } else {
-    const orgEl = document.getElementById('inv-org-inp');
-    const emailEl = document.getElementById('inv-email-inp');
-    [orgEl, emailEl].forEach(el => {
-      if (!el) return;
-      el.style.borderColor = '#c0392b';
-      setTimeout(() => { el.style.borderColor = ''; }, 1800);
-    });
+    if (inpEl) { inpEl.style.borderColor = '#c0392b'; setTimeout(() => { inpEl.style.borderColor = ''; }, 1800); }
     showToast('일치하는 정보가 없습니다.', 'error');
   }
 }
@@ -4003,10 +3960,15 @@ function generateNewInviteCode() {
 
 /* ========== 초대장 상태 ========== */
 const INVITE_STATE = {
-  textBlocks: [],      // [{id, ko, en, ja, zh, es}]
-  codePos: 'top',      // top/middle/bottom
-  inputPos: 'bottom',  // top/middle/bottom
-  qrPos: 'bottom',     // top/middle/bottom
+  textBlocks: [],  // [{id, ko,en,ja,zh,es, color, fontSize, x, y}]
+  positions: {
+    code:  { x: 50, y: 12 },
+    input: { x: 50, y: 68 },
+    qr:    { x: 50, y: 85 }
+  },
+  inputLabel: '이메일 또는 단체명을 입력하세요',
+  inputLabelSize: 11,
+  inputLabelColor: '#c9a84c',
   previewLang: 'ko',
   customImage: null
 };
@@ -4014,7 +3976,8 @@ const INVITE_STATE = {
 /* ---- 텍스트 블록 ---- */
 function addInviteTextBlock() {
   const id = Date.now();
-  INVITE_STATE.textBlocks.push({ id, ko: '', en: '', ja: '', zh: '', es: '' });
+  const yOffset = 30 + INVITE_STATE.textBlocks.length * 8;
+  INVITE_STATE.textBlocks.push({ id, ko:'', en:'', ja:'', zh:'', es:'', color:'#ffffff', fontSize:14, x:50, y:yOffset });
   renderInviteTextBlocks();
   liveUpdateInvitePreview();
 }
@@ -4041,14 +4004,30 @@ function renderInviteTextBlocks() {
           <button onclick="removeInviteTextBlock(${b.id})" style="padding:2px 8px;background:rgba(200,50,50,0.2);border:1px solid rgba(200,50,50,0.4);color:#e74c3c;font-size:9px;cursor:pointer;border-radius:3px;">✕</button>
         </div>
       </div>
-      <textarea onchange="updateBlockText(${b.id},'ko',this.value)" oninput="updateBlockText(${b.id},'ko',this.value)" placeholder="한국어" style="width:100%;padding:5px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);border-radius:3px;resize:none;height:40px;margin-bottom:4px;">${b.ko}</textarea>
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px;">
+        <span style="font-size:9px;color:var(--text-dim);">스타일</span>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <label style="font-size:9px;color:var(--text-dim);">크기</label>
+          <input type="number" value="${b.fontSize||14}" min="8" max="72" oninput="updateBlockStyle(${b.id},'fontSize',parseInt(this.value)||14)" style="width:48px;padding:3px 4px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-size:10px;border-radius:3px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <label style="font-size:9px;color:var(--text-dim);">색상</label>
+          <input type="color" value="${b.color||'#ffffff'}" oninput="updateBlockStyle(${b.id},'color',this.value)" style="width:34px;height:26px;border:1px solid rgba(201,168,76,0.2);border-radius:3px;background:none;cursor:pointer;">
+        </div>
+      </div>
+      <textarea oninput="updateBlockText(${b.id},'ko',this.value)" placeholder="한국어" style="width:100%;padding:5px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);border-radius:3px;resize:none;height:40px;margin-bottom:4px;box-sizing:border-box;">${b.ko}</textarea>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        <textarea onchange="updateBlockText(${b.id},'en',this.value)" placeholder="EN" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.en}</textarea>
-        <textarea onchange="updateBlockText(${b.id},'ja',this.value)" placeholder="JA" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.ja}</textarea>
-        <textarea onchange="updateBlockText(${b.id},'zh',this.value)" placeholder="ZH" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.zh}</textarea>
-        <textarea onchange="updateBlockText(${b.id},'es',this.value)" placeholder="ES" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.es}</textarea>
+        <textarea oninput="updateBlockText(${b.id},'en',this.value)" placeholder="EN" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.en}</textarea>
+        <textarea oninput="updateBlockText(${b.id},'ja',this.value)" placeholder="JA" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.ja}</textarea>
+        <textarea oninput="updateBlockText(${b.id},'zh',this.value)" placeholder="ZH" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.zh}</textarea>
+        <textarea oninput="updateBlockText(${b.id},'es',this.value)" placeholder="ES" style="padding:4px;font-size:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.1);color:var(--text);border-radius:3px;resize:none;height:34px;">${b.es}</textarea>
       </div>
     </div>`).join('');
+}
+
+function updateBlockStyle(id, prop, val) {
+  const b = INVITE_STATE.textBlocks.find(x => x.id === id);
+  if (b) { b[prop] = val; liveUpdateInvitePreview(); }
 }
 
 function updateBlockText(id, lang, val) {
@@ -4070,19 +4049,6 @@ async function autoTranslateBlock(id) {
   showToast('번역 완료!', 'gold');
 }
 
-/* ---- 위치 설정 ---- */
-function setInvitePos(type, pos) {
-  if (type === 'code') INVITE_STATE.codePos = pos;
-  if (type === 'input') INVITE_STATE.inputPos = pos;
-  if (type === 'qr') INVITE_STATE.qrPos = pos;
-
-  ['top','middle','bottom'].forEach(p => {
-    const btn = document.getElementById(`pos-${type}-${p}`);
-    if (btn) btn.style.background = (p === pos) ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.1)';
-  });
-  liveUpdateInvitePreview();
-}
-
 /* ---- 미리보기 언어 ---- */
 function setPreviewLang(lang) {
   INVITE_STATE.previewLang = lang;
@@ -4093,7 +4059,7 @@ function setPreviewLang(lang) {
   liveUpdateInvitePreview();
 }
 
-/* ---- 실시간 미리보기 ---- */
+/* ---- 실시간 미리보기 (드래그 지원) ---- */
 function liveUpdateInvitePreview() {
   const wrap = document.getElementById('invite-preview-inner');
   if (!wrap) return;
@@ -4104,66 +4070,119 @@ function liveUpdateInvitePreview() {
   const tplId = parseInt(document.getElementById('invite-template-selector')?.dataset?.selected || 1);
   const tpl = INVITE_TEMPLATES.find(t => t.id === tplId) || INVITE_TEMPLATES[0];
   const lang = INVITE_STATE.previewLang;
-  const url = `${window.location.origin}${window.location.pathname}?invite=PREVIEW`;
   const customBg = INVITE_STATE.customImage;
+  const pos = INVITE_STATE.positions;
+  const lbl = INVITE_STATE.inputLabel || '이메일 또는 단체명을 입력하세요';
+  const lblSz = INVITE_STATE.inputLabelSize || 11;
+  const lblColor = INVITE_STATE.inputLabelColor || tpl.accent;
 
   const bgStyle = customBg
     ? `background-image:url(${customBg});background-size:cover;background-position:center;`
     : `background:${tpl.bg};`;
 
+  /* 각 요소를 절대 위치로 렌더 */
+  const dragHint = `<div style="position:absolute;top:2px;right:4px;font-size:8px;color:rgba(255,255,255,0.4);pointer-events:none;">✥</div>`;
+
+  const elems = [];
+
   /* 텍스트 블록 */
-  const textHtml = INVITE_STATE.textBlocks.map(b =>
-    `<div style="font-size:12px;color:${tpl.accent};text-align:center;padding:4px 0;line-height:1.5;">${b[lang] || b.ko || ''}</div>`
-  ).join('');
+  INVITE_STATE.textBlocks.forEach(b => {
+    const txt = b[lang] || b.ko || '';
+    elems.push(`
+      <div data-drag="text_${b.id}" style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
+           font-size:${b.fontSize||14}px;color:${b.color||'#fff'};text-align:center;white-space:pre-wrap;
+           cursor:move;padding:4px 8px;border:1px dashed rgba(255,255,255,0.25);border-radius:3px;min-width:60px;">
+        ${dragHint}${txt || '<span style="opacity:0.3;font-size:10px;">텍스트</span>'}
+      </div>`);
+  });
 
-  /* 섹션 순서 결정 */
-  const sections = { top: [], middle: [], bottom: [] };
+  /* 입장코드 */
+  elems.push(`
+    <div data-drag="code" style="position:absolute;left:${pos.code.x}%;top:${pos.code.y}%;transform:translate(-50%,-50%);
+         text-align:center;cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:4px 8px;">
+      ${dragHint}
+      <div style="font-size:20px;font-weight:bold;font-family:'Courier New';letter-spacing:3px;color:${tpl.accent};
+           padding:8px 16px;border:1px solid ${tpl.accent};border-radius:4px;background:rgba(0,0,0,0.5);">██████</div>
+      <div style="font-size:9px;color:${tpl.accent};opacity:0.7;margin-top:3px;">입장 코드 (숨김)</div>
+    </div>`);
 
-  /* 입장코드 섹션 */
-  const codeSection = `
-    <div style="text-align:center;padding:10px 0;">
-      <div style="font-size:22px;font-weight:bold;font-family:'Courier New';letter-spacing:3px;color:${tpl.accent};border:1px solid ${tpl.accent};display:inline-block;padding:8px 20px;border-radius:4px;background:rgba(0,0,0,0.4);">
-        ██████
-      </div>
-      <div style="font-size:9px;color:${tpl.accent};opacity:0.7;margin-top:4px;letter-spacing:1px;">입장 코드 (숨김)</div>
-    </div>`;
-
-  /* 입력란 섹션 */
-  const inputSection = `
-    <div style="padding:8px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radius:4px;">
-      <div style="font-size:9px;color:${tpl.accent};margin-bottom:4px;">이메일 또는 단체명을 입력하세요</div>
-      <div style="height:28px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-bottom:4px;"></div>
-      <div style="height:28px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-bottom:6px;"></div>
-      <div style="height:28px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center;">
+  /* 입력란 */
+  elems.push(`
+    <div data-drag="input" style="position:absolute;left:${pos.input.x}%;top:${pos.input.y}%;transform:translate(-50%,-50%);
+         width:80%;cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:6px 8px;background:rgba(0,0,0,0.35);">
+      ${dragHint}
+      <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:5px;text-align:center;">${lbl}</div>
+      <div style="height:26px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);border-radius:3px;margin-bottom:4px;"></div>
+      <div style="height:26px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center;">
         <span style="font-size:10px;color:${tpl.accent};">확인</span>
       </div>
-    </div>`;
+    </div>`);
 
-  /* QR 섹션 */
-  const qrSection = `
-    <div style="display:flex;justify-content:center;padding:6px 0;">
-      <div style="width:64px;height:64px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;opacity:0.8;">
+  /* QR */
+  elems.push(`
+    <div data-drag="qr" style="position:absolute;left:${pos.qr.x}%;top:${pos.qr.y}%;transform:translate(-50%,-50%);
+         cursor:move;border:1px dashed rgba(255,255,255,0.25);border-radius:4px;padding:4px;">
+      ${dragHint}
+      <div style="width:64px;height:64px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;">
         <span style="font-size:9px;color:#000;">QR</span>
       </div>
-    </div>`;
-
-  sections[INVITE_STATE.codePos].push(codeSection);
-  sections[INVITE_STATE.inputPos].push(inputSection);
-  sections[INVITE_STATE.qrPos].push(qrSection);
+    </div>`);
 
   wrap.innerHTML = `
-    <div style="width:100%;min-height:480px;${bgStyle}border-radius:6px;padding:16px;display:flex;flex-direction:column;box-sizing:border-box;">
-      <div style="text-align:center;margin-bottom:10px;">
-        <div style="font-size:11px;letter-spacing:2px;color:${tpl.accent};opacity:0.8;">VIP PRIVATE</div>
-        <div style="font-size:16px;font-weight:bold;color:${tpl.accent};margin-top:4px;">${org}</div>
+    <div id="invite-preview-card" style="position:relative;width:100%;height:500px;${bgStyle}border-radius:6px;box-sizing:border-box;overflow:hidden;user-select:none;">
+      <div style="position:absolute;top:10px;left:0;right:0;text-align:center;pointer-events:none;">
+        <div style="font-size:10px;letter-spacing:3px;color:${tpl.accent};opacity:0.7;">V I P &nbsp; P R I V A T E</div>
+        <div style="font-size:17px;font-weight:bold;color:${tpl.accent};margin-top:3px;">${org}</div>
       </div>
-      ${textHtml ? `<div style="margin-bottom:8px;">${textHtml}</div>` : ''}
-      <div style="display:flex;flex-direction:column;gap:8px;flex:1;justify-content:space-between;">
-        <div>${sections.top.join('')}</div>
-        <div>${sections.middle.join('')}</div>
-        <div>${sections.bottom.join('')}</div>
-      </div>
+      ${elems.join('')}
+      <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:8px;color:rgba(255,255,255,0.3);pointer-events:none;">요소를 드래그하여 위치 조정</div>
     </div>`;
+
+  _initPreviewDrag();
+}
+
+/* ---- 드래그 로직 ---- */
+function _initPreviewDrag() {
+  const card = document.getElementById('invite-preview-card');
+  if (!card) return;
+  let dragging = null, startX, startY, startLeft, startTop;
+
+  card.querySelectorAll('[data-drag]').forEach(el => {
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      dragging = el;
+      const rect = card.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = (elRect.left + elRect.width/2 - rect.left) / rect.width * 100;
+      startTop  = (elRect.top  + elRect.height/2 - rect.top)  / rect.height * 100;
+    });
+  });
+
+  const onMove = e => {
+    if (!dragging) return;
+    const rect = card.getBoundingClientRect();
+    const dx = (e.clientX - startX) / rect.width  * 100;
+    const dy = (e.clientY - startY) / rect.height * 100;
+    const nx = Math.max(5, Math.min(95, startLeft + dx));
+    const ny = Math.max(2, Math.min(96, startTop  + dy));
+    dragging.style.left = nx + '%';
+    dragging.style.top  = ny + '%';
+    const key = dragging.dataset.drag;
+    if (key === 'code' || key === 'input' || key === 'qr') {
+      INVITE_STATE.positions[key] = { x: nx, y: ny };
+    } else if (key.startsWith('text_')) {
+      const id = parseInt(key.split('_')[1]);
+      const b = INVITE_STATE.textBlocks.find(x => x.id === id);
+      if (b) { b.x = nx; b.y = ny; }
+    }
+  };
+
+  const onUp = () => { dragging = null; };
+  card.addEventListener('mousemove', onMove);
+  card.addEventListener('mouseup', onUp);
+  card.addEventListener('mouseleave', onUp);
 }
 
 /* ---- 업로드 ---- */
@@ -4207,11 +4226,10 @@ function createInviteCard() {
     template: tplId,
     customImage: INVITE_STATE.customImage || null,
     textBlocks: JSON.parse(JSON.stringify(INVITE_STATE.textBlocks)),
-    layout: {
-      codePos: INVITE_STATE.codePos,
-      inputPos: INVITE_STATE.inputPos,
-      qrPos: INVITE_STATE.qrPos
-    },
+    positions: JSON.parse(JSON.stringify(INVITE_STATE.positions)),
+    inputLabel: INVITE_STATE.inputLabel,
+    inputLabelSize: INVITE_STATE.inputLabelSize,
+    inputLabelColor: INVITE_STATE.inputLabelColor,
     created: new Date().toISOString(),
     url: `${window.location.origin}${window.location.pathname}?invite=${inviteId}`,
     share_stats: { telegram:0, sns:0, kakao:0, email:0, sms:0, line:0, view:0 }
@@ -4229,6 +4247,12 @@ function createInviteCard() {
   document.getElementById('invite-code-display').style.display = 'none';
   INVITE_STATE.textBlocks = [];
   INVITE_STATE.customImage = null;
+  INVITE_STATE.positions = { code:{x:50,y:12}, input:{x:50,y:68}, qr:{x:50,y:85} };
+  INVITE_STATE.inputLabel = '이메일 또는 단체명을 입력하세요';
+  INVITE_STATE.inputLabelSize = 11;
+  INVITE_STATE.inputLabelColor = '#c9a84c';
+  const lblEl = document.getElementById('invite-input-label');
+  if (lblEl) lblEl.value = INVITE_STATE.inputLabel;
   renderInviteTextBlocks();
   liveUpdateInvitePreview();
   renderInviteList();
