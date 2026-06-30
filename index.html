@@ -1738,65 +1738,111 @@ function checkInviteLink() {
   }
 }
 
-/* 사용자용 초대장 렌더 (공통 함수 - entry페이지 & 미리보기 모달 공유) */
+/* 사용자용 초대장 렌더 */
 function renderInviteCardForUser(inv, container) {
-  const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template) || INVITE_TEMPLATES[0];
-  const pos = inv.positions || { code:{x:50,y:12}, input:{x:50,y:68}, qr:{x:50,y:85} };
-  const lang = _lang || 'ko';
-  const url = inv.url || window.location.href;
-  const lbl = inv.inputLabel || '이메일 또는 단체명을 입력하세요';
-  const lblSz = inv.inputLabelSize || 11;
+  const tpl    = INVITE_TEMPLATES.find(t => t.id === inv.template) || INVITE_TEMPLATES[0];
+  const pos    = inv.positions || { code:{x:50,y:12}, input:{x:50,y:68}, qr:{x:50,y:82}, visitBtn:{x:50,y:94} };
+  const sz     = inv.sizes    || { input:80, qr:80, visitBtn:140 };
+  const lang   = _lang || 'ko';
+  const lbl    = inv.inputLabel    || '이메일 또는 단체명을 입력하세요';
+  const lblSz  = inv.inputLabelSize  || 11;
   const lblColor = inv.inputLabelColor || tpl.accent;
 
   const bgStyle = inv.customImage
     ? `background-image:url(${inv.customImage});background-size:cover;background-position:center;`
     : `background:${tpl.bg};`;
 
+  // 헤더/단체명
+  const hColor  = inv.headerColor || tpl.accent;
+  const oColor  = inv.orgColor    || tpl.accent;
+  const hText   = inv.headerText  || 'V I P   P R I V A T E';
+  const hPos    = pos.header || { x:50, y:5 };
+  const oPos    = pos.org    || { x:50, y:10 };
+  const headerEl = inv.headerVisible !== false ? `
+    <div style="position:absolute;left:${hPos.x}%;top:${hPos.y}%;transform:translate(-50%,-50%);
+         font-size:${inv.headerSize||10}px;letter-spacing:3px;color:${hColor};opacity:0.85;text-align:center;white-space:nowrap;">${hText}</div>` : '';
+  const orgEl = inv.orgVisible !== false ? `
+    <div style="position:absolute;left:${oPos.x}%;top:${oPos.y}%;transform:translate(-50%,-50%);
+         font-size:${inv.orgSize||17}px;font-weight:bold;color:${oColor};text-align:center;">${inv.org}</div>` : '';
+
+  // 텍스트 블록
   const textElems = (inv.textBlocks || []).map(b => `
     <div style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
          font-size:${b.fontSize||14}px;color:${b.color||tpl.accent};text-align:center;white-space:pre-wrap;padding:2px 6px;">
       ${b[lang] || b.ko || ''}
     </div>`).join('');
 
-  const codeElem = `
-    <div id="inv-code-block" style="position:absolute;left:${pos.code.x}%;top:${pos.code.y}%;transform:translate(-50%,-50%);text-align:center;">
-      <div id="inv-code-hidden" style="display:inline-block;font-size:24px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:${tpl.accent};padding:10px 20px;border:1px solid ${tpl.accent};border-radius:6px;background:rgba(0,0,0,0.5);">██████</div>
+  // image2 — 입장코드 블러 오버레이
+  const i2pos = pos.image2 || { x:50, y:50 };
+  const i2sz  = inv.image2Size || { w:30 };
+  const image2El = inv.customImage2 ? `
+    <div id="inv-img2-wrap" style="position:absolute;left:${i2pos.x}%;top:${i2pos.y}%;transform:translate(-50%,-50%);
+         width:${i2sz.w}%;overflow:hidden;border-radius:4px;">
+      <img src="${inv.customImage2}" style="width:100%;height:auto;display:block;" draggable="false">
+      <div id="inv-code-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <span id="inv-code-blur" style="font-family:'Courier New';font-size:20px;font-weight:bold;color:#c9a84c;
+          letter-spacing:3px;filter:blur(5px);transition:filter 0.6s;text-shadow:0 0 10px rgba(201,168,76,0.9);">${inv.code}</span>
+      </div>
+    </div>` : '';
+
+  // 코드 블록 (image2 없을 때만 표시)
+  const codePos = pos.code || { x:50, y:12 };
+  const codeEl = !inv.customImage2 ? `
+    <div id="inv-code-block" style="position:absolute;left:${codePos.x}%;top:${codePos.y}%;transform:translate(-50%,-50%);text-align:center;">
+      <div id="inv-code-hidden" style="display:inline-block;font-size:${sz.code||20}px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:${tpl.accent};padding:10px 20px;border:1px solid ${tpl.accent};border-radius:6px;background:rgba(0,0,0,0.5);">██████</div>
       <div id="inv-code-revealed" style="display:none;">
-        <div style="font-size:10px;color:${tpl.accent};margin-bottom:6px;opacity:0.8;">✓ 입장 코드가 공개되었습니다</div>
-        <div style="display:inline-block;font-size:24px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:var(--gold);padding:10px 20px;border:1px solid var(--gold);border-radius:6px;background:rgba(201,168,76,0.1);">${inv.code}</div>
+        <div style="font-size:10px;color:${tpl.accent};margin-bottom:6px;opacity:0.8;">✓ 입장 코드</div>
+        <div style="display:inline-block;font-size:${sz.code||20}px;font-weight:bold;font-family:'Courier New';letter-spacing:4px;color:var(--gold);padding:10px 20px;border:1px solid var(--gold);border-radius:6px;background:rgba(201,168,76,0.1);">${inv.code}</div>
         <div style="margin-top:10px;"><button onclick="verifyCodeWithInvite('${inv.code}')" style="padding:10px 24px;background:rgba(201,168,76,0.25);border:1px solid rgba(201,168,76,0.5);color:var(--gold);font-size:13px;cursor:pointer;border-radius:6px;font-weight:bold;">🚪 입장하기</button></div>
       </div>
-    </div>`;
+    </div>` : '';
 
-  const inputElem = `
-    <div id="inv-input-block" style="position:absolute;left:${pos.input.x}%;top:${pos.input.y}%;transform:translate(-50%,-50%);width:78%;padding:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);border-radius:6px;">
+  // 입력란
+  const inputPos = pos.input || { x:50, y:68 };
+  const inputEl = `
+    <div id="inv-input-block" style="position:absolute;left:${inputPos.x}%;top:${inputPos.y}%;transform:translate(-50%,-50%);
+         width:${sz.input||80}%;padding:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);border-radius:6px;">
       <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:8px;text-align:center;">${lbl}</div>
-      <input type="text" id="inv-inp" placeholder="이메일 또는 단체명" style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:#fff;padding:9px 12px;font-size:12px;border-radius:4px;margin-bottom:8px;box-sizing:border-box;">
-      <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:9px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:4px;font-weight:bold;">확인</button>
+      <input type="text" id="inv-inp" placeholder="이메일 또는 단체명"
+        style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:#fff;padding:9px 12px;font-size:12px;border-radius:4px;box-sizing:border-box;">
     </div>`;
 
-  const qrElem = `
-    <div style="position:absolute;left:${pos.qr.x}%;top:${pos.qr.y}%;transform:translate(-50%,-50%);text-align:center;">
-      <div id="inv-qr-box" style="width:90px;height:90px;background:#fff;border-radius:6px;cursor:pointer;margin:0 auto;" onclick="window.open('${url}','_self')" title="클릭 → 입장 페이지"></div>
-      <div style="font-size:8px;color:${tpl.accent};margin-top:3px;opacity:0.7;">QR 클릭 → 입장</div>
+  // QR — 클릭 시 verifyInvite 호출
+  const qrPos = pos.qr || { x:50, y:82 };
+  const qrSz  = sz.qr || 80;
+  const qrEl  = `
+    <div style="position:absolute;left:${qrPos.x}%;top:${qrPos.y}%;transform:translate(-50%,-50%);text-align:center;">
+      <div id="inv-qr-box" style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:6px;cursor:pointer;margin:0 auto;overflow:hidden;"
+        onclick="verifyInvite('${inv.id}')" title="QR 클릭 → 인증"></div>
+      <div style="font-size:8px;color:${tpl.accent};margin-top:4px;opacity:0.7;">이메일/단체명 입력 후 QR 클릭</div>
     </div>`;
+
+  // 방문 버튼 (인증 후 표시)
+  const vbPos = pos.visitBtn || { x:50, y:94 };
+  const vbW   = sz.visitBtn || 140;
+  const visitBtnEl = inv.visitBtnVisible !== false ? `
+    <div id="inv-visit-btn" style="position:absolute;left:${vbPos.x}%;top:${vbPos.y}%;transform:translate(-50%,-50%);display:none;">
+      <a href="https://wjdwo72.github.io/vip-private/" target="_self"
+        style="display:block;width:${vbW}px;padding:10px 0;background:rgba(201,168,76,0.25);border:1px solid rgba(201,168,76,0.6);
+        color:${tpl.accent};text-align:center;font-size:12px;font-weight:bold;letter-spacing:1px;text-decoration:none;border-radius:6px;
+        box-shadow:0 0 12px rgba(201,168,76,0.3);">
+        🌐 사이트 방문하기
+      </a>
+    </div>` : '';
 
   container.innerHTML = `
-    <div style="position:relative;width:100%;height:540px;${bgStyle}border-radius:8px;overflow:hidden;box-sizing:border-box;">
-      <div style="position:absolute;top:10px;left:0;right:0;text-align:center;">
-        <div style="font-size:9px;letter-spacing:3px;color:${tpl.accent};opacity:0.7;">V I P &nbsp; P R I V A T E</div>
-        <div style="font-size:17px;font-weight:bold;color:${tpl.accent};margin-top:3px;">${inv.org}</div>
-      </div>
-      ${textElems}${codeElem}${inputElem}${qrElem}
+    <div style="position:relative;width:100%;height:560px;${bgStyle}border-radius:8px;overflow:hidden;box-sizing:border-box;">
+      ${headerEl}${orgEl}${textElems}${image2El}${codeEl}${inputEl}${qrEl}${visitBtnEl}
     </div>`;
 
-  setTimeout(() => {
-    const qrEl = document.getElementById('inv-qr-box');
-    if (qrEl && typeof QRCode !== 'undefined') {
-      qrEl.innerHTML = '';
-      new QRCode(qrEl, { text: url, width:90, height:90, colorLight:'#fff', colorDark:'#1a1a1a' });
+  // QR 생성
+  requestAnimationFrame(() => {
+    const qrBox = document.getElementById('inv-qr-box');
+    if (qrBox && typeof QRCode !== 'undefined') {
+      qrBox.innerHTML = '';
+      new QRCode(qrBox, { text: 'https://wjdwo72.github.io/vip-private/', width:qrSz, height:qrSz, colorLight:'#fff', colorDark:'#1a1a1a' });
     }
-  }, 100);
+  });
 }
 
 function showInviteCard(inv) {
@@ -1818,11 +1864,27 @@ function verifyInvite(inviteId) {
 
   if (orgMatch || emailMatch) {
     saveInviteTracking(inv, { org: orgMatch ? val : '', email: emailMatch ? val : '' });
+
+    // 입력란 숨김
     document.getElementById('inv-input-block')?.remove();
+
+    // image2 코드 블러 제거 → 코드 공개
+    const blurEl = document.getElementById('inv-code-blur');
+    if (blurEl) {
+      blurEl.style.filter = 'blur(0)';
+      blurEl.style.textShadow = 'none';
+    }
+
+    // image2 없을 때: 기존 코드 블록 공개
     const hidden   = document.getElementById('inv-code-hidden');
     const revealed = document.getElementById('inv-code-revealed');
     if (hidden)   hidden.style.display   = 'none';
     if (revealed) revealed.style.display = 'block';
+
+    // 방문 버튼 표시
+    const visitBtn = document.getElementById('inv-visit-btn');
+    if (visitBtn) visitBtn.style.display = 'block';
+
     showToast('✓ 인증 완료! 입장코드가 공개되었습니다.', 'gold');
   } else {
     if (inpEl) { inpEl.style.borderColor = '#c0392b'; setTimeout(() => { inpEl.style.borderColor = ''; }, 1800); }
@@ -4104,15 +4166,17 @@ function generateNewInviteCode() {
 const INVITE_STATE = {
   textBlocks: [],  // [{id, ko,en,ja,zh,es, color, fontSize, x, y}]
   positions: {
-    code:   { x: 50, y: 12 },
-    input:  { x: 50, y: 68 },
-    qr:     { x: 50, y: 85 },
-    image2: { x: 50, y: 50 },
-    header: { x: 50, y: 5 },
-    org:    { x: 50, y: 10 }
+    code:     { x: 50, y: 12 },
+    input:    { x: 50, y: 68 },
+    qr:       { x: 50, y: 82 },
+    image2:   { x: 50, y: 50 },
+    header:   { x: 50, y: 5 },
+    org:      { x: 50, y: 10 },
+    visitBtn: { x: 50, y: 94 }
   },
   image2Size: { w: 30, h: 20 },
-  sizes: { input: 80, qr: 64, code: 20 }, // input=width%, qr=px, code=font-size px
+  sizes: { input: 80, qr: 80, code: 20, visitBtn: 140 }, // input=width%, qr/visitBtn=px, code=font-size px
+  visitBtnVisible: true,
   headerText:    'V I P   P R I V A T E',
   headerVisible: true,
   headerSize:    10,
@@ -4241,17 +4305,23 @@ function liveUpdateInvitePreview() {
 
   const elems = [];
 
-  /* image2 오버레이 이미지 */
+  /* image2 오버레이 이미지 + 입장코드 블러 숨김 */
   if (INVITE_STATE.customImage2) {
     const i2pos = pos.image2 || { x:50, y:50 };
     const i2sz  = INVITE_STATE.image2Size || { w:30, h:20 };
+    const codeOverlay = (code && code !== '****') ? `
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+        <span style="font-family:'Courier New';font-size:18px;font-weight:bold;color:#c9a84c;
+          letter-spacing:3px;filter:blur(4px);text-shadow:0 0 8px rgba(201,168,76,0.8);">${code}</span>
+      </div>` : '';
     elems.push(`
       <div data-drag="image2" style="position:absolute;left:${i2pos.x}%;top:${i2pos.y}%;transform:translate(-50%,-50%);
-           width:${i2sz.w}%;cursor:move;border:1px dashed rgba(255,255,255,0.3);border-radius:3px;box-sizing:border-box;">
+           width:${i2sz.w}%;cursor:move;border:1px dashed rgba(255,255,255,0.3);border-radius:3px;box-sizing:border-box;overflow:hidden;">
         ${dragHint}
         <img src="${INVITE_STATE.customImage2}" style="width:100%;height:auto;display:block;border-radius:2px;" draggable="false">
+        ${codeOverlay}
         <div data-resize="image2" style="position:absolute;bottom:-5px;right:-5px;width:12px;height:12px;
-             background:rgba(201,168,76,0.9);border-radius:50%;cursor:se-resize;border:1px solid #fff;"></div>
+             background:rgba(201,168,76,0.9);border-radius:50%;cursor:se-resize;border:1px solid #fff;z-index:2;"></div>
       </div>`);
   }
 
@@ -4304,7 +4374,20 @@ function liveUpdateInvitePreview() {
       <div id="invite-preview-qr" style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:4px;overflow:hidden;"></div>
     </div>`);
 
-  /* 입장코드 선택기 → 코드 블록 안에 포함 */
+  /* 방문 버튼 */
+  if (INVITE_STATE.visitBtnVisible !== false) {
+    const vbPos = pos.visitBtn || { x:50, y:94 };
+    const vbW   = sz.visitBtn || 140;
+    elems.push(`
+      <div data-drag="visitBtn" style="position:absolute;left:${vbPos.x}%;top:${vbPos.y}%;transform:translate(-50%,-50%);
+           cursor:move;border:1px dashed rgba(100,170,255,0.4);border-radius:4px;padding:2px;">
+        ${dragHint}${resizeHandle('visitBtn')}
+        <div style="width:${vbW}px;padding:8px 0;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);
+             border-radius:4px;text-align:center;font-size:11px;color:${tpl.accent};letter-spacing:1px;">
+          🌐 사이트 방문하기
+        </div>
+      </div>`);
+  }
 
   const hPos = pos.header || { x:50, y:5 };
   const oPos = pos.org    || { x:50, y:10 };
@@ -4386,7 +4469,7 @@ function _initPreviewDrag() {
       startX = e.clientX;
       const key = handle.dataset.resize;
       if (key === 'image2') startW = INVITE_STATE.image2Size.w;
-      else startW = INVITE_STATE.sizes[key] || (key === 'qr' ? 64 : key === 'input' ? 80 : 20);
+      else startW = INVITE_STATE.sizes[key] || (key === 'qr' ? 80 : key === 'input' ? 80 : key === 'visitBtn' ? 140 : 20);
     });
   });
 
@@ -4421,6 +4504,11 @@ function _initPreviewDrag() {
         INVITE_STATE.sizes.code = nw;
         const inner = resizing.querySelector('div');
         if (inner) inner.style.fontSize = nw + 'px';
+      } else if (key === 'visitBtn') {
+        const nw = Math.max(80, Math.min(300, startW + dx));
+        INVITE_STATE.sizes.visitBtn = nw;
+        const inner = resizing.querySelector('div');
+        if (inner) inner.style.width = nw + 'px';
       }
       return;
     }
@@ -4433,7 +4521,7 @@ function _initPreviewDrag() {
     dragging.style.left = nx + '%';
     dragging.style.top  = ny + '%';
     const key = dragging.dataset.drag;
-    if (['code','input','qr','image2','header','org'].includes(key)) {
+    if (['code','input','qr','image2','header','org','visitBtn'].includes(key)) {
       INVITE_STATE.positions[key] = { x: nx, y: ny };
     } else if (key.startsWith('text_')) {
       const id = parseInt(key.split('_')[1]);
@@ -4509,12 +4597,23 @@ function createInviteCard() {
     id: inviteId,
     org, email, code,
     template: tplId,
-    customImage: INVITE_STATE.customImage || null,
-    textBlocks: JSON.parse(JSON.stringify(INVITE_STATE.textBlocks)),
-    positions: JSON.parse(JSON.stringify(INVITE_STATE.positions)),
-    inputLabel: INVITE_STATE.inputLabel,
-    inputLabelSize: INVITE_STATE.inputLabelSize,
+    customImage:  INVITE_STATE.customImage  || null,
+    customImage2: INVITE_STATE.customImage2 || null,
+    image2Size:   JSON.parse(JSON.stringify(INVITE_STATE.image2Size)),
+    textBlocks:   JSON.parse(JSON.stringify(INVITE_STATE.textBlocks)),
+    positions:    JSON.parse(JSON.stringify(INVITE_STATE.positions)),
+    sizes:        JSON.parse(JSON.stringify(INVITE_STATE.sizes)),
+    inputLabel:      INVITE_STATE.inputLabel,
+    inputLabelSize:  INVITE_STATE.inputLabelSize,
     inputLabelColor: INVITE_STATE.inputLabelColor,
+    headerText:    INVITE_STATE.headerText,
+    headerVisible: INVITE_STATE.headerVisible,
+    headerSize:    INVITE_STATE.headerSize,
+    headerColor:   INVITE_STATE.headerColor,
+    orgVisible:    INVITE_STATE.orgVisible,
+    orgSize:       INVITE_STATE.orgSize,
+    orgColor:      INVITE_STATE.orgColor,
+    visitBtnVisible: INVITE_STATE.visitBtnVisible,
     created: new Date().toISOString(),
     url: `${window.location.origin}${window.location.pathname}?invite=${inviteId}`,
     share_stats: { telegram:0, sns:0, kakao:0, email:0, sms:0, line:0, view:0 }
