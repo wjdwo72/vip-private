@@ -1786,11 +1786,17 @@ function renderInviteCardForUser(inv, container) {
          font-size:${inv.orgSize||17}px;font-weight:bold;color:${oColor};text-align:center;">${inv.org}</div>` : '';
 
   // 텍스트 블록
-  const textElems = (inv.textBlocks || []).map(b => `
+  const textElems = (inv.textBlocks || []).map(b => {
+    const bgOpacity = b.bgOpacity != null ? b.bgOpacity : 0;
+    const bgHex = b.bgColor || '#000000';
+    const r = parseInt(bgHex.slice(1,3),16), g = parseInt(bgHex.slice(3,5),16), bv = parseInt(bgHex.slice(5,7),16);
+    const bgStyle = bgOpacity > 0 ? `background:rgba(${r},${g},${bv},${bgOpacity});` : '';
+    return `
     <div style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
-         width:${b.width||60}%;font-size:${b.fontSize||14}px;color:${b.color||tpl.accent};text-align:center;white-space:pre-wrap;padding:2px 6px;">
+         width:${b.width||60}%;font-size:${b.fontSize||14}px;color:${b.color||tpl.accent};text-align:center;white-space:pre-wrap;padding:6px 10px;border-radius:3px;${bgStyle}">
       ${b[lang] || b.ko || ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   // image2 — 입장코드 블러 오버레이
   const i2pos = pos.image2 || { x:50, y:50 };
@@ -4287,7 +4293,7 @@ const INVITE_STATE = {
 function addInviteTextBlock() {
   const id = Date.now();
   const yOffset = 30 + INVITE_STATE.textBlocks.length * 8;
-  INVITE_STATE.textBlocks.push({ id, ko:'', en:'', ja:'', zh:'', es:'', color:'#ffffff', fontSize:14, x:50, y:yOffset });
+  INVITE_STATE.textBlocks.push({ id, ko:'', en:'', ja:'', zh:'', es:'', color:'#ffffff', fontSize:14, x:50, y:yOffset, bgColor:'#000000', bgOpacity:0 });
   renderInviteTextBlocks();
   liveUpdateInvitePreview();
 }
@@ -4314,15 +4320,24 @@ function renderInviteTextBlocks() {
           <button onclick="removeInviteTextBlock(${b.id})" style="padding:2px 8px;background:rgba(200,50,50,0.2);border:1px solid rgba(200,50,50,0.4);color:#e74c3c;font-size:9px;cursor:pointer;border-radius:3px;">✕</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px;">
-        <span style="font-size:9px;color:var(--text-dim);">스타일</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;">
         <div style="display:flex;align-items:center;gap:4px;">
           <label style="font-size:9px;color:var(--text-dim);">크기</label>
           <input type="number" value="${b.fontSize||14}" min="8" max="72" oninput="updateBlockStyle(${b.id},'fontSize',parseInt(this.value)||14)" style="width:48px;padding:3px 4px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-size:10px;border-radius:3px;">
         </div>
         <div style="display:flex;align-items:center;gap:4px;">
-          <label style="font-size:9px;color:var(--text-dim);">색상</label>
+          <label style="font-size:9px;color:var(--text-dim);">글색</label>
           <input type="color" value="${b.color||'#ffffff'}" oninput="updateBlockStyle(${b.id},'color',this.value)" style="width:34px;height:26px;border:1px solid rgba(201,168,76,0.2);border-radius:3px;background:none;cursor:pointer;">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <label style="font-size:9px;color:var(--text-dim);">배경색</label>
+          <input type="color" value="${b.bgColor||'#000000'}" oninput="updateBlockStyle(${b.id},'bgColor',this.value)" style="width:34px;height:26px;border:1px solid rgba(255,255,255,0.15);border-radius:3px;background:none;cursor:pointer;">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:80px;">
+          <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">투명도 ${Math.round((b.bgOpacity||0)*100)}%</label>
+          <input type="range" min="0" max="1" step="0.05" value="${b.bgOpacity||0}"
+            oninput="updateBlockStyle(${b.id},'bgOpacity',parseFloat(this.value));this.previousElementSibling.textContent='투명도 '+Math.round(parseFloat(this.value)*100)+'%'"
+            style="flex:1;accent-color:var(--gold);">
         </div>
       </div>
       <textarea oninput="updateBlockText(${b.id},'ko',this.value)" placeholder="한국어" style="width:100%;padding:5px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);border-radius:3px;resize:none;height:40px;margin-bottom:4px;box-sizing:border-box;">${b.ko}</textarea>
@@ -4420,11 +4435,15 @@ function liveUpdateInvitePreview() {
   INVITE_STATE.textBlocks.forEach(b => {
     const txt = b[lang] || b.ko || '';
     const bw = b.width || 60;
+    const bgOpacity = b.bgOpacity != null ? b.bgOpacity : 0;
+    const bgHex = b.bgColor || '#000000';
+    const r = parseInt(bgHex.slice(1,3),16), g = parseInt(bgHex.slice(3,5),16), bv = parseInt(bgHex.slice(5,7),16);
+    const bgStyle = bgOpacity > 0 ? `background:rgba(${r},${g},${bv},${bgOpacity});` : '';
     elems.push(`
       <div data-drag="text_${b.id}" style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
            width:${bw}%;font-size:${b.fontSize||14}px;color:${b.color||'#fff'};text-align:center;white-space:pre-wrap;
            cursor:move;padding:6px 10px;border:1px dashed rgba(255,255,255,0.25);border-radius:3px;
-           display:flex;align-items:center;justify-content:center;">
+           ${bgStyle}display:flex;align-items:center;justify-content:center;">
         ${dragHint}
         <div data-resize="text_${b.id}" style="position:absolute;bottom:-6px;right:-6px;width:13px;height:13px;background:rgba(201,168,76,0.9);border-radius:50%;cursor:se-resize;border:1px solid #fff;z-index:2;"></div>
         ${txt || '<span style="opacity:0.3;font-size:10px;">텍스트</span>'}
