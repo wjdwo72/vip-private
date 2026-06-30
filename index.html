@@ -999,13 +999,20 @@
             <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
               <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">② 템플릿 / 배경</div>
               <div id="invite-template-selector" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px;"></div>
-              <div style="display:flex;gap:6px;align-items:center;">
+              <div style="font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px;">배경 이미지 (이미지1)</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
                 <input type="file" id="invite-custom-image" accept="image/*" style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:6px;font-size:10px;border-radius:3px;">
                 <button type="button" onclick="uploadInviteImage()" class="btn-secondary" style="white-space:nowrap;padding:6px 10px;font-size:11px;">업로드</button>
               </div>
-              <div style="margin-top:6px;font-size:9px;color:var(--text-dim);line-height:1.8;">
+              <div style="margin-bottom:10px;font-size:9px;color:var(--text-dim);line-height:1.8;">
                 <div id="invite-image-size" style="display:none;"></div>
                 <div>💡 추천 크기: 600x800px</div>
+              </div>
+              <div style="font-size:9px;color:#6af;letter-spacing:1px;margin-bottom:4px;">오버레이 이미지 (이미지2) — 드래그 이동 / 모서리 드래그 크기조정</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <input type="file" id="invite-custom-image2" accept="image/*" style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(100,170,255,0.2);color:var(--text);padding:6px;font-size:10px;border-radius:3px;">
+                <button type="button" onclick="uploadInviteImage2()" class="btn-secondary" style="white-space:nowrap;padding:6px 10px;font-size:11px;border-color:rgba(100,170,255,0.4);">업로드</button>
+                <button type="button" onclick="INVITE_STATE.customImage2=null;liveUpdateInvitePreview();" style="padding:6px 8px;font-size:10px;background:transparent;border:1px solid rgba(255,100,100,0.3);color:#e88;cursor:pointer;">삭제</button>
               </div>
             </div>
 
@@ -4041,15 +4048,18 @@ function generateNewInviteCode() {
 const INVITE_STATE = {
   textBlocks: [],  // [{id, ko,en,ja,zh,es, color, fontSize, x, y}]
   positions: {
-    code:  { x: 50, y: 12 },
-    input: { x: 50, y: 68 },
-    qr:    { x: 50, y: 85 }
+    code:   { x: 50, y: 12 },
+    input:  { x: 50, y: 68 },
+    qr:     { x: 50, y: 85 },
+    image2: { x: 50, y: 50 }
   },
+  image2Size: { w: 30, h: 20 }, // % of card width/height
   inputLabel: '이메일 또는 단체명을 입력하세요',
   inputLabelSize: 11,
   inputLabelColor: '#c9a84c',
   previewLang: 'ko',
-  customImage: null
+  customImage: null,
+  customImage2: null
 };
 
 /* ---- 텍스트 블록 ---- */
@@ -4164,13 +4174,28 @@ function liveUpdateInvitePreview() {
 
   const elems = [];
 
+  /* image2 오버레이 이미지 */
+  if (INVITE_STATE.customImage2) {
+    const i2pos = pos.image2 || { x:50, y:50 };
+    const i2sz  = INVITE_STATE.image2Size || { w:30, h:20 };
+    elems.push(`
+      <div data-drag="image2" style="position:absolute;left:${i2pos.x}%;top:${i2pos.y}%;transform:translate(-50%,-50%);
+           width:${i2sz.w}%;cursor:move;border:1px dashed rgba(255,255,255,0.3);border-radius:3px;box-sizing:border-box;">
+        ${dragHint}
+        <img src="${INVITE_STATE.customImage2}" style="width:100%;height:auto;display:block;border-radius:2px;" draggable="false">
+        <div data-resize="image2" style="position:absolute;bottom:-5px;right:-5px;width:12px;height:12px;
+             background:rgba(201,168,76,0.9);border-radius:50%;cursor:se-resize;border:1px solid #fff;"></div>
+      </div>`);
+  }
+
   /* 텍스트 블록 */
   INVITE_STATE.textBlocks.forEach(b => {
     const txt = b[lang] || b.ko || '';
     elems.push(`
       <div data-drag="text_${b.id}" style="position:absolute;left:${b.x||50}%;top:${b.y||30}%;transform:translate(-50%,-50%);
            font-size:${b.fontSize||14}px;color:${b.color||'#fff'};text-align:center;white-space:pre-wrap;
-           cursor:move;padding:4px 8px;border:1px dashed rgba(255,255,255,0.25);border-radius:3px;min-width:60px;">
+           cursor:move;padding:6px 10px;border:1px dashed rgba(255,255,255,0.25);border-radius:3px;min-width:60px;
+           display:flex;align-items:center;justify-content:center;">
         ${dragHint}${txt || '<span style="opacity:0.3;font-size:10px;">텍스트</span>'}
       </div>`);
   });
@@ -4224,22 +4249,41 @@ function liveUpdateInvitePreview() {
 function _initPreviewDrag() {
   const card = document.getElementById('invite-preview-card');
   if (!card) return;
-  let dragging = null, startX, startY, startLeft, startTop;
+  let dragging = null, resizing = null;
+  let startX, startY, startLeft, startTop, startW;
 
   card.querySelectorAll('[data-drag]').forEach(el => {
     el.addEventListener('mousedown', e => {
+      if (e.target.dataset.resize) return; // 리사이즈 핸들은 별도 처리
       e.preventDefault();
       dragging = el;
       const rect = card.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
-      startX = e.clientX;
-      startY = e.clientY;
+      startX = e.clientX; startY = e.clientY;
       startLeft = (elRect.left + elRect.width/2 - rect.left) / rect.width * 100;
       startTop  = (elRect.top  + elRect.height/2 - rect.top)  / rect.height * 100;
     });
   });
 
+  // image2 리사이즈 핸들
+  card.querySelectorAll('[data-resize]').forEach(handle => {
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation();
+      resizing = handle.closest('[data-drag]');
+      startX = e.clientX;
+      startW = INVITE_STATE.image2Size.w;
+    });
+  });
+
   const onMove = e => {
+    if (resizing) {
+      const rect = card.getBoundingClientRect();
+      const dw = (e.clientX - startX) / rect.width * 100;
+      const nw = Math.max(8, Math.min(80, startW + dw));
+      INVITE_STATE.image2Size.w = nw;
+      resizing.style.width = nw + '%';
+      return;
+    }
     if (!dragging) return;
     const rect = card.getBoundingClientRect();
     const dx = (e.clientX - startX) / rect.width  * 100;
@@ -4249,7 +4293,7 @@ function _initPreviewDrag() {
     dragging.style.left = nx + '%';
     dragging.style.top  = ny + '%';
     const key = dragging.dataset.drag;
-    if (key === 'code' || key === 'input' || key === 'qr') {
+    if (key === 'code' || key === 'input' || key === 'qr' || key === 'image2') {
       INVITE_STATE.positions[key] = { x: nx, y: ny };
     } else if (key.startsWith('text_')) {
       const id = parseInt(key.split('_')[1]);
@@ -4258,13 +4302,26 @@ function _initPreviewDrag() {
     }
   };
 
-  const onUp = () => { dragging = null; };
+  const onUp = () => { dragging = null; resizing = null; };
   card.addEventListener('mousemove', onMove);
   card.addEventListener('mouseup', onUp);
   card.addEventListener('mouseleave', onUp);
 }
 
 /* ---- 업로드 ---- */
+function uploadInviteImage2() {
+  const fileInput = document.getElementById('invite-custom-image2');
+  const file = fileInput?.files[0];
+  if (!file) { showToast('이미지를 선택하세요.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    INVITE_STATE.customImage2 = e.target.result;
+    liveUpdateInvitePreview();
+    showToast('이미지2 업로드 완료 — 드래그로 이동, 모서리로 크기조정', 'gold');
+  };
+  reader.readAsDataURL(file);
+}
+
 function uploadInviteImage() {
   const fileInput = document.getElementById('invite-custom-image');
   const file = fileInput.files[0];
