@@ -1035,58 +1035,27 @@
                   <input type="text" id="invite-code-label" class="form-input" placeholder="입장 코드" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
                 </div>
                 <div>
-                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">입력란 라벨</label>
-                  <input type="text" id="invite-input-label" class="form-input" placeholder="이메일 또는 단체명" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">단체명 라벨</label>
+                  <input type="text" id="invite-org-label" class="form-input" placeholder="단체명" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
                 </div>
               </div>
-              <div>
-                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">코드 공개 메시지</label>
-                <input type="text" id="invite-code-message" class="form-input" placeholder="입장코드가 공개되었습니다" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div>
+                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">이메일 라벨</label>
+                  <input type="text" id="invite-email-label" class="form-input" placeholder="이메일" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                </div>
+                <div>
+                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">코드 공개 메시지</label>
+                  <input type="text" id="invite-code-message" class="form-input" placeholder="입장코드가 공개되었습니다" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                </div>
               </div>
             </div>
 
             <div style="margin-bottom:10px;padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:4px;">
-              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">📐 레이아웃 (선택)</div>
-
-              <div style="margin-bottom:8px;">
-                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">텍스트 수직 위치</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-                  <button type="button" onclick="setLayoutOpt('text_position', 'top')" id="btn-text-top" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">위</button>
-                  <button type="button" onclick="setLayoutOpt('text_position', 'middle')" id="btn-text-middle" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">중간</button>
-                  <button type="button" onclick="setLayoutOpt('text_position', 'bottom')" id="btn-text-bottom" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">아래</button>
-                </div>
-              </div>
-
-              <div style="margin-bottom:8px;">
-                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">텍스트 수평 정렬</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-                  <button type="button" onclick="setLayoutOpt('text_align', 'left')" id="btn-text-left" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">◀ 왼쪽</button>
-                  <button type="button" onclick="setLayoutOpt('text_align', 'center')" id="btn-text-center" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▮ 중앙</button>
-                  <button type="button" onclick="setLayoutOpt('text_align', 'right')" id="btn-text-right" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">▶ 오른쪽</button>
-                </div>
-              </div>
-
-              <div style="margin-bottom:8px;">
-                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">입장코드 칸 위치</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-                  <button type="button" onclick="setLayoutOpt('code_position', 'top')" id="btn-code-top" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">위</button>
-                  <button type="button" onclick="setLayoutOpt('code_position', 'middle')" id="btn-code-middle" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">중간</button>
-                  <button type="button" onclick="setLayoutOpt('code_position', 'bottom')" id="btn-code-bottom" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">아래</button>
-                </div>
-              </div>
-
-              <div style="margin-bottom:8px;">
-                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">입력란 위치</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-                  <button type="button" onclick="setLayoutOpt('input_position', 'top')" id="btn-input-top" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">위</button>
-                  <button type="button" onclick="setLayoutOpt('input_position', 'middle')" id="btn-input-middle" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">중간</button>
-                  <button type="button" onclick="setLayoutOpt('input_position', 'bottom')" id="btn-input-bottom" class="layout-btn" style="padding:6px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">아래</button>
-                </div>
-              </div>
-
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">📝 추가 텍스트 (선택)</div>
               <div>
-                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">추가 텍스트</label>
-                <input type="text" id="invite-extra-text" placeholder="(선택) 추가 설명 텍스트" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);">
+                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">메모 또는 추가 안내</label>
+                <textarea id="invite-extra-text" placeholder="사용자에게 보여줄 추가 텍스트 (예: 유의사항, 주의사항 등)" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);border-radius:3px;resize:vertical;min-height:60px;"></textarea>
               </div>
             </div>
 
@@ -1712,42 +1681,35 @@ function showInviteCard(inv) {
   const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
   const labels = inv.labels || {
     code_label: '입장 코드',
-    input_label: '이메일 또는 단체명',
+    org_label: '단체명',
+    email_label: '이메일',
     code_message: '입장코드가 공개되었습니다'
-  };
-  const layout = inv.layout_options || {
-    text_position: 'top',
-    text_align: 'center',
-    code_position: 'middle',
-    input_position: 'bottom',
-    extra_text: ''
-  };
-
-  const textAlign = { left: 'flex-start', center: 'center', right: 'flex-end' }[layout.text_align] || 'center';
-
-  const getOrderStyle = (pos) => {
-    const order = { top: 1, middle: 2, bottom: 3 }[pos] || 2;
-    return order;
   };
 
   entryBox.innerHTML = `
-    <div style="padding:20px;border:1px solid rgba(201,168,76,0.3);border-radius:4px;background:rgba(0,0,0,0.3);display:flex;flex-direction:column;gap:12px;">
-      <div style="font-size:14px;color:var(--gold);margin-bottom:4px;font-weight:bold;text-align:center;">🏢 ${inv.org}</div>
+    <div style="padding:20px;border:1px solid rgba(201,168,76,0.3);border-radius:4px;background:rgba(0,0,0,0.3);">
+      <div style="font-size:14px;color:var(--gold);margin-bottom:16px;font-weight:bold;text-align:center;">🏢 ${inv.org}</div>
 
-      <div id="invite-message" style="order:${getOrderStyle(layout.text_position)};font-size:11px;color:var(--text-dim);padding:12px;background:rgba(201,168,76,0.05);border-radius:3px;display:none;text-align:${layout.text_align};"></div>
+      <div id="invite-message" style="font-size:11px;color:var(--text-dim);padding:12px;background:rgba(201,168,76,0.05);border-radius:3px;display:none;margin-bottom:12px;"></div>
 
-      <div style="order:${getOrderStyle(layout.code_position)};display:flex;justify-content:center;">
+      <div style="display:flex;justify-content:center;margin-bottom:16px;">
         <div style="width:100px;height:130px;background:${tpl.bg};border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:14px;">
           <div style="font-size:28px;letter-spacing:2px;margin-bottom:8px;">${inv.code}</div>
           <div style="font-size:9px;letter-spacing:0.5px;">${labels.code_label}</div>
         </div>
       </div>
 
-      <div style="order:${getOrderStyle(layout.input_position)};">
-        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;text-align:center;">${labels.input_label} 확인 후<br>입장코드가 공개됩니다</div>
-        <input type="text" id="invite-verify-input" placeholder="${labels.input_label}" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;margin-bottom:8px;">
-        <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:8px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;border-radius:3px;">확인</button>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:10px;color:var(--gold);margin-bottom:4px;font-weight:bold;">📋 ${labels.org_label}</label>
+        <input type="text" id="invite-org-input" placeholder="${labels.org_label}" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;">
       </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:10px;color:var(--gold);margin-bottom:4px;font-weight:bold;">📧 ${labels.email_label}</label>
+        <input type="text" id="invite-email-input" placeholder="${labels.email_label}" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;">
+      </div>
+
+      <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;border-radius:3px;font-weight:bold;margin-bottom:12px;">확인</button>
 
       <div id="invite-code-reveal" style="display:none;">
         <div style="font-size:10px;color:var(--text-dim);margin-bottom:6px;text-align:center;">✓ ${labels.code_message}</div>
@@ -1755,7 +1717,7 @@ function showInviteCard(inv) {
         <button onclick="verifyCodeWithInvite('${inv.code}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:3px;font-weight:bold;">입장하기</button>
       </div>
 
-      ${layout.extra_text ? `<div style="font-size:10px;color:var(--text-dim);padding:8px;background:rgba(201,168,76,0.03);border-radius:3px;text-align:center;">${layout.extra_text}</div>` : ''}
+      ${inv.extra_text ? `<div style="font-size:10px;color:var(--text-dim);padding:10px;background:rgba(201,168,76,0.03);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-top:12px;white-space:pre-wrap;line-height:1.5;">${inv.extra_text}</div>` : ''}
     </div>`;
 
   setTimeout(() => {
@@ -1770,23 +1732,33 @@ function showInviteCard(inv) {
 }
 
 function verifyInvite(inviteId) {
-  const input = document.getElementById('invite-verify-input').value.trim().toLowerCase();
+  const orgInput = document.getElementById('invite-org-input').value.trim().toLowerCase();
+  const emailInput = document.getElementById('invite-email-input').value.trim().toLowerCase();
   const invites = DB.get('invites', []);
   const inv = invites.find(x => x.id == inviteId);
 
   if (!inv) return;
 
-  if (inv.org.toLowerCase() === input || inv.email.toLowerCase() === input) {
-    // 추적 저장
+  const orgMatch = inv.org.toLowerCase() === orgInput;
+  const emailMatch = inv.email.toLowerCase() === emailInput;
+
+  if (orgMatch && emailMatch) {
     saveInviteTracking(inv);
-    // 코드 공개
     document.getElementById('invite-code-reveal').style.display = 'block';
-    document.getElementById('invite-verify-input').disabled = true;
+    document.getElementById('invite-org-input').disabled = true;
+    document.getElementById('invite-email-input').disabled = true;
     document.querySelector('button[onclick*="verifyInvite"]').disabled = true;
+    showToast('인증되었습니다!', 'gold');
   } else {
-    document.getElementById('invite-verify-input').style.borderColor = '#c0392b';
-    setTimeout(() => document.getElementById('invite-verify-input').style.borderColor = '', 1500);
-    showToast('일치하지 않습니다.', 'error');
+    if (!orgMatch) {
+      document.getElementById('invite-org-input').style.borderColor = '#c0392b';
+      setTimeout(() => document.getElementById('invite-org-input').style.borderColor = '', 1500);
+    }
+    if (!emailMatch) {
+      document.getElementById('invite-email-input').style.borderColor = '#c0392b';
+      setTimeout(() => document.getElementById('invite-email-input').style.borderColor = '', 1500);
+    }
+    showToast('단체명과 이메일이 일치하지 않습니다.', 'error');
   }
 }
 
@@ -4057,10 +4029,11 @@ function createInviteCard() {
     url: `${window.location.origin}?invite=${inviteId}`,
     labels: {
       code_label: document.getElementById('invite-code-label').value.trim() || '입장 코드',
-      input_label: document.getElementById('invite-input-label').value.trim() || '이메일 또는 단체명',
+      org_label: document.getElementById('invite-org-label').value.trim() || '단체명',
+      email_label: document.getElementById('invite-email-label').value.trim() || '이메일',
       code_message: document.getElementById('invite-code-message').value.trim() || '입장코드가 공개되었습니다'
     },
-    layout_options: { ...INVITE_LAYOUT_OPT },
+    extra_text: document.getElementById('invite-extra-text').value.trim() || '',
     share_stats: { telegram: 0, sns: 0, kakao: 0, email: 0, sms: 0, line: 0, facebook: 0, twitter: 0, linkedin: 0, whatsapp: 0, view: 0 }
   });
 
@@ -4076,15 +4049,10 @@ function createInviteCard() {
   document.getElementById('invite-msg-zh').value = '';
   document.getElementById('invite-msg-es').value = '';
   document.getElementById('invite-code-label').value = '';
-  document.getElementById('invite-input-label').value = '';
+  document.getElementById('invite-org-label').value = '';
+  document.getElementById('invite-email-label').value = '';
   document.getElementById('invite-code-message').value = '';
   document.getElementById('invite-extra-text').value = '';
-  INVITE_LAYOUT_OPT.text_position = 'top';
-  INVITE_LAYOUT_OPT.text_align = 'center';
-  INVITE_LAYOUT_OPT.code_position = 'middle';
-  INVITE_LAYOUT_OPT.input_position = 'bottom';
-  INVITE_LAYOUT_OPT.extra_text = '';
-  document.querySelectorAll('.layout-btn').forEach(btn => btn.style.background = 'rgba(201,168,76,0.1)');
   renderInviteList();
   showToast('초대장이 생성되었습니다.', 'gold');
 }
