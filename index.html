@@ -1025,6 +1025,25 @@
               </div>
             </div>
             <button class="btn-secondary" onclick="autoTranslateInviteMsg()" style="width:100%;margin-bottom:10px;">🌐 자동 번역</button>
+
+            <div style="margin-bottom:10px;padding:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:4px;">
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">⚙️ 라벨 텍스트 (선택)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div>
+                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">코드 라벨</label>
+                  <input type="text" id="invite-code-label" class="form-input" placeholder="입장 코드" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                </div>
+                <div>
+                  <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">입력란 라벨</label>
+                  <input type="text" id="invite-input-label" class="form-input" placeholder="이메일 또는 단체명" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+                </div>
+              </div>
+              <div>
+                <label style="display:block;font-size:9px;color:var(--text-dim);margin-bottom:4px;">코드 공개 메시지</label>
+                <input type="text" id="invite-code-message" class="form-input" placeholder="입장코드가 공개되었습니다" style="width:100%;padding:6px;font-size:11px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);">
+              </div>
+            </div>
+
             <button class="btn-primary" onclick="createInviteCard()" style="width:100%;">초대장 생성</button>
           </div>
           <!-- 미리보기 -->
@@ -1645,6 +1664,11 @@ setLang(_lang);
 function showInviteCard(inv) {
   const entryBox = document.querySelector('.entry-box');
   const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
+  const labels = inv.labels || {
+    code_label: '입장 코드',
+    input_label: '이메일 또는 단체명',
+    code_message: '입장코드가 공개되었습니다'
+  };
 
   entryBox.innerHTML = `
     <div style="padding:20px;border:1px solid rgba(201,168,76,0.3);border-radius:4px;background:rgba(0,0,0,0.3);text-align:center;">
@@ -1654,14 +1678,14 @@ function showInviteCard(inv) {
         </div>
         <div style="text-align:left;">
           <div style="font-size:14px;color:var(--gold);margin-bottom:4px;font-weight:bold;">🏢 ${inv.org}</div>
-          <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">이메일 또는 단체명 확인 후<br>입장코드가 공개됩니다</div>
-          <input type="text" id="invite-verify-input" placeholder="이메일 또는 단체명 입력" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;margin-bottom:8px;">
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">${labels.input_label} 확인 후<br>입장코드가 공개됩니다</div>
+          <input type="text" id="invite-verify-input" placeholder="${labels.input_label}" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;margin-bottom:8px;">
           <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:8px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;border-radius:3px;">확인</button>
         </div>
       </div>
       <div id="invite-message" style="font-size:11px;color:var(--text-dim);margin-top:12px;padding:12px;background:rgba(201,168,76,0.05);border-radius:3px;display:none;"></div>
       <div id="invite-code-reveal" style="margin-top:12px;display:none;">
-        <div style="font-size:10px;color:var(--text-dim);margin-bottom:6px;">✓ 입장코드가 공개되었습니다</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:6px;">✓ ${labels.code_message}</div>
         <div style="font-size:16px;color:var(--gold);font-family:'Courier New';font-weight:bold;letter-spacing:2px;padding:10px;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.1);border-radius:3px;margin-bottom:10px;">${inv.code}</div>
         <button onclick="verifyCodeWithInvite('${inv.code}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:3px;font-weight:bold;">입장하기</button>
       </div>
@@ -3934,7 +3958,12 @@ function createInviteCard() {
     id: inviteId,
     org, email, code, template: tplId, messages: msgs,
     created: new Date().toISOString(),
-    url: `${window.location.origin}?invite=${inviteId}`
+    url: `${window.location.origin}?invite=${inviteId}`,
+    labels: {
+      code_label: document.getElementById('invite-code-label').value.trim() || '입장 코드',
+      input_label: document.getElementById('invite-input-label').value.trim() || '이메일 또는 단체명',
+      code_message: document.getElementById('invite-code-message').value.trim() || '입장코드가 공개되었습니다'
+    }
   });
 
   DB.set('invites', invites);
@@ -3946,6 +3975,11 @@ function createInviteCard() {
   document.getElementById('invite-msg-ko').value = '';
   document.getElementById('invite-msg-en').value = '';
   document.getElementById('invite-msg-ja').value = '';
+  document.getElementById('invite-msg-zh').value = '';
+  document.getElementById('invite-msg-es').value = '';
+  document.getElementById('invite-code-label').value = '';
+  document.getElementById('invite-input-label').value = '';
+  document.getElementById('invite-code-message').value = '';
   renderInviteList();
   showToast('초대장이 생성되었습니다.', 'gold');
 }
