@@ -1634,6 +1634,99 @@ setLang(_lang);
 // ============================================================
 // ENTRY
 // ============================================================
+
+// 초대 링크 감지
+(function checkInviteLink() {
+  const params = new URLSearchParams(window.location.search);
+  const inviteId = params.get('invite');
+  if (inviteId) {
+    const invites = DB.get('invites', []);
+    const inv = invites.find(x => x.id == inviteId);
+    if (inv) {
+      // 초대 조회 탭으로 자동 전환
+      switchEntryTab('invite');
+      // 초대 정보 미리 표시
+      showInviteCard(inv);
+    }
+  }
+})();
+
+function showInviteCard(inv) {
+  const resultEl = document.getElementById('invite-search-result');
+  const tpl = INVITE_TEMPLATES.find(t => t.id === inv.template);
+
+  resultEl.innerHTML = `
+    <div style="padding:20px;border:1px solid rgba(201,168,76,0.3);border-radius:4px;background:rgba(0,0,0,0.3);text-align:center;">
+      <div style="display:flex;gap:16px;margin-bottom:16px;justify-content:center;align-items:center;">
+        <div style="width:100px;height:130px;background:${tpl.bg};border-radius:4px;display:flex;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:14px;flex-shrink:0;">
+          ${inv.code}
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:14px;color:var(--gold);margin-bottom:4px;font-weight:bold;">🏢 ${inv.org}</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">이메일 또는 단체명 확인 후<br>입장코드가 공개됩니다</div>
+          <input type="text" id="invite-verify-input" placeholder="이메일 또는 단체명 입력" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);color:var(--text);padding:8px;font-size:11px;border-radius:3px;margin-bottom:8px;">
+          <button onclick="verifyInvite('${inv.id}')" style="width:100%;padding:8px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:11px;cursor:pointer;border-radius:3px;">확인</button>
+        </div>
+      </div>
+      <div id="invite-message" style="font-size:11px;color:var(--text-dim);margin-top:12px;padding:12px;background:rgba(201,168,76,0.05);border-radius:3px;display:none;"></div>
+      <div id="invite-code-reveal" style="margin-top:12px;display:none;">
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:6px;">✓ 입장코드가 공개되었습니다</div>
+        <div style="font-size:16px;color:var(--gold);font-family:'Courier New';font-weight:bold;letter-spacing:2px;padding:10px;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.1);border-radius:3px;margin-bottom:10px;">${inv.code}</div>
+        <button onclick="verifyCodeWithInvite('${inv.code}')" style="width:100%;padding:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:12px;cursor:pointer;border-radius:3px;font-weight:bold;">입장하기</button>
+      </div>
+    </div>`;
+
+  if (inv.messages.ko) {
+    document.getElementById('invite-message').textContent = inv.messages.ko;
+    document.getElementById('invite-message').style.display = 'block';
+  }
+}
+
+function verifyInvite(inviteId) {
+  const input = document.getElementById('invite-verify-input').value.trim().toLowerCase();
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id == inviteId);
+
+  if (!inv) return;
+
+  if (inv.org.toLowerCase() === input || inv.email.toLowerCase() === input) {
+    // 추적 저장
+    saveInviteTracking(inv);
+    // 코드 공개
+    document.getElementById('invite-code-reveal').style.display = 'block';
+    document.getElementById('invite-verify-input').disabled = true;
+    document.querySelector('button[onclick*="verifyInvite"]').disabled = true;
+  } else {
+    document.getElementById('invite-verify-input').style.borderColor = '#c0392b';
+    setTimeout(() => document.getElementById('invite-verify-input').style.borderColor = '', 1500);
+    showToast('일치하지 않습니다.', 'error');
+  }
+}
+
+function verifyCodeWithInvite(code) {
+  const codes = DB.get('codes', []);
+  const found = codes.find(c => c.code === code);
+  if (found) {
+    currentCode = found.code;
+    currentOrg = found.org;
+    currentCodeObj = found;
+
+    // 입장 로그 기록
+    const logs = DB.get('entry_logs', []);
+    logs.unshift({
+      code: found.code,
+      org: found.org,
+      time: new Date().toISOString(),
+      ua: navigator.userAgent.slice(0,80),
+      source: 'invite'
+    });
+    if (logs.length > 500) logs.length = 500;
+    DB.set('entry_logs', logs);
+
+    enterMain();
+  }
+}
+
 document.getElementById('entry-code-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); verifyCode(); }
 });
@@ -3920,11 +4013,12 @@ function createInviteCard() {
     ja: document.getElementById('invite-msg-ja').value.trim()
   };
 
+  const inviteId = Date.now();
   invites.push({
-    id: Date.now(),
+    id: inviteId,
     org, email, code, template: tplId, messages: msgs,
     created: new Date().toISOString(),
-    url: `${window.location.origin}?code=${code}`
+    url: `${window.location.origin}?invite=${inviteId}`
   });
 
   DB.set('invites', invites);
