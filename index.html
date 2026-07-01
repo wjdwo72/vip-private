@@ -5078,6 +5078,7 @@ function uploadInviteImage() {
 
 /* ---- 초대장 생성 ---- */
 function createInviteCard() {
+  try {
   const org = (document.getElementById('invite-org') || {}).value?.trim();
   const email = (document.getElementById('invite-email') || {}).value?.trim();
   const codeEl = document.getElementById('invite-code-select');
@@ -5172,6 +5173,7 @@ function createInviteCard() {
   liveUpdateInvitePreview();
   renderInviteList();
   showToast(_wasEditing ? '초대장이 수정되었습니다!' : '초대장이 생성되었습니다! 📤 보내기로 공유하세요.', 'gold');
+  } catch(err) { showToast('오류: ' + err.message, 'error'); console.error(err); }
 }
 
 /* ---- 썸네일 캡처 ---- */
