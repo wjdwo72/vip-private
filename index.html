@@ -1255,19 +1255,30 @@
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                ${[['qr','QR'],['header','헤더'],['org','단체명']].map(([key,label])=>`
                 <div style="padding:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;">
-                  <div style="font-size:9px;color:var(--text-dim);margin-bottom:5px;">${label}</div>
+                  <div style="font-size:9px;color:var(--text-dim);margin-bottom:5px;">QR</div>
                   <div style="display:flex;align-items:center;gap:6px;">
-                    <input type="color" value="#000000"
-                      oninput="INVITE_STATE.boxBg['${key}'].color=this.value;liveUpdateInvitePreview()"
-                      style="width:30px;height:24px;border:none;background:transparent;cursor:pointer;padding:0;">
-                    <input type="range" min="0" max="1" step="0.05" value="0"
-                      oninput="INVITE_STATE.boxBg['${key}'].opacity=parseFloat(this.value);this.nextElementSibling.textContent=Math.round(parseFloat(this.value)*100)+'%';liveUpdateInvitePreview()"
-                      style="flex:1;accent-color:var(--gold);">
+                    <input type="color" value="#000000" oninput="INVITE_STATE.boxBg['qr'].color=this.value;liveUpdateInvitePreview()" style="width:30px;height:24px;border:none;background:transparent;cursor:pointer;padding:0;">
+                    <input type="range" min="0" max="1" step="0.05" value="0" oninput="INVITE_STATE.boxBg['qr'].opacity=parseFloat(this.value);this.nextElementSibling.textContent=Math.round(parseFloat(this.value)*100)+'%';liveUpdateInvitePreview()" style="flex:1;accent-color:var(--gold);">
                     <span style="font-size:9px;color:var(--text-dim);min-width:28px;text-align:right;">0%</span>
                   </div>
-                </div>`).join('')}
+                </div>
+                <div style="padding:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;">
+                  <div style="font-size:9px;color:var(--text-dim);margin-bottom:5px;">헤더</div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="color" value="#000000" oninput="INVITE_STATE.boxBg['header'].color=this.value;liveUpdateInvitePreview()" style="width:30px;height:24px;border:none;background:transparent;cursor:pointer;padding:0;">
+                    <input type="range" min="0" max="1" step="0.05" value="0" oninput="INVITE_STATE.boxBg['header'].opacity=parseFloat(this.value);this.nextElementSibling.textContent=Math.round(parseFloat(this.value)*100)+'%';liveUpdateInvitePreview()" style="flex:1;accent-color:var(--gold);">
+                    <span style="font-size:9px;color:var(--text-dim);min-width:28px;text-align:right;">0%</span>
+                  </div>
+                </div>
+                <div style="padding:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:4px;">
+                  <div style="font-size:9px;color:var(--text-dim);margin-bottom:5px;">단체명</div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="color" value="#000000" oninput="INVITE_STATE.boxBg['org'].color=this.value;liveUpdateInvitePreview()" style="width:30px;height:24px;border:none;background:transparent;cursor:pointer;padding:0;">
+                    <input type="range" min="0" max="1" step="0.05" value="0" oninput="INVITE_STATE.boxBg['org'].opacity=parseFloat(this.value);this.nextElementSibling.textContent=Math.round(parseFloat(this.value)*100)+'%';liveUpdateInvitePreview()" style="flex:1;accent-color:var(--gold);">
+                    <span style="font-size:9px;color:var(--text-dim);min-width:28px;text-align:right;">0%</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -4680,6 +4691,11 @@ function liveUpdateInvitePreview() {
   const tplId = parseInt(document.getElementById('invite-template-selector')?.dataset?.selected || 1);
   const tpl = INVITE_TEMPLATES.find(t => t.id === tplId) || INVITE_TEMPLATES[0];
   const lang = INVITE_STATE.previewLang;
+  const _pvTxt = {
+    confirm:   {ko:'확인',en:'Confirm',ja:'確認',zh:'确认',es:'Confirmar'},
+    visitSite: {ko:'🌐 사이트 방문하기',en:'🌐 Visit Site',ja:'🌐 サイトへ',zh:'🌐 访问网站',es:'🌐 Visitar sitio'},
+  };
+  const _pv = k => _pvTxt[k]?.[lang] || _pvTxt[k]?.ko || '';
   const customBg = INVITE_STATE.customImage;
   const pos = INVITE_STATE.positions;
   const lbl = (INVITE_STATE.inputLabelLangs?.[lang] || INVITE_STATE.inputLabel || '이메일 또는 단체명을 입력하세요');
@@ -4795,7 +4811,7 @@ function liveUpdateInvitePreview() {
       <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:5px;text-align:center;font-family:'${lblFont}',serif;">${lbl}</div>
       <div style="height:26px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);border-radius:3px;margin-bottom:4px;"></div>
       <div style="height:26px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:10px;color:${tpl.accent};">확인</span>
+        <span style="font-size:10px;color:${tpl.accent};">${_pv('confirm')}</span>
       </div>
     </div>`);
 
@@ -4826,7 +4842,7 @@ function liveUpdateInvitePreview() {
         ${dragHint}${resizeHandle('visitBtn')}
         <div style="width:${vbW}px;padding:8px 0;background:rgba(201,168,76,0.2);${_vbBorderStyle()}
              border-radius:4px;text-align:center;font-size:11px;color:${tpl.accent};letter-spacing:1px;">
-          🌐 사이트 방문하기
+          ${_pv('visitSite')}
         </div>
       </div>`);
   }
