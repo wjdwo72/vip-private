@@ -2650,19 +2650,17 @@ async function sendToTelegram(record, targetChannelId = null) {
 
   // 관리자 채널 — 항상 수신
   const adminChannels = allChannels.filter(c => c.is_admin);
+  // 미지정 채널 — code_id, link_id 없음 → 전체 수신
+  const generalChannels = allChannels.filter(c => !c.is_admin && !c.code_id && !c.link_id);
   // 코드 지정 채널 — record.code 매칭
   const codeChannels = record?.code
-    ? allChannels.filter(c => !c.is_admin && c.code_id && c.code_id === record.code && !c.link_id)
+    ? allChannels.filter(c => !c.is_admin && c.code_id && c.code_id === record.code)
     : [];
   // 링크 지정 채널 — record.link_id 매칭
   const inviteChannels = record?.link_id
     ? allChannels.filter(c => !c.is_admin && c.link_id && String(c.link_id) === String(record.link_id))
     : [];
-  // 메뉴 지정 채널 — targetChannelId 매칭
-  const menuChannels = targetChannelId
-    ? allChannels.filter(c => c.id === targetChannelId && !c.is_admin && !c.code_id && !c.link_id)
-    : [];
-  const channels = [...adminChannels, ...codeChannels, ...inviteChannels, ...menuChannels].filter(
+  const channels = [...adminChannels, ...generalChannels, ...codeChannels, ...inviteChannels].filter(
     (c, i, arr) => arr.findIndex(x => x.id === c.id) === i
   );
 
