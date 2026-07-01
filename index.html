@@ -927,15 +927,13 @@
         <div id="new-tg-code-wrap" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:10px;color:var(--text-dim);letter-spacing:1px;white-space:nowrap;min-width:90px;">입장코드 전용:</span>
-            <select id="new-tg-code" style="flex:1;background:var(--card-bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);padding:5px 8px;font-size:10px;cursor:pointer;"
-              onchange="if(this.value){document.getElementById('new-tg-link').value='';}">
+            <select id="new-tg-code" style="flex:1;background:var(--card-bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);padding:5px 8px;font-size:10px;cursor:pointer;">
               <option value="">-- 미지정 --</option>
             </select>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:10px;color:#a8f;letter-spacing:1px;white-space:nowrap;min-width:90px;">링크 전용:</span>
-            <select id="new-tg-link" style="flex:1;background:var(--card-bg);color:#a8f;border:1px solid rgba(170,130,255,0.2);padding:5px 8px;font-size:10px;cursor:pointer;"
-              onchange="if(this.value){document.getElementById('new-tg-code').value='';}">
+            <select id="new-tg-link" style="flex:1;background:var(--card-bg);color:#a8f;border:1px solid rgba(170,130,255,0.2);padding:5px 8px;font-size:10px;cursor:pointer;">
               <option value="">-- 미지정 --</option>
             </select>
           </div>
