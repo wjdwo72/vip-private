@@ -606,6 +606,7 @@
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode.js/1.5.3/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -5109,6 +5110,9 @@ function createInviteCard() {
   }
   DB.set('invites', invites);
 
+  /* 썸네일 캡처 (비동기, 저장 완료 후) */
+  captureInviteThumbnail(inv.id);
+
   /* 초기화 */
   document.getElementById('invite-org').value = '';
   document.getElementById('invite-email').value = '';
@@ -5131,6 +5135,20 @@ function createInviteCard() {
   showToast(_wasEditing ? '초대장이 수정되었습니다!' : '초대장이 생성되었습니다! 📤 보내기로 공유하세요.', 'gold');
 }
 
+/* ---- 썸네일 캡처 ---- */
+async function captureInviteThumbnail(invId) {
+  if (typeof html2canvas === 'undefined') return;
+  const card = document.getElementById('invite-preview-card');
+  if (!card) return;
+  try {
+    const canvas = await html2canvas(card, { scale:0.5, useCORS:true, allowTaint:true, logging:false, backgroundColor:null });
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+    const invites = DB.get('invites', []);
+    const inv = invites.find(x => x.id === invId);
+    if (inv) { inv.thumbnail = dataUrl; DB.set('invites', invites); renderInviteList(); }
+  } catch(e) {}
+}
+
 /* ---- 목록 렌더링 ---- */
 function renderInviteList() {
   const el = document.getElementById('invite-list');
@@ -5147,8 +5165,10 @@ function renderInviteList() {
     return `
       <div style="padding:14px;border:1px solid rgba(201,168,76,0.2);border-radius:6px;margin-bottom:10px;">
         <div style="display:flex;gap:12px;margin-bottom:10px;">
-          <div style="width:70px;height:90px;flex-shrink:0;${bgThumb}border-radius:4px;display:flex;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:11px;cursor:pointer;border:1px solid rgba(201,168,76,0.2);" onclick="window.open('${inv.url}','_blank')">
-            ${inv.customImage ? '' : inv.code}
+          <div style="width:70px;height:90px;flex-shrink:0;border-radius:4px;overflow:hidden;cursor:pointer;border:1px solid rgba(201,168,76,0.2);" onclick="window.open('${inv.url}','_blank')">
+            ${inv.thumbnail
+              ? `<img src="${inv.thumbnail}" style="width:100%;height:100%;object-fit:cover;">`
+              : `<div style="width:100%;height:100%;${bgThumb}display:flex;align-items:center;justify-content:center;color:${tpl.accent};font-family:'Courier New';font-weight:bold;font-size:11px;">${inv.customImage ? '' : inv.code}</div>`}
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;color:var(--gold);font-weight:bold;margin-bottom:2px;">${inv.org}</div>
