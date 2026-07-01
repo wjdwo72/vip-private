@@ -5283,32 +5283,38 @@ async function shareInviteTelegram(id) {
   const token = DB.get('tg_token','');
   const channels = DB.get('tg_channels',[]).filter(c => !c.is_admin);
 
+  const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
+  const caption = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.${msg ? '\n\n'+msg : ''}\n\n🔗 ${inv.url}`;
+
   if (!token || !channels.length) {
-    // 봇 미설정 시 기존 방식으로 폴백
-    const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
-    const text = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n\n${msg}\n\n${inv.url}`;
     recordShareAttempt(id,'telegram');
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(caption)}`, '_blank');
     return;
   }
 
-  showToast('초대장 이미지 전송 중...', 'gold');
+  showToast('초대장 이미지 캡처 중...', 'gold');
 
-  // 카드 캡처
+  // 오프스크린 컨테이너에 초대 카드 렌더링
   let blob = null;
-  const card = document.getElementById('invite-preview-card');
-  if (card && typeof html2canvas !== 'undefined') {
+  if (typeof html2canvas !== 'undefined') {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:360px;height:640px;z-index:-1;';
+    document.body.appendChild(wrap);
     try {
-      const cvs = await html2canvas(card, { scale:2, useCORS:true, allowTaint:true, logging:false, backgroundColor:null });
+      renderInviteCardForUser(inv, wrap);
+      await new Promise(r => setTimeout(r, 300)); // 폰트/이미지 로드 대기
+      const cvs = await html2canvas(wrap.firstElementChild || wrap, {
+        scale: 2, useCORS: true, allowTaint: true, logging: false, backgroundColor: null,
+        width: 360, height: 640
+      });
       blob = await new Promise(res => cvs.toBlob(res, 'image/jpeg', 0.92));
-    } catch(e) {}
+    } catch(e) { console.error('capture fail', e); }
+    document.body.removeChild(wrap);
   }
-
-  const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
-  const caption = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n${msg ? '\n'+msg+'\n' : ''}\n🔗 ${inv.url}`;
 
   recordShareAttempt(id,'telegram');
 
+  showToast('텔레그램 전송 중...', 'gold');
   let sent = 0;
   for (const ch of channels) {
     try {
@@ -5318,7 +5324,8 @@ async function shareInviteTelegram(id) {
         form.append('photo', blob, 'invite.jpg');
         form.append('caption', caption);
         const r = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method:'POST', body:form });
-        if ((await r.json()).ok) { sent++; continue; }
+        const rj = await r.json();
+        if (rj.ok) { sent++; continue; }
       }
       // 이미지 실패 시 텍스트 폴백
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
