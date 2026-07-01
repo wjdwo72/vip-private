@@ -5329,20 +5329,32 @@ async function shareInviteTelegram(id) {
 
   showToast('텔레그램 전송 중...', 'gold');
 
-  // 공유 모달에서 미리 캡처된 blob 사용, 없으면 새로 캡처
+  // 1순위: 공유 모달에서 미리 캡처된 blob
+  // 2순위: 저장된 썸네일 data URL → blob 변환
+  // 3순위: html2canvas 새 캡처
   let blob = _shareBlob || null;
+
+  if (!blob && inv.thumbnail) {
+    try {
+      const res = await fetch(inv.thumbnail);
+      blob = await res.blob();
+    } catch(e) {}
+  }
+
   if (!blob && typeof html2canvas !== 'undefined') {
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:360px;height:640px;z-index:-1;';
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:360px;height:560px;z-index:-1;';
     document.body.appendChild(wrap);
     try {
       renderInviteCardForUser(inv, wrap);
-      await new Promise(r => setTimeout(r, 400));
-      const cvs = await html2canvas(wrap.firstElementChild || wrap, {
-        scale: 2, useCORS: true, allowTaint: true, logging: false, backgroundColor: null,
-        width: 360, height: 640
+      await new Promise(r => setTimeout(r, 500));
+      const target = wrap.firstElementChild || wrap;
+      const cvs = await html2canvas(target, {
+        scale: 1.5, useCORS: true, allowTaint: true, logging: false,
+        backgroundColor: '#0a0a0a',
+        width: 360, height: 560
       });
-      blob = await new Promise(res => cvs.toBlob(res, 'image/jpeg', 0.92));
+      blob = await new Promise(res => cvs.toBlob(res, 'image/jpeg', 0.85));
     } catch(e) { console.error('capture fail', e); }
     document.body.removeChild(wrap);
   }
