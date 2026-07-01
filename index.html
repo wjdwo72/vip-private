@@ -2025,14 +2025,13 @@ function renderInviteCardForUser(inv, container) {
         style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:#fff;padding:9px 12px;font-size:12px;border-radius:4px;box-sizing:border-box;">
     </div>`;
 
-  // QR — 클릭 시 verifyInvite 호출
+  // QR — 인증 후 표시
   const qrPos = pos.qr || { x:50, y:82 };
   const qrSz  = sz.qr || 80;
   const qrEl  = `
-    <div style="position:absolute;left:${qrPos.x}%;top:${qrPos.y}%;transform:translate(-50%,-50%);text-align:center;${_iBg('qr')}border-radius:6px;padding:4px;">
-      <div id="inv-qr-box" style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:6px;cursor:pointer;margin:0 auto;overflow:hidden;"
-        onclick="verifyInvite('${inv.id}')" title="QR 클릭 → 인증"></div>
-      <div style="font-size:8px;color:${tpl.accent};margin-top:4px;opacity:0.7;">이메일/단체명 입력 후 QR 클릭</div>
+    <div id="inv-qr-wrap" style="position:absolute;left:${qrPos.x}%;top:${qrPos.y}%;transform:translate(-50%,-50%);text-align:center;${_iBg('qr')}border-radius:6px;padding:4px;display:none;">
+      <div id="inv-qr-box" style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:6px;margin:0 auto;overflow:hidden;"></div>
+      <div style="font-size:8px;color:${tpl.accent};margin-top:4px;opacity:0.7;">초대 QR</div>
     </div>`;
 
   // 방문 버튼 (인증 후 표시)
@@ -2061,14 +2060,9 @@ function renderInviteCardForUser(inv, container) {
       ${headerEl}${orgEl}${textElems}${image2El}${codeEl}${inputEl}${qrEl}${visitBtnEl}
     </div>`;
 
-  // QR 생성
-  requestAnimationFrame(() => {
-    const qrBox = document.getElementById('inv-qr-box');
-    if (qrBox && typeof QRCode !== 'undefined') {
-      qrBox.innerHTML = '';
-      new QRCode(qrBox, { text: 'https://wjdwo72.github.io/vip-private/', width:qrSz, height:qrSz, colorLight:'#fff', colorDark:'#1a1a1a' });
-    }
-  });
+  // QR은 인증 후 생성 (초기엔 숨김)
+  window._currentInvQrUrl = inv.url || 'https://wjdwo72.github.io/vip-private/';
+  window._currentInvQrSz  = qrSz;
 }
 
 function showInviteCard(inv) {
@@ -2107,6 +2101,18 @@ function verifyInvite(inviteId) {
     const revealed = document.getElementById('inv-code-revealed');
     if (hidden)   hidden.style.display   = 'none';
     if (revealed) revealed.style.display = 'block';
+
+    // QR 표시 및 생성
+    const qrWrap = document.getElementById('inv-qr-wrap');
+    if (qrWrap) {
+      qrWrap.style.display = 'block';
+      const qrBox = document.getElementById('inv-qr-box');
+      if (qrBox && typeof QRCode !== 'undefined') {
+        qrBox.innerHTML = '';
+        const sz = window._currentInvQrSz || 80;
+        new QRCode(qrBox, { text: window._currentInvQrUrl || location.href, width:sz, height:sz, colorLight:'#fff', colorDark:'#1a1a1a' });
+      }
+    }
 
     // 방문 버튼 표시
     const visitBtn = document.getElementById('inv-visit-btn');
