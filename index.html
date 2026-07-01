@@ -5179,15 +5179,26 @@ function createInviteCard() {
 /* ---- 썸네일 캡처 ---- */
 async function captureInviteThumbnail(invId) {
   if (typeof html2canvas === 'undefined') return;
-  const card = document.getElementById('invite-preview-card');
-  if (!card) return;
+  const invites = DB.get('invites', []);
+  const inv = invites.find(x => x.id === invId);
+  if (!inv) return;
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:360px;height:560px;z-index:-1;overflow:hidden;';
+  document.body.appendChild(wrap);
   try {
-    const canvas = await html2canvas(card, { scale:0.5, useCORS:true, allowTaint:true, logging:false, backgroundColor:null });
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-    const invites = DB.get('invites', []);
-    const inv = invites.find(x => x.id === invId);
-    if (inv) { inv.thumbnail = dataUrl; DB.set('invites', invites); renderInviteList(); }
-  } catch(e) {}
+    renderInviteCardForUser(inv, wrap);
+    await new Promise(r => setTimeout(r, 500));
+    const target = wrap.firstElementChild || wrap;
+    const canvas = await html2canvas(target, {
+      scale: 1, useCORS: true, allowTaint: true, logging: false,
+      backgroundColor: '#0a0a0a', width: 360, height: 560
+    });
+    inv.thumbnail = canvas.toDataURL('image/jpeg', 0.8);
+    DB.set('invites', invites);
+    renderInviteList();
+  } catch(e) { console.error('thumbnail capture fail', e); }
+  document.body.removeChild(wrap);
 }
 
 /* ---- 목록 렌더링 ---- */
