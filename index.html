@@ -5366,14 +5366,25 @@ async function shareInviteTelegram(id) {
   let sent = 0, lastErr = '';
   for (const ch of channels) {
     try {
+      // sendPhoto 시도
       const form = new FormData();
       form.append('chat_id', String(ch.id));
       form.append('photo', blob, 'invite.jpg');
       form.append('caption', caption);
       const r = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method:'POST', body:form });
       const rj = await r.json();
-      if (rj.ok) { sent++; }
-      else { lastErr = rj.description || JSON.stringify(rj); }
+      if (rj.ok) { sent++; continue; }
+      lastErr = rj.description || JSON.stringify(rj);
+
+      // sendPhoto 실패 → sendDocument 시도
+      const form2 = new FormData();
+      form2.append('chat_id', String(ch.id));
+      form2.append('document', blob, 'invite-card.jpg');
+      form2.append('caption', caption);
+      const r2 = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, { method:'POST', body:form2 });
+      const rj2 = await r2.json();
+      if (rj2.ok) { sent++; continue; }
+      lastErr = (rj2.description || JSON.stringify(rj2));
     } catch(e) { lastErr = e.message; }
   }
 
