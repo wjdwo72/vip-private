@@ -1282,7 +1282,12 @@
               </div>
             </div>
 
-            <button class="btn-primary" onclick="createInviteCard()" style="width:100%;padding:12px;font-size:13px;">✉️ 초대장 생성</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <button onclick="saveInviteDraft()" style="padding:9px;background:rgba(100,180,100,0.15);border:1px solid rgba(100,180,100,0.35);color:#8d8;font-size:11px;cursor:pointer;border-radius:4px;">💾 임시저장</button>
+              <button onclick="loadInviteDraft()" style="padding:9px;background:rgba(100,180,100,0.08);border:1px solid rgba(100,180,100,0.2);color:#6b6;font-size:11px;cursor:pointer;border-radius:4px;">📂 불러오기</button>
+            </div>
+            <button id="invite-create-btn" class="btn-primary" onclick="createInviteCard()" style="width:100%;padding:12px;font-size:13px;">✉️ 초대장 생성</button>
+            <div id="invite-edit-banner" style="display:none;text-align:center;font-size:10px;color:#fa8;margin-top:6px;">✏️ 수정 모드 — 기존 초대장을 덮어씁니다 <button onclick="cancelInviteEdit()" style="margin-left:8px;padding:2px 8px;background:rgba(200,100,50,0.2);border:1px solid rgba(200,100,50,0.4);color:#fa8;font-size:10px;cursor:pointer;border-radius:3px;">취소</button></div>
           </div>
 
           <!-- 오른쪽: 미리보기 -->
@@ -5065,7 +5070,26 @@ function createInviteCard() {
   };
 
   const invites = DB.get('invites', []);
-  invites.push(inv);
+  const _wasEditing = !!INVITE_EDIT_ID;
+  if (INVITE_EDIT_ID) {
+    const idx = invites.findIndex(x => x.id === INVITE_EDIT_ID);
+    if (idx !== -1) {
+      inv.id = INVITE_EDIT_ID;
+      inv.created = invites[idx].created;
+      inv.share_stats = invites[idx].share_stats || inv.share_stats;
+      inv.url = invites[idx].url || inv.url;
+      invites[idx] = inv;
+    } else {
+      invites.push(inv);
+    }
+    INVITE_EDIT_ID = null;
+    const btn = document.getElementById('invite-create-btn');
+    if (btn) btn.textContent = '✉️ 초대장 생성';
+    const banner = document.getElementById('invite-edit-banner');
+    if (banner) banner.style.display = 'none';
+  } else {
+    invites.push(inv);
+  }
   DB.set('invites', invites);
 
   /* 초기화 */
@@ -5087,7 +5111,7 @@ function createInviteCard() {
   renderInviteTextBlocks();
   liveUpdateInvitePreview();
   renderInviteList();
-  showToast('초대장이 생성되었습니다! 📤 보내기로 공유하세요.', 'gold');
+  showToast(_wasEditing ? '초대장이 수정되었습니다!' : '초대장이 생성되었습니다! 📤 보내기로 공유하세요.', 'gold');
 }
 
 /* ---- 목록 렌더링 ---- */
@@ -5118,6 +5142,7 @@ function renderInviteList() {
         </div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
           <button onclick="previewInvite(${inv.id})" style="padding:5px 10px;background:rgba(255,200,50,0.15);border:1px solid rgba(255,200,50,0.3);color:#ffc832;font-size:10px;cursor:pointer;border-radius:3px;">👁 미리보기</button>
+          <button onclick="loadInviteForEdit(${inv.id})" style="padding:5px 10px;background:rgba(255,140,0,0.2);border:1px solid rgba(255,140,0,0.4);color:#fa8;font-size:10px;cursor:pointer;border-radius:3px;">✏️ 수정</button>
           <button onclick="openShareMenu(${inv.id})" style="padding:5px 10px;background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.4);color:#4caf50;font-size:10px;cursor:pointer;border-radius:3px;">📤 공유</button>
           <button onclick="downloadInviteImage(${inv.id})" style="padding:5px 10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">⬇ 다운</button>
           <button onclick="copyInviteUrl(${inv.id})" style="padding:5px 10px;background:rgba(100,180,255,0.15);border:1px solid rgba(100,180,255,0.3);color:#64b4ff;font-size:10px;cursor:pointer;border-radius:3px;">🔗 URL복사</button>
@@ -5317,6 +5342,71 @@ function previewInvite(id) {
     const area = document.getElementById('preview-card-area');
     if (area) renderInviteCardForUser(inv, area);
   }, 0);
+}
+
+/* ---- 임시저장 ---- */
+function saveInviteDraft() {
+  const draft = {
+    org:   (document.getElementById('invite-org')  || {}).value || '',
+    email: (document.getElementById('invite-email') || {}).value || '',
+    code:  (() => { const el = document.getElementById('invite-code-select'); return el ? (el.value || el.dataset.newCode || '') : ''; })(),
+    tplId: parseInt(document.getElementById('invite-template-selector')?.dataset?.selected || 1),
+    state: JSON.parse(JSON.stringify(INVITE_STATE))
+  };
+  localStorage.setItem('invite_draft', JSON.stringify(draft));
+  showToast('임시저장 완료!', 'gold');
+}
+
+function loadInviteDraft() {
+  const raw = localStorage.getItem('invite_draft');
+  if (!raw) { showToast('임시저장된 내용이 없습니다.', 'error'); return; }
+  const draft = JSON.parse(raw);
+  _applyInviteState(draft);
+  showToast('임시저장 불러오기 완료!', 'gold');
+}
+
+/* ---- 수정 모드 ---- */
+let INVITE_EDIT_ID = null;
+
+function loadInviteForEdit(id) {
+  const inv = DB.get('invites', []).find(x => x.id === id);
+  if (!inv) return;
+  _applyInviteState({ org: inv.org, email: inv.email, code: inv.code, tplId: inv.template, state: inv });
+  INVITE_EDIT_ID = id;
+  const btn = document.getElementById('invite-create-btn');
+  if (btn) btn.textContent = '✏️ 초대장 수정 저장';
+  const banner = document.getElementById('invite-edit-banner');
+  if (banner) banner.style.display = 'block';
+  document.querySelector('.admin-section-title')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  showToast('수정 모드로 불러왔습니다.', 'gold');
+}
+
+function cancelInviteEdit() {
+  INVITE_EDIT_ID = null;
+  const btn = document.getElementById('invite-create-btn');
+  if (btn) btn.textContent = '✉️ 초대장 생성';
+  const banner = document.getElementById('invite-edit-banner');
+  if (banner) banner.style.display = 'none';
+  showToast('수정 취소됨.', 'gold');
+}
+
+function _applyInviteState(draft) {
+  const s = draft.state || {};
+  const fields = ['textBlocks','positions','sizes','boxBg','codeBorder','inputBorder','visitBtnBorder',
+    'image2Size','inputLabel','inputLabelSize','inputLabelColor','inputLabelFont','inputLabelLangs',
+    'headerText','headerVisible','headerSize','headerColor','headerFont',
+    'orgVisible','orgSize','orgColor','orgFont',
+    'visitBtnVisible','image2TextFont','image2TextColor','customImage','customImage2','previewLang'];
+  fields.forEach(k => { if (s[k] !== undefined) INVITE_STATE[k] = JSON.parse(JSON.stringify(s[k])); });
+  const orgEl = document.getElementById('invite-org');
+  const emailEl = document.getElementById('invite-email');
+  const codeEl = document.getElementById('invite-code-select');
+  if (orgEl)   orgEl.value   = draft.org   || '';
+  if (emailEl) emailEl.value = draft.email || '';
+  if (codeEl && draft.code) { codeEl.value = draft.code; codeEl.dataset.newCode = draft.code; }
+  if (draft.tplId) selectInviteTemplate(draft.tplId);
+  renderInviteTextBlocks();
+  liveUpdateInvitePreview();
 }
 
 /* ---- 삭제/수정 ---- */
