@@ -1055,7 +1055,7 @@
                     <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">글씨체</label>
                     <select onchange="INVITE_STATE.headerFont=this.value;liveUpdateInvitePreview()"
                       style="flex:1;padding:3px 4px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-size:10px;border-radius:3px;cursor:pointer;">
-                      ${['Noto Serif KR','Batang','Gungsuh','Nanum Myeongjo','Gowun Batang','Malgun Gothic','Noto Sans KR','Nanum Gothic','Black Han Sans','Cormorant Garamond','Playfair Display','Cinzel','Georgia','Courier New'].map(f=>`<option value="${f}" ${f==='Noto Serif KR'?'selected':''}>${f}</option>`).join('')}
+                      <option value="Noto Serif KR" selected>Noto Serif KR</option><option value="Batang">Batang</option><option value="Gungsuh">Gungsuh</option><option value="Nanum Myeongjo">Nanum Myeongjo</option><option value="Gowun Batang">Gowun Batang</option><option value="Malgun Gothic">Malgun Gothic</option><option value="Noto Sans KR">Noto Sans KR</option><option value="Nanum Gothic">Nanum Gothic</option><option value="Black Han Sans">Black Han Sans</option><option value="Cormorant Garamond">Cormorant Garamond</option><option value="Playfair Display">Playfair Display</option><option value="Cinzel">Cinzel</option><option value="Georgia">Georgia</option><option value="Courier New">Courier New</option>
                     </select>
                   </div>
                 </div>
@@ -1095,7 +1095,7 @@
                     <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">글씨체</label>
                     <select onchange="INVITE_STATE.orgFont=this.value;liveUpdateInvitePreview()"
                       style="flex:1;padding:3px 4px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-size:10px;border-radius:3px;cursor:pointer;">
-                      ${['Noto Serif KR','Batang','Gungsuh','Nanum Myeongjo','Gowun Batang','Malgun Gothic','Noto Sans KR','Nanum Gothic','Black Han Sans','Cormorant Garamond','Playfair Display','Cinzel','Georgia','Courier New'].map(f=>`<option value="${f}" ${f==='Noto Serif KR'?'selected':''}>${f}</option>`).join('')}
+                      <option value="Noto Serif KR" selected>Noto Serif KR</option><option value="Batang">Batang</option><option value="Gungsuh">Gungsuh</option><option value="Nanum Myeongjo">Nanum Myeongjo</option><option value="Gowun Batang">Gowun Batang</option><option value="Malgun Gothic">Malgun Gothic</option><option value="Noto Sans KR">Noto Sans KR</option><option value="Nanum Gothic">Nanum Gothic</option><option value="Black Han Sans">Black Han Sans</option><option value="Cormorant Garamond">Cormorant Garamond</option><option value="Playfair Display">Playfair Display</option><option value="Cinzel">Cinzel</option><option value="Georgia">Georgia</option><option value="Courier New">Courier New</option>
                     </select>
                   </div>
                 </div>
@@ -1132,7 +1132,7 @@
                   <label style="font-size:9px;color:var(--text-dim);white-space:nowrap;">글씨체</label>
                   <select onchange="INVITE_STATE.image2TextFont=this.value;liveUpdateInvitePreview()"
                     style="flex:1;padding:3px 6px;background:rgba(0,0,0,0.5);border:1px solid rgba(100,170,255,0.2);color:var(--text);font-size:10px;border-radius:3px;cursor:pointer;">
-                    ${['Courier New','Noto Serif KR','Batang','Gungsuh','Malgun Gothic','Noto Sans KR','Playfair Display','Cinzel','Georgia'].map(f=>`<option value="${f}">${f}</option>`).join('')}
+                    <option value="Courier New" selected>Courier New</option><option value="Noto Serif KR">Noto Serif KR</option><option value="Batang">Batang</option><option value="Gungsuh">Gungsuh</option><option value="Malgun Gothic">Malgun Gothic</option><option value="Noto Sans KR">Noto Sans KR</option><option value="Playfair Display">Playfair Display</option><option value="Cinzel">Cinzel</option><option value="Georgia">Georgia</option>
                   </select>
                 </div>
               </div>
@@ -1155,13 +1155,36 @@
               <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">④ 입력란 설정 <span style="font-size:9px;color:var(--text-dim);font-weight:normal;">(미리보기에서 요소 드래그로 위치 이동)</span></div>
               <div style="margin-bottom:8px;">
                 <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">안내 문구 (언어별)</label>
-                ${[['ko','🇰🇷 한국어'],['en','🇺🇸 EN'],['ja','🇯🇵 JA'],['zh','🇨🇳 ZH'],['es','🇪🇸 ES']].map(([l,flag])=>`
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                  <span style="font-size:9px;color:var(--text-dim);min-width:52px;">${flag}</span>
+                  <span style="font-size:9px;color:var(--text-dim);min-width:52px;">🇰🇷 한국어</span>
                   <input type="text" class="form-input" style="flex:1;font-size:10px;padding:4px 6px;"
-                    value="${{ko:'이메일 또는 단체명을 입력하세요',en:'Enter email or organization name',ja:'メールまたは団体名を入力',zh:'请输入邮箱或团体名称',es:'Ingrese email o nombre de organización'}[l]}"
-                    oninput="INVITE_STATE.inputLabelLangs['${l}']=this.value;liveUpdateInvitePreview()">
-                </div>`).join('')}
+                    value="이메일 또는 단체명을 입력하세요"
+                    oninput="INVITE_STATE.inputLabelLangs['ko']=this.value;liveUpdateInvitePreview()">
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <span style="font-size:9px;color:var(--text-dim);min-width:52px;">🇺🇸 EN</span>
+                  <input type="text" class="form-input" style="flex:1;font-size:10px;padding:4px 6px;"
+                    value="Enter email or organization name"
+                    oninput="INVITE_STATE.inputLabelLangs['en']=this.value;liveUpdateInvitePreview()">
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <span style="font-size:9px;color:var(--text-dim);min-width:52px;">🇯🇵 JA</span>
+                  <input type="text" class="form-input" style="flex:1;font-size:10px;padding:4px 6px;"
+                    value="メールまたは団体名を入力"
+                    oninput="INVITE_STATE.inputLabelLangs['ja']=this.value;liveUpdateInvitePreview()">
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <span style="font-size:9px;color:var(--text-dim);min-width:52px;">🇨🇳 ZH</span>
+                  <input type="text" class="form-input" style="flex:1;font-size:10px;padding:4px 6px;"
+                    value="请输入邮箱或团体名称"
+                    oninput="INVITE_STATE.inputLabelLangs['zh']=this.value;liveUpdateInvitePreview()">
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <span style="font-size:9px;color:var(--text-dim);min-width:52px;">🇪🇸 ES</span>
+                  <input type="text" class="form-input" style="flex:1;font-size:10px;padding:4px 6px;"
+                    value="Ingrese email o nombre de organización"
+                    oninput="INVITE_STATE.inputLabelLangs['es']=this.value;liveUpdateInvitePreview()">
+                </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
                 <div>
@@ -1176,7 +1199,7 @@
                   <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">글씨체</label>
                   <select onchange="INVITE_STATE.inputLabelFont=this.value;liveUpdateInvitePreview()"
                     style="width:100%;padding:3px 4px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-size:10px;border-radius:3px;cursor:pointer;height:32px;">
-                    ${['Noto Serif KR','Batang','Gungsuh','Nanum Myeongjo','Gowun Batang','Malgun Gothic','Noto Sans KR','Nanum Gothic','Black Han Sans','Cormorant Garamond','Playfair Display','Cinzel','Georgia','Courier New'].map(f=>`<option value="${f}" ${f==='Noto Serif KR'?'selected':''}>${f}</option>`).join('')}
+                    <option value="Noto Serif KR" selected>Noto Serif KR</option><option value="Batang">Batang</option><option value="Gungsuh">Gungsuh</option><option value="Nanum Myeongjo">Nanum Myeongjo</option><option value="Gowun Batang">Gowun Batang</option><option value="Malgun Gothic">Malgun Gothic</option><option value="Noto Sans KR">Noto Sans KR</option><option value="Nanum Gothic">Nanum Gothic</option><option value="Black Han Sans">Black Han Sans</option><option value="Cormorant Garamond">Cormorant Garamond</option><option value="Playfair Display">Playfair Display</option><option value="Cinzel">Cinzel</option><option value="Georgia">Georgia</option><option value="Courier New">Courier New</option>
                   </select>
                 </div>
               </div>
