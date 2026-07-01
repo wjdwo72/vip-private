@@ -5239,12 +5239,58 @@ function closeShareMenu() {
   document.getElementById('share-menu-overlay')?.remove();
 }
 
-function shareInviteTelegram(id) {
+async function shareInviteTelegram(id) {
   const inv = DB.get('invites',[]).find(x=>x.id===id); if(!inv) return;
+  const token = DB.get('tg_token','');
+  const channels = DB.get('tg_channels',[]).filter(c => !c.is_admin);
+
+  if (!token || !channels.length) {
+    // 봇 미설정 시 기존 방식으로 폴백
+    const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
+    const text = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n\n${msg}\n\n${inv.url}`;
+    recordShareAttempt(id,'telegram');
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`, '_blank');
+    return;
+  }
+
+  showToast('초대장 이미지 전송 중...', 'gold');
+
+  // 카드 캡처
+  let blob = null;
+  const card = document.getElementById('invite-preview-card');
+  if (card && typeof html2canvas !== 'undefined') {
+    try {
+      const cvs = await html2canvas(card, { scale:2, useCORS:true, allowTaint:true, logging:false, backgroundColor:null });
+      blob = await new Promise(res => cvs.toBlob(res, 'image/jpeg', 0.92));
+    } catch(e) {}
+  }
+
   const msg = (inv.textBlocks?.[0]?.[_lang]) || (inv.textBlocks?.[0]?.ko) || '';
-  const text = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n\n${msg}\n\n${inv.url}`;
+  const caption = `🎉 VIP Private 초대\n\n${inv.org}에서 초대합니다.\n${msg ? '\n'+msg+'\n' : ''}\n🔗 ${inv.url}`;
+
   recordShareAttempt(id,'telegram');
-  window.open(`https://t.me/share/url?url=${encodeURIComponent(inv.url)}&text=${encodeURIComponent(text)}`, '_blank');
+
+  let sent = 0;
+  for (const ch of channels) {
+    try {
+      if (blob) {
+        const form = new FormData();
+        form.append('chat_id', ch.id);
+        form.append('photo', blob, 'invite.jpg');
+        form.append('caption', caption);
+        const r = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method:'POST', body:form });
+        if ((await r.json()).ok) { sent++; continue; }
+      }
+      // 이미지 실패 시 텍스트 폴백
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ chat_id:ch.id, text:caption })
+      });
+      sent++;
+    } catch(e) {}
+  }
+
+  showToast(sent ? `✓ ${sent}개 채널에 초대장 전송 완료!` : '전송 실패. 채널 설정을 확인하세요.', sent ? 'gold' : 'error');
 }
 
 function shareInviteSNS(id) {
