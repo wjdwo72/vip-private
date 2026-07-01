@@ -1677,12 +1677,36 @@ const DB = {
   get(k, def) { try { return JSON.parse(localStorage.getItem('vip_'+k)) ?? def; } catch { return def; } },
   setLocal(k, v) { localStorage.setItem('vip_'+k, JSON.stringify(v)); },
   set(k, v) {
-    localStorage.setItem('vip_'+k, JSON.stringify(v));
+    // invites 저장 시 thumbnail(base64) 제거하여 용량 절약
+    let data = v;
+    if (k === 'invites' && Array.isArray(v)) {
+      data = v.map(inv => { const c = {...inv}; delete c.thumbnail; return c; });
+    }
+    try {
+      localStorage.setItem('vip_'+k, JSON.stringify(data));
+    } catch(e) {
+      // quota 초과 시 thumbnail 없이 재시도
+      if (k === 'invites') {
+        try { localStorage.setItem('vip_invites', JSON.stringify(data)); } catch(e2) {}
+      }
+    }
     // 클라우드 동기화 (1.5초 debounce)
     clearTimeout(_cloudTimer);
     _cloudTimer = setTimeout(cloudPush, 1500);
   }
 };
+
+// 기존 localStorage에 저장된 thumbnail 데이터 정리
+(function cleanupOldThumbnails() {
+  try {
+    const raw = localStorage.getItem('vip_invites');
+    if (!raw) return;
+    const invites = JSON.parse(raw);
+    if (!Array.isArray(invites)) return;
+    const cleaned = invites.map(inv => { const c = {...inv}; delete c.thumbnail; return c; });
+    localStorage.setItem('vip_invites', JSON.stringify(cleaned));
+  } catch(e) {}
+})();
 
 const _FB_DEFAULT_URL = 'https://vip-private-ebc10-default-rtdb.asia-southeast1.firebasedatabase.app';
 const _FB_DEFAULT_SECRET = '34CPnpuBimhbONu4HstfXZzjQyDqN0I1oUOunSyy';
