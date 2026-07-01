@@ -2017,12 +2017,23 @@ function renderInviteCardForUser(inv, container) {
     const r2=parseInt(h.slice(1,3),16),g2=parseInt(h.slice(3,5),16),b2=parseInt(h.slice(5,7),16);
     return `border:1px solid rgba(${r2},${g2},${b2},${op});`;
   };
+  const _uiTxt = {
+    confirm: {ko:'확인',en:'Confirm',ja:'確認',zh:'确认',es:'Confirmar'},
+    placeholder: {ko:'이메일 또는 단체명',en:'Email or organization',ja:'メールまたは団体名',zh:'邮箱或团体名称',es:'Email o organización'},
+    visitSite: {ko:'🌐 사이트 방문하기',en:'🌐 Visit Site',ja:'🌐 サイトへ',zh:'🌐 访问网站',es:'🌐 Visitar sitio'},
+    qrLabel: {ko:'초대 QR',en:'Invite QR',ja:'招待QR',zh:'邀请QR',es:'QR de invitación'},
+  };
+  const _t = (k) => (_uiTxt[k]?.[lang] || _uiTxt[k]?.ko || '');
   const inputEl = `
     <div id="inv-input-block" style="position:absolute;left:${inputPos.x}%;top:${inputPos.y}%;transform:translate(-50%,-50%);
          width:${sz.input||80}%;padding:10px;${_iBg('input')||'background:rgba(0,0,0,0.5);'}${_iInputBorder()}border-radius:6px;">
       <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:8px;text-align:center;font-family:'${lblFont}',serif;">${lbl}</div>
-      <input type="text" id="inv-inp" placeholder="이메일 또는 단체명"
-        style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:#fff;padding:9px 12px;font-size:12px;border-radius:4px;box-sizing:border-box;">
+      <input type="text" id="inv-inp" placeholder="${_t('placeholder')}"
+        style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:#fff;padding:9px 12px;font-size:12px;border-radius:4px;box-sizing:border-box;margin-bottom:8px;">
+      <button onclick="verifyInvite('${inv.id}')"
+        style="width:100%;padding:9px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);color:${tpl.accent};font-size:12px;font-weight:bold;cursor:pointer;border-radius:4px;letter-spacing:1px;">
+        ${_t('confirm')}
+      </button>
     </div>`;
 
   // QR — 인증 후 표시
@@ -2031,7 +2042,7 @@ function renderInviteCardForUser(inv, container) {
   const qrEl  = `
     <div id="inv-qr-wrap" style="position:absolute;left:${qrPos.x}%;top:${qrPos.y}%;transform:translate(-50%,-50%);text-align:center;${_iBg('qr')}border-radius:6px;padding:4px;display:none;">
       <div id="inv-qr-box" style="width:${qrSz}px;height:${qrSz}px;background:#fff;border-radius:6px;margin:0 auto;overflow:hidden;"></div>
-      <div style="font-size:8px;color:${tpl.accent};margin-top:4px;opacity:0.7;">초대 QR</div>
+      <div style="font-size:8px;color:${tpl.accent};margin-top:4px;opacity:0.7;">${_t('qrLabel')}</div>
     </div>`;
 
   // 방문 버튼 (인증 후 표시)
@@ -2051,7 +2062,7 @@ function renderInviteCardForUser(inv, container) {
         style="display:block;width:${vbW}px;padding:10px 0;background:rgba(201,168,76,0.25);${_iVbBorder()}
         color:${tpl.accent};text-align:center;font-size:12px;font-weight:bold;letter-spacing:1px;text-decoration:none;border-radius:6px;
         box-shadow:0 0 12px rgba(201,168,76,0.3);">
-        🌐 사이트 방문하기
+        ${_t('visitSite')}
       </a>
     </div>` : '';
 
