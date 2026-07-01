@@ -5253,7 +5253,7 @@ async function openShareMenu(id) {
       </div>
       <div style="font-size:8px;color:var(--text-dim);text-align:center;margin-bottom:14px;word-break:break-all;">${shareUrl}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <button onclick="shareInviteTelegram(${id}); closeShareMenu()" style="padding:9px;background:rgba(0,136,204,0.2);border:1px solid rgba(0,136,204,0.4);color:#0af;cursor:pointer;border-radius:4px;font-size:10px;">📱 Telegram</button>
+        <button id="share-tg-btn" onclick="shareInviteTelegram(${id}); closeShareMenu()" disabled style="padding:9px;background:rgba(0,136,204,0.1);border:1px solid rgba(0,136,204,0.2);color:rgba(0,170,255,0.4);cursor:not-allowed;border-radius:4px;font-size:10px;">📱 캡처중...</button>
         <button onclick="shareInviteSNS(${id})" style="padding:9px;background:rgba(59,89,152,0.2);border:1px solid rgba(59,89,152,0.4);color:#79f;cursor:pointer;border-radius:4px;font-size:10px;">👥 SNS</button>
         <button onclick="shareInviteKakao(${id}); closeShareMenu()" style="padding:9px;background:rgba(255,220,0,0.15);border:1px solid rgba(255,220,0,0.4);color:#fd0;cursor:pointer;border-radius:4px;font-size:10px;">💬 카카오</button>
         <button onclick="shareInviteEmail(${id}); closeShareMenu()" style="padding:9px;background:rgba(234,67,53,0.2);border:1px solid rgba(234,67,53,0.4);color:#f64;cursor:pointer;border-radius:4px;font-size:10px;">📧 이메일</button>
@@ -5289,9 +5289,18 @@ async function openShareMenu(id) {
         previewEl.innerHTML = '';
         previewEl.appendChild(img);
       }
+      // 캡처 완료 → Telegram 버튼 활성화
+      const tgBtn = document.getElementById('share-tg-btn');
+      if (tgBtn) {
+        tgBtn.disabled = false;
+        tgBtn.textContent = '📱 Telegram';
+        tgBtn.style.cssText = 'padding:9px;background:rgba(0,136,204,0.2);border:1px solid rgba(0,136,204,0.4);color:#0af;cursor:pointer;border-radius:4px;font-size:10px;';
+      }
     } catch(e) {
       const previewEl = document.getElementById('share-card-preview');
       if (previewEl) previewEl.innerHTML = '<span style="color:#f64;font-size:10px;">캡처 실패</span>';
+      const tgBtn = document.getElementById('share-tg-btn');
+      if (tgBtn) { tgBtn.disabled = false; tgBtn.textContent = '📱 Telegram'; tgBtn.style.cursor='pointer'; tgBtn.style.color='#0af'; }
     }
     document.body.removeChild(wrap);
   }
