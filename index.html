@@ -1150,17 +1150,30 @@
             <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
               <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">④ 입력란 설정 <span style="font-size:9px;color:var(--text-dim);font-weight:normal;">(미리보기에서 요소 드래그로 위치 이동)</span></div>
               <div style="margin-bottom:8px;">
-                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">안내 문구</label>
-                <input type="text" id="invite-input-label" value="이메일 또는 단체명을 입력하세요" class="form-input" style="font-size:11px;padding:6px 8px;" oninput="INVITE_STATE.inputLabel=this.value;liveUpdateInvitePreview()">
+                <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">안내 문구 (언어별)</label>
+                ${[['ko','🇰🇷 한국어'],['en','🇺🇸 EN'],['ja','🇯🇵 JA'],['zh','🇨🇳 ZH'],['es','🇪🇸 ES']].map(([l,flag])=>`
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <span style="font-size:9px;color:var(--text-dim);min-width:52px;">${flag}</span>
+                  <input type="text" class="form-input" style="flex:1;font-size:10px;padding:4px 6px;"
+                    value="${{ko:'이메일 또는 단체명을 입력하세요',en:'Enter email or organization name',ja:'メールまたは団体名を入力',zh:'请输入邮箱或团体名称',es:'Ingrese email o nombre de organización'}[l]}"
+                    oninput="INVITE_STATE.inputLabelLangs['${l}']=this.value;liveUpdateInvitePreview()">
+                </div>`).join('')}
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
                 <div>
-                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">문구 크기 (px)</label>
+                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">크기 (px)</label>
                   <input type="number" id="invite-input-label-size" value="11" min="8" max="24" class="form-input" style="font-size:11px;padding:6px 8px;" oninput="INVITE_STATE.inputLabelSize=parseInt(this.value)||11;liveUpdateInvitePreview()">
                 </div>
                 <div>
-                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">문구 색상</label>
+                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">색상</label>
                   <input type="color" id="invite-input-label-color" value="#c9a84c" style="width:100%;height:32px;border:1px solid rgba(201,168,76,0.3);border-radius:3px;background:none;cursor:pointer;" oninput="INVITE_STATE.inputLabelColor=this.value;liveUpdateInvitePreview()">
+                </div>
+                <div>
+                  <label style="font-size:9px;color:var(--text-dim);display:block;margin-bottom:3px;">글씨체</label>
+                  <select onchange="INVITE_STATE.inputLabelFont=this.value;liveUpdateInvitePreview()"
+                    style="width:100%;padding:3px 4px;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.2);color:var(--text);font-size:10px;border-radius:3px;cursor:pointer;height:32px;">
+                    ${['Noto Serif KR','Batang','Gungsuh','Nanum Myeongjo','Gowun Batang','Malgun Gothic','Noto Sans KR','Nanum Gothic','Black Han Sans','Cormorant Garamond','Playfair Display','Cinzel','Georgia','Courier New'].map(f=>`<option value="${f}" ${f==='Noto Serif KR'?'selected':''}>${f}</option>`).join('')}
+                  </select>
                 </div>
               </div>
             </div>
@@ -1899,9 +1912,10 @@ function renderInviteCardForUser(inv, container) {
   const pos    = inv.positions || { code:{x:50,y:12}, input:{x:50,y:68}, qr:{x:50,y:82}, visitBtn:{x:50,y:94} };
   const sz     = inv.sizes    || { input:80, qr:80, visitBtn:140 };
   const lang   = _lang || 'ko';
-  const lbl    = inv.inputLabel    || '이메일 또는 단체명을 입력하세요';
+  const lbl    = (inv.inputLabelLangs?.[lang] || inv.inputLabel || '이메일 또는 단체명을 입력하세요');
   const lblSz  = inv.inputLabelSize  || 11;
   const lblColor = inv.inputLabelColor || tpl.accent;
+  const lblFont  = inv.inputLabelFont  || 'Noto Serif KR';
 
   const bgStyle = inv.customImage
     ? `background-image:url(${inv.customImage});background-size:cover;background-position:center;`
@@ -1998,7 +2012,7 @@ function renderInviteCardForUser(inv, container) {
   const inputEl = `
     <div id="inv-input-block" style="position:absolute;left:${inputPos.x}%;top:${inputPos.y}%;transform:translate(-50%,-50%);
          width:${sz.input||80}%;padding:10px;${_iBg('input')||'background:rgba(0,0,0,0.5);'}${_iInputBorder()}border-radius:6px;">
-      <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:8px;text-align:center;">${lbl}</div>
+      <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:8px;text-align:center;font-family:'${lblFont}',serif;">${lbl}</div>
       <input type="text" id="inv-inp" placeholder="이메일 또는 단체명"
         style="width:100%;background:rgba(0,0,0,0.5);border:1px solid rgba(201,168,76,0.25);color:#fff;padding:9px 12px;font-size:12px;border-radius:4px;box-sizing:border-box;">
     </div>`;
@@ -4472,9 +4486,11 @@ const INVITE_STATE = {
   orgSize:       17,
   orgColor:      '',
   orgFont:       'Noto Serif KR',
+  inputLabelLangs: { ko:'이메일 또는 단체명을 입력하세요', en:'Enter email or organization name', ja:'メールまたは団体名を入力', zh:'请输入邮箱或团体名称', es:'Ingrese email o nombre de organización' },
   inputLabel: '이메일 또는 단체명을 입력하세요',
   inputLabelSize: 11,
   inputLabelColor: '#c9a84c',
+  inputLabelFont: 'Noto Serif KR',
   previewLang: 'ko',
   customImage: null,
   customImage2: null
@@ -4619,9 +4635,10 @@ function liveUpdateInvitePreview() {
   const lang = INVITE_STATE.previewLang;
   const customBg = INVITE_STATE.customImage;
   const pos = INVITE_STATE.positions;
-  const lbl = INVITE_STATE.inputLabel || '이메일 또는 단체명을 입력하세요';
+  const lbl = (INVITE_STATE.inputLabelLangs?.[lang] || INVITE_STATE.inputLabel || '이메일 또는 단체명을 입력하세요');
   const lblSz = INVITE_STATE.inputLabelSize || 11;
   const lblColor = INVITE_STATE.inputLabelColor || tpl.accent;
+  const lblFont = INVITE_STATE.inputLabelFont || 'Noto Serif KR';
 
   const bgStyle = customBg
     ? `background-image:url(${customBg});background-size:cover;background-position:center;`
@@ -4728,7 +4745,7 @@ function liveUpdateInvitePreview() {
     <div data-drag="input" style="position:absolute;left:${pos.input.x}%;top:${pos.input.y}%;transform:translate(-50%,-50%);
          width:${sz.input||80}%;cursor:move;${_inputBorderStyle()}border-radius:4px;padding:6px 8px;${_boxBg('input')||'background:rgba(0,0,0,0.35);'}">
       ${dragHint}${resizeHandle('input')}
-      <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:5px;text-align:center;">${lbl}</div>
+      <div style="font-size:${lblSz}px;color:${lblColor};margin-bottom:5px;text-align:center;font-family:'${lblFont}',serif;">${lbl}</div>
       <div style="height:26px;background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.25);border-radius:3px;margin-bottom:4px;"></div>
       <div style="height:26px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center;">
         <span style="font-size:10px;color:${tpl.accent};">확인</span>
@@ -4997,9 +5014,11 @@ function createInviteCard() {
     textBlocks:   JSON.parse(JSON.stringify(INVITE_STATE.textBlocks)),
     positions:    JSON.parse(JSON.stringify(INVITE_STATE.positions)),
     sizes:        JSON.parse(JSON.stringify(INVITE_STATE.sizes)),
+    inputLabelLangs: JSON.parse(JSON.stringify(INVITE_STATE.inputLabelLangs || {})),
     inputLabel:      INVITE_STATE.inputLabel,
     inputLabelSize:  INVITE_STATE.inputLabelSize,
     inputLabelColor: INVITE_STATE.inputLabelColor,
+    inputLabelFont:  INVITE_STATE.inputLabelFont,
     headerText:    INVITE_STATE.headerText,
     headerVisible: INVITE_STATE.headerVisible,
     headerSize:    INVITE_STATE.headerSize,
@@ -5034,9 +5053,11 @@ function createInviteCard() {
   INVITE_STATE.textBlocks = [];
   INVITE_STATE.customImage = null;
   INVITE_STATE.positions = { code:{x:50,y:12}, input:{x:50,y:68}, qr:{x:50,y:85} };
+  INVITE_STATE.inputLabelLangs = { ko:'이메일 또는 단체명을 입력하세요', en:'Enter email or organization name', ja:'メールまたは団体名を入力', zh:'请输入邮箱或团体名称', es:'Ingrese email o nombre de organización' };
   INVITE_STATE.inputLabel = '이메일 또는 단체명을 입력하세요';
   INVITE_STATE.inputLabelSize = 11;
   INVITE_STATE.inputLabelColor = '#c9a84c';
+  INVITE_STATE.inputLabelFont = 'Noto Serif KR';
   const lblEl = document.getElementById('invite-input-label');
   if (lblEl) lblEl.value = INVITE_STATE.inputLabel;
   renderInviteTextBlocks();
