@@ -1141,7 +1141,10 @@
             <div style="padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:6px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                 <div style="font-size:10px;color:var(--gold);letter-spacing:1px;">③ 텍스트 블록</div>
-                <button onclick="addInviteTextBlock()" style="padding:4px 10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">+ 추가</button>
+                <div style="display:flex;gap:6px;">
+                  <button onclick="autoTranslateAll()" style="padding:4px 10px;background:rgba(0,150,255,0.2);border:1px solid rgba(0,150,255,0.4);color:#4af;font-size:10px;cursor:pointer;border-radius:3px;">🌐 전체 번역</button>
+                  <button onclick="addInviteTextBlock()" style="padding:4px 10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:10px;cursor:pointer;border-radius:3px;">+ 추가</button>
+                </div>
               </div>
               <div id="invite-text-blocks" style="display:flex;flex-direction:column;gap:8px;"></div>
             </div>
@@ -4609,6 +4612,27 @@ async function autoTranslateBlock(id) {
   renderInviteTextBlocks();
   liveUpdateInvitePreview();
   showToast('번역 완료!', 'gold');
+}
+
+async function autoTranslateAll() {
+  const blocks = INVITE_STATE.textBlocks.filter(b => b.ko);
+  const hasLabel = INVITE_STATE.inputLabelLangs?.ko;
+  if (!blocks.length && !hasLabel) { showToast('번역할 한국어 텍스트가 없습니다.', 'error'); return; }
+  showToast('전체 번역 중...', 'gold');
+  const jobs = [];
+  blocks.forEach(b => jobs.push(_translateItem(b.ko, TRANS_TARGETS).then(res => { if(res.en)b.en=res.en; if(res.ja)b.ja=res.ja; if(res.zh)b.zh=res.zh; if(res.es)b.es=res.es; }).catch(()=>{})));
+  if (hasLabel) {
+    jobs.push(_translateItem(INVITE_STATE.inputLabelLangs.ko, TRANS_TARGETS).then(res => {
+      if (res.en) INVITE_STATE.inputLabelLangs.en = res.en;
+      if (res.ja) INVITE_STATE.inputLabelLangs.ja = res.ja;
+      if (res.zh) INVITE_STATE.inputLabelLangs.zh = res.zh;
+      if (res.es) INVITE_STATE.inputLabelLangs.es = res.es;
+    }).catch(()=>{}));
+  }
+  await Promise.all(jobs);
+  renderInviteTextBlocks();
+  liveUpdateInvitePreview();
+  showToast(`번역 완료! (${blocks.length}개 블록)`, 'gold');
 }
 
 /* ---- 미리보기 언어 ---- */
